@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Table, Space, Tag, Button, message, Modal, Select, Input } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { adminApi } from '@/utils/api';
 import type { ColumnsType } from 'antd/es/table';
 
@@ -8,6 +9,7 @@ const statusColors: Record<string, string> = {
 };
 
 export default function AdminProducts() {
+  const { t } = useTranslation();
   const [data, setData] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -88,11 +90,11 @@ export default function AdminProducts() {
   return (
     <div className="animate-fade-in">
       <div style={{ marginBottom: 20 }}>
-        <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 20, color: 'var(--ink-darkest)', marginBottom: 4 }}>产品管理</h2>
-        <p style={{ color: 'var(--ink-light)', fontSize: 13, margin: 0 }}>审核、发布和管理平台产品</p>
+        <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 20, color: 'var(--ink-darkest)', marginBottom: 4 }}>{t('admin.products')}</h2>
+        <p style={{ color: 'var(--ink-light)', fontSize: 13, margin: 0 }}>{t('admin.overviewDesc')}</p>
       </div>
       <Space style={{ marginBottom: 16 }} wrap>
-        <Input.Search placeholder="搜索产品" allowClear style={{ width: 260 }}
+        <Input.Search placeholder={t('admin.searchProduct')} allowClear style={{ width: 280 }}
           onSearch={(v) => { setKeyword(v); setPage(1); loadData(); }} />
         <Select placeholder="状态" allowClear style={{ width: 130 }}
           onChange={(v) => { setStatusFilter(v); setPage(1); }}

@@ -31,6 +31,10 @@ export const userApi = {
   getTheme: () => request.get('/users/me/theme'),
   updateTheme: (themeConfig: string) =>
     request.put('/users/me/theme', { themeConfig }),
+  uploadAvatar: (formData: FormData) =>
+    request.post('/users/me/avatar', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
 };
 
 // ===== Product API =====

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Form, Input, Button, Tabs, Avatar, message, Descriptions, Tag, Upload, Radio, Slider, Space, Select, ColorPicker } from 'antd';
+import { Form, Input, Button, Tabs, message, Descriptions, Tag, Upload, Radio, Slider, Space, Select, ColorPicker } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined, EditOutlined, BgColorsOutlined, UploadOutlined } from '@ant-design/icons';
+import { AvatarUpload } from '@/components/AvatarUpload';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { setUser, logout } from '@/store/slices/authSlice';
@@ -123,21 +124,33 @@ export default function Profile() {
     try {
       const strokeWidth = values.strokeWidth === 'custom' ? (values.strokeWidthCustom || '2px') : values.strokeWidth;
       const fontFamily = values.fontFamily === 'custom' ? (values.fontFamilyCustom || '"Ma Shan Zheng", cursive') : values.fontFamily;
-      const themeConfig = {
+      const apiConfig = {
         background: {
           type: values.backgroundType,
           url: values.backgroundUrl,
           opacity: values.backgroundOpacity,
-          overlay: currentTheme.background.overlay,
         },
         ink: {
-          primaryColor: values.primaryColor || currentTheme.ink.primaryColor,
+          primaryColor: values.primaryColor || currentTheme.appearance.primaryColor,
           strokeWidth,
           fontFamily,
         },
       };
-      await userApi.updateTheme(JSON.stringify(themeConfig));
-      dispatch(setUserConfig(themeConfig));
+      await userApi.updateTheme(JSON.stringify(apiConfig));
+      dispatch(setUserConfig({
+        background: {
+          type: values.backgroundType,
+          url: values.backgroundUrl,
+          opacity: values.backgroundOpacity,
+          blur: currentTheme.background.blur,
+        },
+        appearance: {
+          primaryColor: values.primaryColor || currentTheme.appearance.primaryColor,
+          fontFamily,
+          borderRadius: currentTheme.appearance.borderRadius,
+          mode: currentTheme.appearance.mode,
+        },
+      }));
       message.success('外观设置已保存');
     } catch { /* handled */ } finally { setLoading(false); }
   };
@@ -149,11 +162,17 @@ export default function Profile() {
       children: (
         <Form form={profileForm} layout="vertical" onFinish={onProfileSave}>
           <div style={{ textAlign: 'center', marginBottom: 28 }}>
-            <Avatar
+            <AvatarUpload
+              currentAvatar={user?.avatarUrl || undefined}
+              onUpload={async (blob, isGif) => {
+                const formData = new FormData();
+                formData.append('file', blob, isGif ? 'avatar.gif' : 'avatar.png');
+                const res: any = await userApi.uploadAvatar(formData);
+                if (res.data?.avatarUrl && user) {
+                  dispatch(setUser({ ...user, avatarUrl: res.data.avatarUrl }));
+                }
+              }}
               size={88}
-              icon={<UserOutlined />}
-              src={user?.avatarUrl}
-              style={{ backgroundColor: 'var(--ink-lighter)', border: '3px solid var(--paper-warm)' }}
             />
             <div style={{ marginTop: 12, fontFamily: 'var(--font-serif)', fontSize: 18, color: 'var(--ink-darkest)' }}>
               {user?.nickname || user?.username}
@@ -244,7 +263,7 @@ export default function Profile() {
           <Form.Item label="背景文件">
             <Space.Compact style={{ width: '100%' }}>
               <Form.Item name="backgroundUrl" noStyle>
-                <Input style={{ width: 'calc(100% - 100px)' }} placeholder="背景文件URL 或上传文件" />
+                <Input style={{ width: 'calc(100% - 90px)' }} placeholder="背景文件URL 或上传文件" />
               </Form.Item>
               <Upload
                 showUploadList={false}

@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Row, Col, Statistic, Spin } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { UserOutlined, AppstoreOutlined, CommentOutlined, DownloadOutlined, RiseOutlined, CloudDownloadOutlined } from '@ant-design/icons';
 import { adminApi } from '@/utils/api';
 
 export default function AdminDashboard() {
+  const { t } = useTranslation();
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -19,26 +21,26 @@ export default function AdminDashboard() {
   if (loading) return (
     <div style={{ textAlign: 'center', padding: '80px 0' }}>
       <Spin size="large" />
-      <div style={{ marginTop: 12, color: 'var(--ink-light)', fontFamily: 'var(--font-serif)' }}>数据加载中...</div>
+      <div style={{ marginTop: 12, color: 'var(--ink-light)', fontFamily: 'var(--font-serif)' }}>{t('common.loading')}</div>
     </div>
   );
 
   const statCards = [
-    { title: '用户总数', value: stats?.totalUsers || 0, icon: <UserOutlined />, color: 'var(--indigo)' },
-    { title: '产品总数', value: stats?.totalProducts || 0, icon: <AppstoreOutlined />, color: 'var(--celadon)' },
-    { title: '总下载量', value: stats?.totalDownloads || 0, icon: <DownloadOutlined />, color: 'var(--gamboge)' },
-    { title: '总评论数', value: stats?.totalComments || 0, icon: <CommentOutlined />, color: 'var(--cinnabar)' },
-    { title: '今日新增用户', value: stats?.newUsersToday || 0, icon: <RiseOutlined />, color: 'var(--indigo)' },
-    { title: '今日下载量', value: stats?.downloadsToday || 0, icon: <CloudDownloadOutlined />, color: 'var(--celadon)' },
+    { title: t('admin.totalUsers'), value: stats?.totalUsers || 0, icon: <UserOutlined />, color: 'var(--indigo)' },
+    { title: t('admin.totalProducts'), value: stats?.totalProducts || 0, icon: <AppstoreOutlined />, color: 'var(--celadon)' },
+    { title: t('admin.totalDownloads'), value: stats?.totalDownloads || 0, icon: <DownloadOutlined />, color: 'var(--gamboge)' },
+    { title: t('admin.totalComments'), value: stats?.totalComments || 0, icon: <CommentOutlined />, color: 'var(--cinnabar)' },
+    { title: t('admin.newUsersToday'), value: stats?.newUsersToday || 0, icon: <RiseOutlined />, color: 'var(--indigo)' },
+    { title: t('admin.downloadsToday'), value: stats?.downloadsToday || 0, icon: <CloudDownloadOutlined />, color: 'var(--celadon)' },
   ];
 
   return (
     <div className="animate-fade-in">
       <div style={{ marginBottom: 24 }}>
         <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 22, color: 'var(--ink-darkest)', marginBottom: 4 }}>
-          仪表盘
+          {t('admin.dashboard')}
         </h2>
-        <p style={{ color: 'var(--ink-light)', fontSize: 13, margin: 0 }}>平台运营数据概览</p>
+        <p style={{ color: 'var(--ink-light)', fontSize: 13, margin: 0 }}>{t('admin.overviewDesc')}</p>
       </div>
 
       <Row gutter={[16, 16]}>
@@ -65,25 +67,25 @@ export default function AdminDashboard() {
       </Row>
 
       {stats?.downloadTrend && (
-        <div className="paper-card" style={{ padding: '24px', marginTop: 20 }}>
+        <div className="paper-card" style={{ padding: '24px', marginTop: 20, background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }}>
           <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 16, color: 'var(--ink-darkest)', marginBottom: 16 }}>
-            近 7 日下载趋势
+            {t('admin.downloadTrend')}
           </h3>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 120 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 120, padding: '0 4px' }}>
             {stats.downloadTrend.map((d: any, i: number) => {
               const max = Math.max(...stats.downloadTrend.map((t: any) => t.count));
               const h = max > 0 ? (d.count / max) * 100 : 0;
               return (
                 <div key={i} style={{ flex: 1, textAlign: 'center' }}>
-                  <div style={{ fontSize: 11, color: 'var(--ink-light)', marginBottom: 4 }}>{d.count}</div>
+                  <div style={{ fontSize: 11, color: 'var(--ink-dark)', marginBottom: 4, fontWeight: 600 }}>{d.count}</div>
                   <div style={{
-                    height: h,
-                    background: 'linear-gradient(to top, var(--ink-lighter), var(--ink-lightest))',
+                    height: Math.max(h, 6),
+                    background: 'linear-gradient(to top, var(--cinnabar, #8B0000), var(--ink-medium, #666))',
                     borderRadius: '4px 4px 0 0',
                     transition: 'height 0.5s ease',
-                    minHeight: 4,
+                    opacity: 0.85,
                   }} />
-                  <div style={{ fontSize: 11, color: 'var(--ink-light)', marginTop: 4 }}>{d.date}</div>
+                  <div style={{ fontSize: 11, color: 'var(--ink-medium)', marginTop: 4, fontWeight: 500 }}>{d.date}</div>
                 </div>
               );
             })}

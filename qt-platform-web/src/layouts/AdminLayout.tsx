@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { Spin } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { AdminSidebar } from '@/components/layout/AdminSidebar';
 import { Header } from '@/components/layout/Header';
 import { useAppSelector } from '@/store/hooks';
 
 export default function AdminLayout() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+  const { currentTheme } = useAppSelector((state) => state.theme);
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
@@ -35,7 +38,7 @@ export default function AdminLayout() {
   if (checking) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Spin size="large" tip="验证权限中..." />
+        <Spin size="large" tip={t('common.loading')} />
       </div>
     );
   }
@@ -50,7 +53,10 @@ export default function AdminLayout() {
         <Header />
         
         <div className="flex-1 px-8 pb-8 pt-2 overflow-y-auto custom-scrollbar">
-          <div className="glass-panel rounded-3xl min-h-full p-8 bg-white/40 backdrop-blur-xl border-white/20 shadow-none">
+          <div
+            className="glass-panel rounded-3xl min-h-full p-8 backdrop-blur-xl border-white/20 shadow-none transition-colors duration-300"
+            style={{ backgroundColor: `rgba(255, 255, 255, ${Math.min(currentTheme.background.opacity + 0.1, 1)})` }}
+          >
              <Outlet />
           </div>
         </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Form, Input, Button, Radio, Slider, Upload, message, Card, Select, ColorPicker, Space } from 'antd';
 import { UploadOutlined, SaveOutlined, ReloadOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import { adminApi } from '@/utils/api';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { setSystemConfig } from '@/store/slices/themeSlice';
@@ -27,6 +28,7 @@ const STROKE_WIDTH_OPTIONS = [
 ];
 
 export default function AdminTheme() {
+  const { t } = useTranslation();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -123,12 +125,11 @@ export default function AdminTheme() {
         ? values.fontFamilyCustom || '"Ma Shan Zheng", cursive' 
         : values.fontFamily;
       
-      const themeConfig = {
+      const apiConfig = {
         background: {
           type: values.backgroundType,
           url: values.backgroundUrl,
           opacity: values.backgroundOpacity,
-          overlay: currentTheme.background.overlay,
         },
         ink: {
           primaryColor: values.primaryColor,
@@ -136,11 +137,24 @@ export default function AdminTheme() {
           fontFamily,
         },
       };
-      await adminApi.updateGlobalTheme(JSON.stringify(themeConfig));
-      dispatch(setSystemConfig(themeConfig));
-      message.success('全局主题配置已保存');
+      await adminApi.updateGlobalTheme(JSON.stringify(apiConfig));
+      dispatch(setSystemConfig({
+        background: {
+          type: values.backgroundType,
+          url: values.backgroundUrl,
+          opacity: values.backgroundOpacity,
+          blur: currentTheme.background.blur,
+        },
+        appearance: {
+          primaryColor: values.primaryColor,
+          fontFamily,
+          borderRadius: currentTheme.appearance.borderRadius,
+          mode: currentTheme.appearance.mode,
+        },
+      }));
+      message.success(t('theme.saveSuccess'));
     } catch {
-      message.error('保存失败');
+      message.error(t('theme.saveFail'));
     } finally {
       setLoading(false);
     }
@@ -150,30 +164,30 @@ export default function AdminTheme() {
     <div className="animate-fade-in">
       <div style={{ marginBottom: 20 }}>
         <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 20, color: 'var(--ink-darkest)', marginBottom: 4 }}>
-          主题管理
+          {t('theme.title')}
         </h2>
         <p style={{ color: 'var(--ink-light)', fontSize: 13, margin: 0 }}>
-          配置全局默认主题，影响所有未自定义主题的用户
+          {t('theme.subtitle')}
         </p>
       </div>
 
       <Card>
         <Form form={form} layout="vertical" onFinish={onSave} style={{ maxWidth: 800 }}>
           <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 16, color: 'var(--ink-dark)', marginBottom: 16 }}>
-            背景设置
+            {t('theme.background')}
           </h3>
           
-          <Form.Item label="背景类型" name="backgroundType" initialValue="image">
+          <Form.Item label={t('theme.bgType')} name="backgroundType" initialValue="image">
             <Radio.Group>
-              <Radio value="image">图片</Radio>
-              <Radio value="video">视频</Radio>
+              <Radio value="image">{t('theme.bgImage')}</Radio>
+              <Radio value="video">{t('theme.bgVideo')}</Radio>
             </Radio.Group>
           </Form.Item>
 
-          <Form.Item label="背景文件">
+          <Form.Item label={t('theme.bgFile')}>
             <Space.Compact style={{ width: '100%' }}>
               <Form.Item name="backgroundUrl" noStyle>
-                <Input style={{ width: 'calc(100% - 100px)' }} placeholder="背景文件URL 或上传文件" />
+                <Input style={{ width: 'calc(100% - 90px)' }} placeholder={t('theme.bgUrlPlaceholder')} />
               </Form.Item>
               <Upload
                 showUploadList={false}
@@ -183,7 +197,7 @@ export default function AdminTheme() {
                 }}
                 accept="image/*,video/*"
               >
-                <Button icon={<UploadOutlined />} loading={uploading}>上传</Button>
+                <Button icon={<UploadOutlined />} loading={uploading}>{t('theme.bgUpload')}</Button>
               </Upload>
             </Space.Compact>
             {/* 背景预览 */}
@@ -198,15 +212,15 @@ export default function AdminTheme() {
             )}
           </Form.Item>
 
-          <Form.Item label="背景透明度" name="backgroundOpacity" initialValue={0.1}>
+          <Form.Item label={t('theme.bgOpacity')} name="backgroundOpacity" initialValue={0.1}>
             <Slider min={0} max={1} step={0.05} marks={{ 0: '0%', 0.5: '50%', 1: '100%' }} />
           </Form.Item>
 
           <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 16, color: 'var(--ink-dark)', marginTop: 32, marginBottom: 16 }}>
-            水墨风格设置
+            {t('theme.inkStyle')}
           </h3>
 
-          <Form.Item label="主色调" name="primaryColor" initialValue="#8B0000"
+          <Form.Item label={t('theme.primaryColor')} name="primaryColor" initialValue="#8B0000"
             getValueFromEvent={(color: Color) => (typeof color === 'string' ? color : color.toHexString())}
           >
             <ColorPicker showText format="hex" />
@@ -215,12 +229,11 @@ export default function AdminTheme() {
           <div style={{ marginTop: -16, marginBottom: 24 }}>
             <div style={{ height: 6, borderRadius: 3, background: watchPrimaryColor || '#8B0000', boxShadow: `0 0 8px ${watchPrimaryColor || '#8B0000'}44` }} />
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
-              <span style={{ fontSize: 12, color: watchPrimaryColor || '#8B0000', fontWeight: 600 }}>当前主色调: {watchPrimaryColor || '#8B0000'}</span>
-              <span style={{ fontSize: 12, color: 'var(--ink-light)' }}>印章、链接、按钮等使用此颜色</span>
+              <span style={{ fontSize: 12, color: watchPrimaryColor || '#8B0000', fontWeight: 600 }}>{t('theme.primaryColor')}: {watchPrimaryColor || '#8B0000'}</span>
             </div>
           </div>
 
-          <Form.Item label="笔画宽度">
+          <Form.Item label={t('theme.strokeWidth')}>
             <Space>
               <Form.Item name="strokeWidth" initialValue="2px" noStyle>
                 <Select
@@ -241,11 +254,11 @@ export default function AdminTheme() {
             {/* 笔画宽度预览 */}
             <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ flex: 1, height: previewStrokeWidth, background: 'var(--ink-dark)', borderRadius: 2, transition: 'height 0.3s' }} />
-              <span style={{ fontSize: 12, color: 'var(--ink-light)', whiteSpace: 'nowrap' }}>预览: {previewStrokeWidth}</span>
+              <span style={{ fontSize: 12, color: 'var(--ink-light)', whiteSpace: 'nowrap' }}>{previewStrokeWidth}</span>
             </div>
           </Form.Item>
 
-          <Form.Item label="字体">
+          <Form.Item label={t('theme.fontFamily')}>
             <Space direction="vertical" style={{ width: '100%' }}>
               <Form.Item name="fontFamily" initialValue='"Ma Shan Zheng", cursive' noStyle>
                 <Select
@@ -277,13 +290,13 @@ export default function AdminTheme() {
           <Form.Item>
             <div style={{ display: 'flex', gap: 12 }}>
               <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={loading}>
-                保存配置
+                {t('theme.save')}
               </Button>
               <Button icon={<ReloadOutlined />} onClick={() => {
                 form.resetFields();
                 loadThemeConfig();
               }}>
-                重置
+                {t('theme.reset')}
               </Button>
             </div>
           </Form.Item>

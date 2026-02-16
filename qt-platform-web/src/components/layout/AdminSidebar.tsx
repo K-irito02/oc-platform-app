@@ -1,5 +1,5 @@
-import React from 'react';
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { 
   LayoutDashboard, 
@@ -9,18 +9,17 @@ import {
   FolderTree, 
   Palette, 
   Server, 
-  LogOut,
-  ArrowLeft
+  ArrowLeft,
+  PanelLeftClose,
+  PanelLeftOpen
 } from 'lucide-react';
-import { useAppDispatch } from '@/store/hooks';
-import { logout } from '@/store/slices/authSlice';
+import { Tooltip } from 'antd';
 import { cn } from '@/lib/utils';
 
 export const AdminSidebar: React.FC = () => {
   const { t } = useTranslation();
-  const location = useLocation();
   const navigate = useNavigate();
-  const dispatch = useAppDispatch();
+  const [collapsed, setCollapsed] = useState(() => localStorage.getItem('admin_sidebar_collapsed') === 'true');
 
   const navItems = [
     { to: '/admin', icon: LayoutDashboard, label: t('admin.dashboard') || '仪表盘', end: true },
@@ -32,62 +31,85 @@ export const AdminSidebar: React.FC = () => {
     { to: '/admin/system', icon: Server, label: t('admin.system') || '系统设置' },
   ];
 
-  const handleLogout = () => {
-    dispatch(logout());
-    navigate('/login');
+  const toggleCollapse = () => {
+    const next = !collapsed;
+    setCollapsed(next);
+    localStorage.setItem('admin_sidebar_collapsed', String(next));
   };
 
   return (
-    <aside className="hidden md:flex flex-col w-72 h-screen sticky top-0 z-40 p-4">
+    <aside className={cn(
+      "hidden md:flex flex-col h-screen sticky top-0 z-40 p-4 transition-all duration-300",
+      collapsed ? "w-20" : "w-72"
+    )}>
       <div className="flex-1 flex flex-col glass-panel rounded-2xl overflow-hidden bg-slate-900/80 backdrop-blur-xl border-white/10 shadow-2xl text-white">
         
         {/* Logo Section */}
-        <div className="flex items-center gap-3 px-6 py-8 border-b border-white/10">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500 to-orange-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-rose-500/30">
+        <div className={cn("flex items-center gap-3 py-8 border-b border-white/10", collapsed ? "px-4 justify-center" : "px-6")}>
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500 to-orange-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-rose-500/30 flex-shrink-0">
             Qt
           </div>
-          <span className="font-bold text-xl text-white tracking-tight">Admin</span>
+          {!collapsed && <span className="font-bold text-xl text-white tracking-tight">Admin</span>}
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto custom-scrollbar">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              className={({ isActive }) => cn(
-                "flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-300 group relative overflow-hidden",
-                isActive 
-                  ? "bg-white/10 text-white font-semibold shadow-sm" 
-                  : "text-slate-400 hover:bg-white/5 hover:text-white"
-              )}
-            >
-              {({ isActive }) => (
-                <>
-                  <item.icon size={20} className={cn(
-                    "transition-transform duration-300",
-                    isActive ? "scale-110 text-rose-400" : "group-hover:scale-105"
-                  )} />
-                  <span className="z-10">{item.label}</span>
-                  
-                  {isActive && (
-                    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-rose-500 rounded-l-full shadow-[0_0_12px_rgba(244,63,94,0.6)]" />
-                  )}
-                </>
-              )}
-            </NavLink>
-          ))}
+        <nav className={cn("flex-1 py-6 space-y-2 overflow-y-auto custom-scrollbar", collapsed ? "px-2" : "px-4")}>
+          {navItems.map((item) => {
+            const link = (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                className={({ isActive }) => cn(
+                  "flex items-center gap-3 rounded-xl transition-all duration-300 group relative overflow-hidden",
+                  collapsed ? "px-3 py-3.5 justify-center" : "px-4 py-3.5",
+                  isActive 
+                    ? "bg-white/10 text-white font-semibold shadow-sm" 
+                    : "text-slate-400 hover:bg-white/5 hover:text-white"
+                )}
+              >
+                {({ isActive }) => (
+                  <>
+                    <item.icon size={20} className={cn(
+                      "transition-transform duration-300 flex-shrink-0",
+                      isActive ? "scale-110 text-rose-400" : "group-hover:scale-105"
+                    )} />
+                    {!collapsed && <span className="z-10">{item.label}</span>}
+                    
+                    {isActive && (
+                      <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-rose-500 rounded-l-full shadow-[0_0_12px_rgba(244,63,94,0.6)]" />
+                    )}
+                  </>
+                )}
+              </NavLink>
+            );
+            return collapsed ? <Tooltip key={item.to} title={item.label} placement="right">{link}</Tooltip> : link;
+          })}
         </nav>
 
         {/* Footer Actions */}
-        <div className="mt-auto p-4 border-t border-white/10 space-y-2 bg-black/20">
+        <div className={cn("mt-auto border-t border-white/10 space-y-2 bg-black/20", collapsed ? "p-2" : "p-4")}>
+          {/* Collapse Toggle */}
+          <button
+            onClick={toggleCollapse}
+            className={cn(
+              "w-full flex items-center gap-3 rounded-xl text-slate-500 hover:bg-white/10 hover:text-white transition-all duration-300",
+              collapsed ? "px-3 py-3 justify-center" : "px-4 py-3"
+            )}
+          >
+            {collapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
+            {!collapsed && <span className="font-medium text-sm">{t('common.collapse') || '收起'}</span>}
+          </button>
+
           <button 
             onClick={() => navigate('/')}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/10 hover:text-white transition-all duration-300 group"
+            className={cn(
+              "w-full flex items-center gap-3 rounded-xl text-slate-400 hover:bg-white/10 hover:text-white transition-all duration-300 group",
+              collapsed ? "px-3 py-3 justify-center" : "px-4 py-3"
+            )}
           >
-            <ArrowLeft size={20} className="text-slate-500 group-hover:text-white transition-colors" />
-            <span className="font-medium">返回前台</span>
+            <ArrowLeft size={20} className="text-slate-500 group-hover:text-white transition-colors flex-shrink-0" />
+            {!collapsed && <span className="font-medium">{t('admin.backToFront')}</span>}
           </button>
         </div>
       </div>

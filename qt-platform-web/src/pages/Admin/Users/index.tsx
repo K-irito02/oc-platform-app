@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Table, Input, Select, Space, Tag, Button, message, Modal } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { adminApi } from '@/utils/api';
 import type { ColumnsType } from 'antd/es/table';
 
 export default function AdminUsers() {
+  const { t } = useTranslation();
   const [data, setData] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -68,11 +70,11 @@ export default function AdminUsers() {
   return (
     <div className="animate-fade-in">
       <div style={{ marginBottom: 20 }}>
-        <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 20, color: 'var(--ink-darkest)', marginBottom: 4 }}>用户管理</h2>
-        <p style={{ color: 'var(--ink-light)', fontSize: 13, margin: 0 }}>管理平台注册用户</p>
+        <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 20, color: 'var(--ink-darkest)', marginBottom: 4 }}>{t('admin.users')}</h2>
+        <p style={{ color: 'var(--ink-light)', fontSize: 13, margin: 0 }}>{t('admin.overviewDesc')}</p>
       </div>
       <Space style={{ marginBottom: 16 }} wrap>
-        <Input.Search placeholder="搜索用户名/邮箱" allowClear style={{ width: 260 }}
+        <Input.Search placeholder={t('admin.searchUser')} allowClear style={{ width: 280 }}
           onSearch={(v) => { setKeyword(v); setPage(1); loadData(); }} />
         <Select placeholder="状态" allowClear style={{ width: 120 }}
           onChange={(v) => { setStatusFilter(v); setPage(1); }}

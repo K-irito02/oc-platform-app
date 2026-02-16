@@ -1,11 +1,24 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Settings, Image, Video, Type, Palette, Save, RotateCcw } from 'lucide-react';
-import { Drawer, Slider, Input, Switch, Button, ColorPicker } from 'antd';
+import { Settings, Image, Video, Palette, Save, RotateCcw } from 'lucide-react';
+import { Drawer, Slider, Input, Button, ColorPicker, Upload as AntUpload, Select, Space, message } from 'antd';
+import { UploadOutlined } from '@ant-design/icons';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { setUserConfig, setSystemConfig, resetTheme, ThemeConfig } from '@/store/slices/themeSlice';
-import { adminApi, userApi } from '@/utils/api'; // Assuming userApi exists for saving user preference
+import { adminApi, userApi } from '@/utils/api';
 import { GlassButton } from '@/components/ui/GlassButton';
+import type { Color } from 'antd/es/color-picker';
+
+const FONT_OPTIONS = [
+  { label: '马善政楷书', value: '"Ma Shan Zheng", cursive' },
+  { label: '思源宋体', value: '"Noto Serif SC", serif' },
+  { label: '霞鹜文楷', value: '"LXGW WenKai", cursive' },
+  { label: '站酷仓耳渔阳体', value: '"ZCOOL XiaoWei", serif' },
+  { label: '行书', value: '"Zhi Mang Xing", cursive' },
+  { label: '草书', value: '"Liu Jian Mao Cao", cursive' },
+  { label: '龙藏体', value: '"Long Cang", cursive' },
+  { label: '系统默认', value: 'system-ui, sans-serif' },
+];
 
 interface ThemeSettingsProps {
   open: boolean;
@@ -20,6 +33,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ open, onClose }) =
   
   const isAdmin = user?.roles?.some((r: string) => ['ADMIN', 'SUPER_ADMIN'].includes(r));
   const [activeTab, setActiveTab] = useState<'background' | 'appearance'>('background');
+  const [saving, setSaving] = useState(false);
 
   const handleBackgroundChange = (key: keyof ThemeConfig['background'], value: any) => {
     const newConfig = {
@@ -45,26 +59,53 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ open, onClose }) =
     dispatch(setUserConfig(newConfig));
   };
 
+  const handleFileUpload = (file: File) => {
+    const blobUrl = URL.createObjectURL(file);
+    handleBackgroundChange('url', blobUrl);
+    message.success(`${file.name} ${t('theme.bgUpload')}`);
+    return false;
+  };
+
   const handleSave = async () => {
+    setSaving(true);
     try {
-        // Save to backend
-        // Assuming there is an API to save user theme config
-        // await userApi.updateTheme(userConfig);
-        console.log("Saving user theme:", userConfig);
-    } catch (error) {
-        console.error("Failed to save theme", error);
+      const themeConfig = {
+        background: currentTheme.background,
+        ink: {
+          primaryColor: currentTheme.appearance.primaryColor,
+          strokeWidth: '2px',
+          fontFamily: currentTheme.appearance.fontFamily,
+        },
+      };
+      await userApi.updateTheme(JSON.stringify(themeConfig));
+      message.success(t('theme.saveSuccess'));
+    } catch {
+      message.error(t('theme.saveFail'));
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleSaveSystem = async () => {
-      if (!isAdmin) return;
-      try {
-          // await adminApi.updateSystemTheme(currentTheme);
-          dispatch(setSystemConfig(currentTheme));
-          console.log("Saving system theme:", currentTheme);
-      } catch (error) {
-          console.error("Failed to save system theme", error);
-      }
+    if (!isAdmin) return;
+    setSaving(true);
+    try {
+      const themeConfig = {
+        background: currentTheme.background,
+        ink: {
+          primaryColor: currentTheme.appearance.primaryColor,
+          strokeWidth: '2px',
+          fontFamily: currentTheme.appearance.fontFamily,
+        },
+      };
+      await adminApi.updateGlobalTheme(JSON.stringify(themeConfig));
+      dispatch(setSystemConfig({ background: currentTheme.background, appearance: currentTheme.appearance }));
+      message.success(t('theme.saveSuccess'));
+    } catch {
+      message.error(t('theme.saveFail'));
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -72,7 +113,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ open, onClose }) =
       title={
         <div className="flex items-center gap-2 text-slate-800">
           <Settings size={20} />
-          <span className="font-bold">Theme Customization</span>
+          <span className="font-bold">{t('theme.customization')}</span>
         </div>
       }
       placement="right"
@@ -93,14 +134,14 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ open, onClose }) =
                 onClick={() => setActiveTab('background')}
                 className="flex-1"
             >
-                <Image size={16} className="mr-2" /> Background
+                <Image size={16} className="mr-2" /> {t('theme.backgroundTab')}
             </GlassButton>
             <GlassButton 
                 variant={activeTab === 'appearance' ? 'primary' : 'ghost'} 
                 onClick={() => setActiveTab('appearance')}
                 className="flex-1"
             >
-                <Palette size={16} className="mr-2" /> Appearance
+                <Palette size={16} className="mr-2" /> {t('theme.appearanceTab')}
             </GlassButton>
         </div>
 
@@ -111,42 +152,60 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ open, onClose }) =
                 <div className="space-y-6">
                     {/* Type Selection */}
                     <div className="space-y-3">
-                        <label className="text-sm font-medium text-slate-700">Background Type</label>
+                        <label className="text-sm font-medium text-slate-700">{t('theme.bgType')}</label>
                         <div className="grid grid-cols-2 gap-3">
                             <button 
                                 onClick={() => handleBackgroundChange('type', 'image')}
-                                className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all ${currentTheme.background.type === 'image' ? 'border-primary bg-primary/10 text-primary' : 'border-slate-200 hover:border-slate-300 text-slate-500'}`}
+                                className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all ${currentTheme.background.type === 'image' ? 'border-blue-500 bg-blue-50 text-blue-600' : 'border-slate-200 hover:border-slate-300 text-slate-500'}`}
                             >
                                 <Image size={24} />
-                                <span className="text-sm font-medium">Image</span>
+                                <span className="text-sm font-medium">{t('theme.bgImage')}</span>
                             </button>
                             <button 
                                 onClick={() => handleBackgroundChange('type', 'video')}
-                                className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all ${currentTheme.background.type === 'video' ? 'border-primary bg-primary/10 text-primary' : 'border-slate-200 hover:border-slate-300 text-slate-500'}`}
+                                className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all ${currentTheme.background.type === 'video' ? 'border-blue-500 bg-blue-50 text-blue-600' : 'border-slate-200 hover:border-slate-300 text-slate-500'}`}
                             >
                                 <Video size={24} />
-                                <span className="text-sm font-medium">Video</span>
+                                <span className="text-sm font-medium">{t('theme.bgVideo')}</span>
                             </button>
                         </div>
                     </div>
 
-                    {/* URL Input */}
+                    {/* URL Input + Upload */}
                     <div className="space-y-3">
-                        <label className="text-sm font-medium text-slate-700">Media URL</label>
-                        <Input 
-                            placeholder="https://..." 
-                            value={currentTheme.background.url} 
-                            onChange={(e) => handleBackgroundChange('url', e.target.value)}
-                            className="rounded-lg bg-white/50 border-slate-200"
-                        />
-                        <p className="text-xs text-slate-500">Supports MP4, WebM for video. JPG, PNG, WebP for images.</p>
+                        <label className="text-sm font-medium text-slate-700">{t('theme.bgFile')}</label>
+                        <Space.Compact style={{ width: '100%' }}>
+                            <Input 
+                                placeholder={t('theme.bgUrlPlaceholder')}
+                                value={currentTheme.background.url} 
+                                onChange={(e) => handleBackgroundChange('url', e.target.value)}
+                                style={{ width: 'calc(100% - 90px)' }}
+                            />
+                            <AntUpload
+                                showUploadList={false}
+                                beforeUpload={handleFileUpload}
+                                accept="image/*,video/*"
+                            >
+                                <Button icon={<UploadOutlined />}>{t('theme.bgUpload')}</Button>
+                            </AntUpload>
+                        </Space.Compact>
+                        {/* Preview */}
+                        {currentTheme.background.url && (
+                          <div style={{ borderRadius: 8, overflow: 'hidden', border: '1px solid rgba(0,0,0,0.1)', maxHeight: 140 }}>
+                            {currentTheme.background.type === 'video' ? (
+                              <video src={currentTheme.background.url} autoPlay loop muted playsInline style={{ width: '100%', maxHeight: 140, objectFit: 'cover', opacity: currentTheme.background.opacity }} />
+                            ) : (
+                              <div style={{ width: '100%', height: 100, backgroundImage: `url(${currentTheme.background.url})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: currentTheme.background.opacity }} />
+                            )}
+                          </div>
+                        )}
                     </div>
 
                     {/* Opacity Slider */}
                     <div className="space-y-3">
                         <div className="flex justify-between">
-                            <label className="text-sm font-medium text-slate-700">Glass Opacity</label>
-                            <span className="text-xs text-slate-500">{currentTheme.background.opacity}</span>
+                            <label className="text-sm font-medium text-slate-700">{t('theme.glassOpacity')}</label>
+                            <span className="text-xs text-slate-500">{Math.round(currentTheme.background.opacity * 100)}%</span>
                         </div>
                         <Slider 
                             min={0} max={1} step={0.05} 
@@ -158,7 +217,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ open, onClose }) =
                     {/* Blur Slider */}
                     <div className="space-y-3">
                         <div className="flex justify-between">
-                            <label className="text-sm font-medium text-slate-700">Backdrop Blur</label>
+                            <label className="text-sm font-medium text-slate-700">{t('theme.backdropBlur')}</label>
                             <span className="text-xs text-slate-500">{currentTheme.background.blur}px</span>
                         </div>
                         <Slider 
@@ -174,37 +233,29 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ open, onClose }) =
                 <div className="space-y-6">
                     {/* Primary Color */}
                     <div className="space-y-3">
-                        <label className="text-sm font-medium text-slate-700">Primary Color</label>
+                        <label className="text-sm font-medium text-slate-700">{t('theme.primaryColor')}</label>
                         <ColorPicker 
                             showText
+                            format="hex"
                             value={currentTheme.appearance.primaryColor}
-                            onChange={(color) => handleAppearanceChange('primaryColor', color.toHexString())}
-                            className="w-full"
+                            onChange={(color: Color) => handleAppearanceChange('primaryColor', typeof color === 'string' ? color : color.toHexString())}
                         />
+                        <div style={{ height: 6, borderRadius: 3, background: currentTheme.appearance.primaryColor, boxShadow: `0 0 8px ${currentTheme.appearance.primaryColor}44` }} />
                     </div>
 
                     {/* Font Family */}
                     <div className="space-y-3">
-                        <label className="text-sm font-medium text-slate-700">Font Family</label>
-                        <select 
-                            className="w-full p-2 rounded-lg bg-white/50 border border-slate-200 text-sm focus:ring-2 focus:ring-primary/50 outline-none"
+                        <label className="text-sm font-medium text-slate-700">{t('theme.fontFamily')}</label>
+                        <Select
+                            style={{ width: '100%' }}
                             value={currentTheme.appearance.fontFamily}
-                            onChange={(e) => handleAppearanceChange('fontFamily', e.target.value)}
-                        >
-                            <option value="Inter, system-ui, sans-serif">Inter (Default)</option>
-                            <option value="'Noto Serif SC', serif">Noto Serif (Elegant)</option>
-                            <option value="'JetBrains Mono', monospace">Monospace (Code)</option>
-                            <option value="system-ui, -apple-system, sans-serif">System UI</option>
-                        </select>
-                    </div>
-
-                    {/* Mode */}
-                    <div className="flex items-center justify-between p-4 bg-white/50 rounded-xl border border-white/40">
-                        <span className="text-sm font-medium text-slate-700">Dark Mode</span>
-                        <Switch 
-                            checked={currentTheme.appearance.mode === 'dark'}
-                            onChange={(checked) => handleAppearanceChange('mode', checked ? 'dark' : 'light')}
+                            onChange={(val) => handleAppearanceChange('fontFamily', val)}
+                            options={FONT_OPTIONS}
                         />
+                        <div style={{ padding: '10px 14px', background: 'rgba(255,255,255,0.5)', borderRadius: 8, border: '1px solid rgba(0,0,0,0.06)' }}>
+                          <div style={{ fontFamily: currentTheme.appearance.fontFamily, fontSize: 18, color: '#333' }}>墨韵悠然·水墨丹青</div>
+                          <div style={{ fontFamily: currentTheme.appearance.fontFamily, fontSize: 13, color: '#888', marginTop: 2 }}>Qt Platform (Preview)</div>
+                        </div>
                     </div>
                 </div>
             )}
@@ -213,8 +264,8 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ open, onClose }) =
         {/* Footer */}
         <div className="p-4 border-t border-white/20 bg-white/60 backdrop-blur-md flex flex-col gap-3">
             <div className="flex gap-3">
-                <GlassButton variant="primary" className="flex-1" onClick={handleSave}>
-                    <Save size={16} className="mr-2" /> Save Changes
+                <GlassButton variant="primary" className="flex-1" onClick={handleSave} disabled={saving}>
+                    <Save size={16} className="mr-2" /> {t('theme.saveChanges')}
                 </GlassButton>
                 <GlassButton variant="ghost" onClick={() => dispatch(resetTheme())}>
                     <RotateCcw size={16} />
@@ -222,8 +273,8 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ open, onClose }) =
             </div>
             
             {isAdmin && (
-                <Button type="dashed" block onClick={handleSaveSystem} className="text-xs text-slate-500 hover:text-primary border-slate-300">
-                    Set as System Default
+                <Button type="dashed" block onClick={handleSaveSystem} loading={saving} className="text-xs text-slate-500 hover:text-blue-500 border-slate-300">
+                    {t('theme.setAsDefault')}
                 </Button>
             )}
         </div>
