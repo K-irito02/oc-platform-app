@@ -21,7 +21,7 @@ CREATE TABLE users (
     created_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     last_login_at   TIMESTAMPTZ,
-    last_login_ip   INET,
+    last_login_ip   VARCHAR(45),
     theme_config    TEXT
 );
 

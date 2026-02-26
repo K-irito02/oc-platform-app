@@ -30,6 +30,8 @@ public class User {
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
     private OffsetDateTime lastLoginAt;
+    
+    @TableField(updateStrategy = FieldStrategy.NEVER)
     private String lastLoginIp;
 
     @TableField("theme_config")

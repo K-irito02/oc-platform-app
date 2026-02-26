@@ -21,6 +21,12 @@ public interface UserMapper extends BaseMapper<User> {
     @Select("SELECT EXISTS(SELECT 1 FROM users WHERE username = #{username})")
     boolean existsByUsername(@Param("username") String username);
 
-    @Update("UPDATE users SET last_login_at = NOW(), last_login_ip = #{ip}::inet WHERE id = #{id}")
+    @Update("UPDATE users SET last_login_at = NOW(), last_login_ip = #{ip} WHERE id = #{id}")
     void updateLoginInfo(@Param("id") Long id, @Param("ip") String ip);
+
+    @Update("UPDATE users SET email = #{email}, updated_at = NOW() WHERE id = #{id}")
+    void updateEmail(@Param("id") Long id, @Param("email") String email);
+
+    @Update("UPDATE users SET password_hash = #{passwordHash}, updated_at = NOW() WHERE id = #{id}")
+    void updatePassword(@Param("id") Long id, @Param("passwordHash") String passwordHash);
 }

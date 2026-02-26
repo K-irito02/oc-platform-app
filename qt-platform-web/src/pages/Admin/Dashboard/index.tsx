@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Row, Col, Statistic, Spin } from 'antd';
+import { Spin, Card } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { UserOutlined, AppstoreOutlined, CommentOutlined, DownloadOutlined, RiseOutlined, CloudDownloadOutlined } from '@ant-design/icons';
+import { User, Package, Download, MessageSquare, TrendingUp, Cloud } from 'lucide-react';
 import { adminApi } from '@/utils/api';
 
 export default function AdminDashboard() {
@@ -19,78 +19,67 @@ export default function AdminDashboard() {
   };
 
   if (loading) return (
-    <div style={{ textAlign: 'center', padding: '80px 0' }}>
+    <div className="flex justify-center items-center h-64">
       <Spin size="large" />
-      <div style={{ marginTop: 12, color: 'var(--ink-light)', fontFamily: 'var(--font-serif)' }}>{t('common.loading')}</div>
     </div>
   );
 
   const statCards = [
-    { title: t('admin.totalUsers'), value: stats?.totalUsers || 0, icon: <UserOutlined />, color: 'var(--indigo)' },
-    { title: t('admin.totalProducts'), value: stats?.totalProducts || 0, icon: <AppstoreOutlined />, color: 'var(--celadon)' },
-    { title: t('admin.totalDownloads'), value: stats?.totalDownloads || 0, icon: <DownloadOutlined />, color: 'var(--gamboge)' },
-    { title: t('admin.totalComments'), value: stats?.totalComments || 0, icon: <CommentOutlined />, color: 'var(--cinnabar)' },
-    { title: t('admin.newUsersToday'), value: stats?.newUsersToday || 0, icon: <RiseOutlined />, color: 'var(--indigo)' },
-    { title: t('admin.downloadsToday'), value: stats?.downloadsToday || 0, icon: <CloudDownloadOutlined />, color: 'var(--celadon)' },
+    { title: t('admin.totalUsers') || 'Total Users', value: stats?.totalUsers || 0, icon: <User size={24} />, color: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' },
+    { title: t('admin.totalProducts') || 'Total Products', value: stats?.totalProducts || 0, icon: <Package size={24} />, color: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' },
+    { title: t('admin.totalDownloads') || 'Total Downloads', value: stats?.totalDownloads || 0, icon: <Download size={24} />, color: 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400' },
+    { title: t('admin.totalComments') || 'Comments', value: stats?.totalComments || 0, icon: <MessageSquare size={24} />, color: 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400' },
+    { title: t('admin.newUsersToday') || 'New Users Today', value: stats?.newUsersToday || 0, icon: <TrendingUp size={24} />, color: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400' },
+    { title: t('admin.downloadsToday') || 'Downloads Today', value: stats?.downloadsToday || 0, icon: <Cloud size={24} />, color: 'bg-cyan-100 text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-400' },
   ];
 
   return (
-    <div className="animate-fade-in">
-      <div style={{ marginBottom: 24 }}>
-        <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 22, color: 'var(--ink-darkest)', marginBottom: 4 }}>
-          {t('admin.dashboard')}
+    <div className="p-6">
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+          {t('admin.dashboard') || 'Dashboard'}
         </h2>
-        <p style={{ color: 'var(--ink-light)', fontSize: 13, margin: 0 }}>{t('admin.overviewDesc')}</p>
+        <p className="text-slate-500 dark:text-slate-400">{t('admin.overviewDesc') || 'Overview of platform statistics'}</p>
       </div>
 
-      <Row gutter={[16, 16]}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {statCards.map((card, i) => (
-          <Col xs={24} sm={12} lg={8} key={i}>
-            <div className="paper-card" style={{
-              padding: '20px 24px',
-              display: 'flex', alignItems: 'center', gap: 16,
-              transition: 'transform 0.2s, box-shadow 0.2s',
-              cursor: 'default',
-            }}>
-              <div style={{
-                width: 48, height: 48, borderRadius: 12,
-                background: `color-mix(in srgb, ${card.color} 12%, transparent)`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 22, color: card.color,
-              }}>
+          <Card key={i} className="border-slate-200 dark:border-slate-800 dark:bg-slate-900 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-4">
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${card.color}`}>
                 {card.icon}
               </div>
-              <Statistic title={<span style={{ color: 'var(--ink-light)', fontSize: 13 }}>{card.title}</span>} value={card.value} />
+              <div>
+                <div className="text-slate-500 dark:text-slate-400 text-sm">{card.title}</div>
+                <div className="text-2xl font-bold text-slate-900 dark:text-white">{card.value}</div>
+              </div>
             </div>
-          </Col>
+          </Card>
         ))}
-      </Row>
+      </div>
 
       {stats?.downloadTrend && (
-        <div className="paper-card" style={{ padding: '24px', marginTop: 20, background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(8px)' }}>
-          <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 16, color: 'var(--ink-darkest)', marginBottom: 16 }}>
-            {t('admin.downloadTrend')}
+        <Card className="mt-8 border-slate-200 dark:border-slate-800 dark:bg-slate-900 shadow-sm">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">
+            {t('admin.downloadTrend') || 'Download Trend'}
           </h3>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 120, padding: '0 4px' }}>
+          <div className="flex items-end gap-2 h-40">
             {stats.downloadTrend.map((d: any, i: number) => {
               const max = Math.max(...stats.downloadTrend.map((t: any) => t.count));
               const h = max > 0 ? (d.count / max) * 100 : 0;
               return (
-                <div key={i} style={{ flex: 1, textAlign: 'center' }}>
-                  <div style={{ fontSize: 11, color: 'var(--ink-dark)', marginBottom: 4, fontWeight: 600 }}>{d.count}</div>
-                  <div style={{
-                    height: Math.max(h, 6),
-                    background: 'linear-gradient(to top, var(--cinnabar, #8B0000), var(--ink-medium, #666))',
-                    borderRadius: '4px 4px 0 0',
-                    transition: 'height 0.5s ease',
-                    opacity: 0.85,
-                  }} />
-                  <div style={{ fontSize: 11, color: 'var(--ink-medium)', marginTop: 4, fontWeight: 500 }}>{d.date}</div>
+                <div key={i} className="flex-1 flex flex-col items-center group">
+                  <div className="text-xs text-slate-500 mb-1 opacity-0 group-hover:opacity-100 transition-opacity">{d.count}</div>
+                  <div 
+                    className="w-full bg-blue-500 rounded-t-sm transition-all hover:bg-blue-600"
+                    style={{ height: `${Math.max(h, 5)}%` }} 
+                  />
+                  <div className="text-xs text-slate-400 mt-2 truncate w-full text-center">{d.date}</div>
                 </div>
               );
             })}
           </div>
-        </div>
+        </Card>
       )}
     </div>
   );

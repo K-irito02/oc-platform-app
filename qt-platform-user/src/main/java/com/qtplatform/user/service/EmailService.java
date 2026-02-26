@@ -7,6 +7,7 @@ import com.qtplatform.user.entity.EmailVerification;
 import com.qtplatform.user.repository.EmailVerificationMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -25,6 +26,9 @@ public class EmailService {
     private final JavaMailSender mailSender;
     private final EmailVerificationMapper emailVerificationMapper;
     private final StringRedisTemplate stringRedisTemplate;
+
+    @Value("${spring.mail.username}")
+    private String mailFrom;
 
     private static final int CODE_LENGTH = 6;
     private static final int CODE_EXPIRE_MINUTES = 10;
@@ -79,6 +83,7 @@ public class EmailService {
     public void sendVerificationEmail(String email, String code, String type) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(mailFrom);
             message.setTo(email);
             message.setSubject(getSubject(type));
             message.setText(getBody(code, type));

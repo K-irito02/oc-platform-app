@@ -8,7 +8,6 @@ import { useAppSelector, useAppDispatch } from '@/store/hooks'
 import { setUser, logout } from '@/store/slices/authSlice'
 import { userApi } from '@/utils/api'
 import { ThemeProvider } from '@/components/ThemeProvider'
-import { DynamicBackground } from '@/components/DynamicBackground'
 
 function App() {
   const dispatch = useAppDispatch()
@@ -28,7 +27,6 @@ function App() {
     <ConfigProvider locale={zhCN} theme={theme}>
       <AntdApp>
         <ThemeProvider>
-          <DynamicBackground />
           <RouterProvider router={router} />
         </ThemeProvider>
       </AntdApp>

@@ -1,6 +1,5 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { message } from 'antd';
-import { setupMock } from './mock';
 
 const request = axios.create({
   baseURL: '/api/v1',
@@ -10,18 +9,16 @@ const request = axios.create({
   },
 });
 
-// 开发环境启用 Mock 数据（后端未启动时自动使用模拟数据）
-// 设置 VITE_ENABLE_MOCK=false 可禁用 Mock，使用真实后端
-if (import.meta.env.DEV && import.meta.env.VITE_ENABLE_MOCK !== 'false') {
-  setupMock(request);
-}
-
 // 请求拦截器
 request.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('access_token');
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    // FormData 请求需要让浏览器自动设置 Content-Type（包含 boundary）
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
     }
     return config;
   },

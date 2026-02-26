@@ -4,6 +4,7 @@ import com.qtplatform.common.response.ApiResponse;
 import com.qtplatform.common.util.IpUtil;
 import com.qtplatform.user.dto.*;
 import com.qtplatform.user.service.AuthService;
+import com.qtplatform.user.service.EmailService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final EmailService emailService;
 
     @PostMapping("/register")
     public ApiResponse<Void> register(@Valid @RequestBody RegisterRequest request) {
@@ -72,6 +74,23 @@ public class AuthController {
                                             @Valid @RequestBody ChangePasswordRequest request) {
         Long userId = (Long) authentication.getPrincipal();
         authService.changePassword(userId, request);
+        return ApiResponse.success();
+    }
+
+    @PostMapping("/send-change-email-code")
+    public ApiResponse<Void> sendChangeEmailCode(Authentication authentication,
+                                                 @Valid @RequestBody SendChangeEmailCodeRequest request) {
+        Long userId = (Long) authentication.getPrincipal();
+        // 发送验证码到新邮箱
+        emailService.generateAndSendCode(request.getNewEmail(), "CHANGE_EMAIL");
+        return ApiResponse.success();
+    }
+
+    @PutMapping("/change-email")
+    public ApiResponse<Void> changeEmail(Authentication authentication,
+                                         @Valid @RequestBody ChangeEmailRequest request) {
+        Long userId = (Long) authentication.getPrincipal();
+        authService.changeEmail(userId, request.getCode(), request.getNewEmail());
         return ApiResponse.success();
     }
 }

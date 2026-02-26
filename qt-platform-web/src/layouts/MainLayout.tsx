@@ -1,30 +1,15 @@
 import { Outlet } from 'react-router-dom';
-import { Sidebar } from '@/components/layout/Sidebar';
-import { Header } from '@/components/layout/Header';
-import { useAppSelector } from '@/store/hooks';
+import { Navbar } from '@/components/layout/Navbar';
+import { Footer } from '@/components/layout/Footer';
 
 export default function MainLayout() {
-  const { currentTheme } = useAppSelector((state) => state.theme);
-  const glassOpacity = currentTheme.background.opacity;
-
   return (
-    <div className="flex min-h-screen w-full relative bg-slate-50/50 transition-colors duration-500">
-      {/* Sidebar - Fixed/Sticky on Desktop */}
-      <Sidebar />
-
-      {/* Main Content Area */}
-      <main className="flex-1 flex flex-col min-w-0 transition-all duration-300 relative z-10">
-        <Header />
-        
-        <div className="flex-1 px-8 pb-8 pt-2 overflow-y-auto custom-scrollbar">
-          <div
-            className="glass-panel rounded-3xl min-h-full p-8 backdrop-blur-md border-white/20 shadow-none transition-colors duration-300"
-            style={{ backgroundColor: `rgba(255, 255, 255, ${glassOpacity})` }}
-          >
-             <Outlet />
-          </div>
-        </div>
+    <div className="min-h-screen flex flex-col bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50 transition-colors duration-300">
+      <Navbar />
+      <main className="flex-grow pt-16"> {/* pt-16 to account for fixed navbar */}
+        <Outlet />
       </main>
+      <Footer />
     </div>
   );
 }

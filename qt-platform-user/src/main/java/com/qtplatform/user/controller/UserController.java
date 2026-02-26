@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 
@@ -57,5 +58,13 @@ public class UserController {
         Long userId = (Long) authentication.getPrincipal();
         userService.updateThemeConfig(userId, body.get("themeConfig"));
         return ApiResponse.success();
+    }
+
+    @PostMapping("/me/avatar")
+    public ApiResponse<Map<String, String>> uploadAvatar(Authentication authentication,
+                                                         @RequestParam("file") MultipartFile file) {
+        Long userId = (Long) authentication.getPrincipal();
+        String avatarUrl = userService.uploadAvatar(userId, file);
+        return ApiResponse.success(Map.of("avatarUrl", avatarUrl));
     }
 }

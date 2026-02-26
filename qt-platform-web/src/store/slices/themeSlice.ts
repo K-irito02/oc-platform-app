@@ -12,23 +12,23 @@ export interface ThemeConfig {
     primaryColor: string; // Tailwind color hex or name
     fontFamily: string;
     borderRadius: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
-    mode: 'light' | 'dark'; // Light or Dark mode
+    mode: 'light' | 'dark' | 'system'; // Added system mode
   };
 }
 
-// Default Glassmorphism Config
+// Default Minimalist Config
 export const defaultTheme: ThemeConfig = {
   background: {
     type: 'image',
-    url: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1920&q=80',
-    opacity: 0.7, // High opacity for readability
-    blur: 12,
+    url: '', // No background image by default
+    opacity: 1, // Solid background
+    blur: 0,
   },
   appearance: {
-    primaryColor: '#3b82f6', // Blue-500
+    primaryColor: '#2563eb', // Blue-600
     fontFamily: 'Inter, system-ui, sans-serif',
-    borderRadius: 'xl',
-    mode: 'light',
+    borderRadius: 'md',
+    mode: 'system', // Default to system
   },
 };
 

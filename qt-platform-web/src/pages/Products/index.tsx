@@ -1,12 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Typography, Input, Select, Space, Row, Col, Card, Tag, Spin, Empty, Pagination } from 'antd';
-import { DownloadOutlined, EyeOutlined, StarFilled, SearchOutlined } from '@ant-design/icons';
+import { Input, Select, Pagination, Spin, Empty, Tag, Card } from 'antd';
+import { Search, Download, Star, Eye, Filter } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { productApi, categoryApi } from '@/utils/api';
-
-const { Paragraph, Text } = Typography;
-const { Search } = Input;
 
 export default function Products() {
   const { t } = useTranslation();
@@ -51,214 +48,128 @@ export default function Products() {
     setSearchParams(params);
   };
 
-  const formatCount = (n: number) => {
-    if (n >= 10000) return (n / 10000).toFixed(1) + '万';
-    if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
-    return String(n || 0);
-  };
-
   const categoryOptions = [
-    { value: '', label: t('product.allCategories') || '全部分类' },
+    { value: '', label: t('product.allCategories') || 'All Categories' },
     ...categories.map((c: any) => ({ value: String(c.id), label: c.name })),
   ];
 
   return (
-    <div className="animate-fade-in ink-bg-pattern">
-      {/* 页面标题 */}
-      <div style={{ marginBottom: 36 }}>
-        <h2 className="section-title" style={{ textAlign: 'left', marginBottom: 8 }}>
-          {t('product.allProducts') || '全部产品'}
-        </h2>
-        <p style={{
-          color: 'var(--ink-light)',
-          fontSize: 14,
-          fontFamily: 'var(--font-sans)',
-          margin: 0,
-        }}>
-          {t('product.browseDesc') || '浏览和发现各类优质 Qt 应用程序'}
-        </p>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 min-h-screen bg-white dark:bg-slate-950">
+      <div className="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">{t('product.allProducts') || 'All Products'}</h1>
+          <p className="text-slate-500 dark:text-slate-400">Explore our collection of high-quality Qt applications.</p>
+        </div>
+        <div className="flex items-center text-sm text-slate-500 dark:text-slate-400">
+          Total <span className="font-semibold mx-1 text-slate-900 dark:text-white">{total}</span> products found
+        </div>
       </div>
 
-      {/* 筛选栏 — 水墨风格 */}
-      <div style={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: 12,
-        marginBottom: 32,
-        padding: '16px 20px',
-        background: 'var(--paper-warm)',
-        borderRadius: 'var(--radius-md)',
-        border: '1px solid var(--ink-lightest)',
-        alignItems: 'center',
-      }}>
-        <Search
-          placeholder={t('common.search') || '搜索产品...'}
+      {/* Filter Bar */}
+      <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 mb-8 flex flex-col md:flex-row gap-4 items-center">
+        <Input
+          placeholder={t('common.search') || 'Search products...'}
           defaultValue={keyword}
-          style={{ width: 260 }}
+          className="w-full md:w-80"
           allowClear
-          prefix={<SearchOutlined style={{ color: 'var(--ink-lighter)' }} />}
-          onSearch={(v) => updateParams({ q: v || undefined, page: '1' })}
+          prefix={<Search size={16} className="text-slate-400" />}
+          onPressEnter={(e) => updateParams({ q: e.currentTarget.value || undefined, page: '1' })}
         />
+        
         <Select
           value={categoryId ? String(categoryId) : ''}
-          style={{ width: 140 }}
+          className="w-full md:w-48"
           options={categoryOptions}
           onChange={(v) => updateParams({ category: v || undefined, page: '1' })}
+          suffixIcon={<Filter size={14} />}
         />
+        
         <Select
           value={sort}
-          style={{ width: 140 }}
+          className="w-full md:w-48"
           onChange={(v) => updateParams({ sort: v, page: '1' })}
           options={[
-            { value: 'latest', label: t('product.sortLatest') || '最新发布' },
-            { value: 'downloads', label: t('product.sortDownloads') || '下载最多' },
-            { value: 'rating', label: t('product.sortRating') || '评分最高' },
-            { value: 'name', label: t('product.sortName') || '名称排序' },
+            { value: 'latest', label: t('product.sortLatest') || 'Latest' },
+            { value: 'downloads', label: t('product.sortDownloads') || 'Most Downloaded' },
+            { value: 'rating', label: t('product.sortRating') || 'Highest Rated' },
+            { value: 'name', label: t('product.sortName') || 'Name (A-Z)' },
           ]}
         />
-        {total > 0 && (
-          <Text style={{ color: 'var(--ink-light)', fontSize: 13, marginLeft: 'auto' }}>
-            共 <Text strong>{total}</Text> 个产品
-          </Text>
-        )}
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '80px 0' }}>
+        <div className="flex justify-center items-center py-20">
           <Spin size="large" />
-          <div style={{ marginTop: 16, color: 'var(--ink-light)', fontFamily: 'var(--font-serif)', fontSize: 14, letterSpacing: '0.1em' }}>
-            墨迹渲染中...
-          </div>
         </div>
       ) : products.length === 0 ? (
         <Empty
-          description={<span style={{ color: 'var(--ink-light)', fontFamily: 'var(--font-serif)' }}>{t('common.noData') || '暂无产品'}</span>}
-          style={{ marginTop: 64, marginBottom: 64 }}
+          description={<span className="text-slate-500 dark:text-slate-400">No products found</span>}
+          className="py-20"
         />
       ) : (
         <>
-          <Row gutter={[20, 20]}>
-            {products.map((p: any, i: number) => (
-              <Col xs={24} sm={12} md={8} lg={6} key={p.id}>
-                <Card
-                  hoverable
-                  onClick={() => navigate(`/products/${p.slug}`)}
-                  className={`animate-fade-in-up stagger-${Math.min(i % 4 + 1, 4)}`}
-                  styles={{ body: { padding: '20px 16px' } }}
-                  style={{ height: '100%', overflow: 'hidden' }}
-                  cover={
-                    <div style={{
-                      height: 130,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      background: 'linear-gradient(135deg, var(--paper-warm) 0%, var(--paper-cream) 100%)',
-                      borderBottom: '1px solid var(--ink-lightest)',
-                      position: 'relative',
-                    }}>
-                      {p.iconUrl ? (
-                        <img
-                          src={p.iconUrl}
-                          alt={p.name}
-                          style={{ maxHeight: 80, maxWidth: '70%', objectFit: 'contain', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.08))' }}
-                        />
-                      ) : (
-                        <div style={{
-                          width: 72,
-                          height: 72,
-                          borderRadius: 16,
-                          background: 'var(--paper-white)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: 32,
-                          color: 'var(--ink-lighter)',
-                          fontFamily: 'var(--font-serif)',
-                          border: '1px solid var(--ink-lightest)',
-                          fontWeight: 600,
-                        }}>
-                          {(p.name || 'Q')[0]}
-                        </div>
-                      )}
-                      {p.isFeatured && (
-                        <Tag
-                          color="gold"
-                          style={{
-                            position: 'absolute',
-                            top: 8,
-                            right: 8,
-                            fontSize: 11,
-                            margin: 0,
-                            border: 'none',
-                          }}
-                        >
-                          精选
-                        </Tag>
-                      )}
-                    </div>
-                  }
-                >
-                  {/* 产品名 */}
-                  <Text strong ellipsis style={{
-                    display: 'block',
-                    fontSize: 15,
-                    fontFamily: 'var(--font-serif)',
-                    marginBottom: 4,
-                    color: 'var(--ink-darkest)',
-                  }}>
-                    {p.name}
-                  </Text>
-
-                  {/* 分类标签 */}
-                  {p.categoryName && (
-                    <Tag style={{
-                      background: 'transparent',
-                      borderColor: 'var(--ink-lightest)',
-                      color: 'var(--ink-light)',
-                      fontSize: 11,
-                      marginBottom: 8,
-                    }}>
-                      {p.categoryName}
-                    </Tag>
-                  )}
-
-                  {/* 描述 */}
-                  <Paragraph
-                    ellipsis={{ rows: 2 }}
-                    style={{ color: 'var(--ink-medium)', fontSize: 13, marginBottom: 12, minHeight: 40, lineHeight: 1.6 }}
-                  >
-                    {p.description || '暂无描述'}
-                  </Paragraph>
-
-                  {/* 统计 */}
-                  <div style={{ borderTop: '1px solid var(--ink-lightest)', paddingTop: 10 }}>
-                    <Space split={<span style={{ color: 'var(--ink-lightest)' }}>·</span>}>
-                      <Text style={{ fontSize: 12, color: 'var(--ink-light)' }}>
-                        <DownloadOutlined /> {formatCount(p.downloadCount)}
-                      </Text>
-                      {p.ratingAverage > 0 && (
-                        <Text style={{ fontSize: 12, color: 'var(--gamboge)' }}>
-                          <StarFilled /> {p.ratingAverage.toFixed(1)}
-                        </Text>
-                      )}
-                      <Text style={{ fontSize: 12, color: 'var(--ink-light)' }}>
-                        <EyeOutlined /> {formatCount(p.viewCount)}
-                      </Text>
-                    </Space>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            {products.map((p: any) => (
+              <Card
+                key={p.id}
+                hoverable
+                className="overflow-hidden border-slate-200 dark:border-slate-800 dark:bg-slate-900"
+                styles={{ body: { padding: '1.5rem' } }}
+                onClick={() => navigate(`/products/${p.slug}`)}
+                cover={
+                  <div className="h-40 bg-slate-50 dark:bg-slate-800 flex items-center justify-center border-b border-slate-100 dark:border-slate-800 relative group">
+                    {p.iconUrl ? (
+                      <img
+                        src={p.iconUrl}
+                        alt={p.name}
+                        className="h-20 w-auto object-contain transition-transform duration-300 group-hover:scale-110"
+                      />
+                    ) : (
+                      <div className="w-20 h-20 rounded-xl bg-white dark:bg-slate-700 flex items-center justify-center text-3xl font-bold text-slate-300 dark:text-slate-500">
+                        {(p.name || 'Q')[0]}
+                      </div>
+                    )}
+                    {p.isFeatured && (
+                      <Tag color="gold" className="absolute top-2 right-2 m-0 border-none">Featured</Tag>
+                    )}
                   </div>
-                </Card>
-              </Col>
+                }
+              >
+                <div className="mb-1">
+                  {p.categoryName && (
+                    <span className="text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded-full">
+                      {p.categoryName}
+                    </span>
+                  )}
+                </div>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 truncate">{p.name}</h3>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mb-4 line-clamp-2 h-10">
+                  {p.description || 'No description available'}
+                </p>
+                
+                <div className="flex items-center justify-between text-xs text-slate-400 pt-4 border-t border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-1">
+                    <Download size={14} /> {p.downloadCount}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Star size={14} className="text-amber-400 fill-amber-400" /> {p.ratingAverage.toFixed(1)}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Eye size={14} /> {p.viewCount}
+                  </div>
+                </div>
+              </Card>
             ))}
-          </Row>
+          </div>
 
           {total > 12 && (
-            <div style={{ textAlign: 'center', marginTop: 40 }}>
+            <div className="flex justify-center">
               <Pagination
                 current={page}
                 total={total}
                 pageSize={12}
                 onChange={(p) => updateParams({ page: String(p) })}
-                showTotal={(t) => <span style={{ color: 'var(--ink-light)', fontFamily: 'var(--font-serif)' }}>共 {t} 个产品</span>}
+                showSizeChanger={false}
               />
             </div>
           )}

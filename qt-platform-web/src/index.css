@@ -2,49 +2,57 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  /* Default Theme Colors (Glassmorphism + Minimalism) */
-  --color-primary: 59 130 246; /* blue-500 */
-  --color-secondary: 16 185 129; /* emerald-500 */
-  --color-accent: 244 63 94; /* rose-500 */
-  
-  /* Glassmorphism Variables */
-  --glass-opacity: 0.7;
-  --glass-blur: 12px;
-  --glass-border-opacity: 0.2;
-  
-  /* Background */
-  --bg-image-url: url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1920&q=80'); /* Default abstract minimal background */
-}
-
 @layer base {
+  :root {
+    --color-primary: 37 99 235; /* blue-600 */
+    --color-secondary: 71 85 105; /* slate-600 */
+    --color-accent: 225 29 72; /* rose-600 */
+
+    /* Legacy Ink Theme Mappings (for compatibility) */
+    --ink-darkest: #0f172a; /* slate-900 */
+    --ink-dark: #334155; /* slate-700 */
+    --ink-medium: #64748b; /* slate-500 */
+    --ink-light: #94a3b8; /* slate-400 */
+    --ink-lighter: #cbd5e1; /* slate-300 */
+    --ink-lightest: #e2e8f0; /* slate-200 */
+    --paper-white: #ffffff;
+    --paper-warm: #f8fafc; /* slate-50 */
+    --paper-cream: #f1f5f9; /* slate-100 */
+    --cinnabar: #ef4444; /* red-500 */
+    --indigo: #3b82f6; /* blue-500 */
+    --celadon: #10b981; /* emerald-500 */
+    --gamboge: #f59e0b; /* amber-500 */
+    --font-serif: 'Inter', system-ui, sans-serif;
+  }
+
+  .dark {
+    --color-primary: 96 165 250; /* blue-400 */
+    --color-secondary: 148 163 184; /* slate-400 */
+    --color-accent: 251 113 133; /* rose-400 */
+
+    /* Legacy Ink Theme Mappings (Dark Mode) */
+    --ink-darkest: #f8fafc; /* slate-50 */
+    --ink-dark: #e2e8f0; /* slate-200 */
+    --ink-medium: #cbd5e1; /* slate-300 */
+    --ink-light: #94a3b8; /* slate-400 */
+    --ink-lighter: #64748b; /* slate-500 */
+    --ink-lightest: #334155; /* slate-700 */
+    --paper-white: #0f172a; /* slate-900 */
+    --paper-warm: #1e293b; /* slate-800 */
+    --paper-cream: #020617; /* slate-950 */
+  }
+
   body {
-    @apply text-slate-800 antialiased;
-    background-image: var(--bg-image-url);
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
-    background-repeat: no-repeat;
+    @apply antialiased bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50 transition-colors duration-300;
   }
 }
 
 @layer components {
-  /* Glassmorphism Card */
   .glass-panel {
-    @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-xl;
+    @apply bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-xl;
   }
   
-  .glass-button {
-    @apply px-4 py-2 rounded-lg bg-primary/90 text-white font-medium 
-           hover:bg-primary transition-all duration-300 shadow-lg 
-           hover:shadow-primary/30 active:scale-95;
-    background-color: rgb(var(--color-primary) / 0.9);
-  }
-
-  .glass-input {
-    @apply w-full px-4 py-2 rounded-lg bg-white/50 border border-white/30 
-           focus:outline-none focus:ring-2 focus:ring-primary/50 
-           placeholder:text-slate-400 backdrop-blur-sm transition-all;
-    --tw-ring-color: rgb(var(--color-primary) / 0.5);
+  .paper-card {
+    @apply bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800;
   }
 }

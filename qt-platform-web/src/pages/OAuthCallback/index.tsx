@@ -13,7 +13,7 @@ export default function OAuthCallback() {
 
   useEffect(() => {
     const code = searchParams.get('code');
-    if (!code) { setError('缺少授权码'); return; }
+    if (!code) { setError('Missing authorization code'); return; }
     handleCallback(code);
   }, []);
 
@@ -27,21 +27,27 @@ export default function OAuthCallback() {
       }));
       navigate('/', { replace: true });
     } catch {
-      setError('GitHub 登录失败，请重试');
+      setError('GitHub login failed, please try again');
     }
   };
 
   if (error) {
     return (
-      <Result status="error" title="授权失败" subTitle={error}
-        extra={<Button type="primary" onClick={() => navigate('/login')}>返回登录</Button>} />
+      <div className="flex items-center justify-center min-h-screen">
+        <Result 
+          status="error" 
+          title="Authorization Failed" 
+          subTitle={error}
+          extra={<Button type="primary" onClick={() => navigate('/login')}>Back to Login</Button>} 
+        />
+      </div>
     );
   }
 
   return (
-    <div style={{ textAlign: 'center', marginTop: '20vh' }}>
+    <div className="flex flex-col items-center justify-center min-h-screen">
       <Spin size="large" />
-      <p style={{ marginTop: 16, color: 'var(--ink-light)' }}>正在处理 GitHub 授权...</p>
+      <p className="mt-4 text-slate-500 dark:text-slate-400">Processing GitHub authorization...</p>
     </div>
   );
 }

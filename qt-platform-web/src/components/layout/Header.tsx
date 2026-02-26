@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Bell, Search, Globe, Menu, Settings } from 'lucide-react';
+import { Bell, Search, Globe, Menu } from 'lucide-react';
 import { Dropdown, Avatar, Badge } from 'antd';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { logout } from '@/store/slices/authSlice';
 import { GlassButton } from '@/components/ui/GlassButton';
-import { ThemeSettings } from '@/components/ThemeSettings';
 
 export const Header: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -14,7 +13,6 @@ export const Header: React.FC = () => {
   const location = useLocation();
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
-  const [isThemeSettingsOpen, setIsThemeSettingsOpen] = useState(false);
 
   const toggleLanguage = () => {
     const newLang = i18n.language === 'zh-CN' ? 'en-US' : 'zh-CN';
@@ -27,8 +25,15 @@ export const Header: React.FC = () => {
     navigate('/login');
   };
 
+  const isAdmin = user?.roles?.some(role => 
+    role === 'ADMIN' || role === 'SUPER_ADMIN'
+  );
+
   const userMenuItems = [
     { key: 'profile', label: t('common.profile') || '个人中心', onClick: () => navigate('/profile') },
+    ...(isAdmin ? [
+      { key: 'admin', label: t('common.admin') || '管理后台', onClick: () => navigate('/admin') },
+    ] : []),
     { type: 'divider' },
     { key: 'logout', label: t('common.logout') || '退出登录', onClick: handleLogout, danger: true },
   ];
@@ -45,7 +50,7 @@ export const Header: React.FC = () => {
   return (
     <>
       <header className="sticky top-0 z-30 px-8 py-4">
-        <div className="glass-panel rounded-2xl px-6 py-3 flex items-center justify-between bg-white/60 backdrop-blur-xl border-white/40 shadow-sm">
+        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-2xl px-6 py-3 flex items-center justify-between shadow-sm">
           
           {/* Left: Mobile Menu & Title */}
           <div className="flex items-center gap-4">
@@ -69,10 +74,6 @@ export const Header: React.FC = () => {
                 className="bg-transparent border-none outline-none text-sm text-slate-700 placeholder:text-slate-400 w-full"
               />
             </div>
-
-            <GlassButton variant="ghost" size="sm" onClick={() => setIsThemeSettingsOpen(true)} className="hidden sm:flex" title="Theme Settings">
-                <Settings size={18} />
-            </GlassButton>
 
             <GlassButton variant="ghost" size="sm" onClick={toggleLanguage} className="hidden sm:flex">
               <Globe size={16} className="mr-2" />
@@ -102,8 +103,6 @@ export const Header: React.FC = () => {
           </div>
         </div>
       </header>
-
-      <ThemeSettings open={isThemeSettingsOpen} onClose={() => setIsThemeSettingsOpen(false)} />
     </>
   );
 };

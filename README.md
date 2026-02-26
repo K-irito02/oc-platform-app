@@ -127,7 +127,7 @@ npm run dev
 ```
 
 启动成功后可访问：
-- **前端地址**: http://localhost:5173
+- **前端地址**: http://localhost:5173（如果端口被占用会自动切换到5174）
 - Vite 已配置代理 `/api` → `http://localhost:8081`
 
 ### 7. 禁用 Mock 数据（可选）
@@ -165,9 +165,9 @@ qt-platform/
 │       ├── router/                # 路由配置（懒加载）
 │       ├── store/                 # Redux（authSlice + themeSlice）
 │       ├── locales/               # 国际化（zh-CN + en-US）
-│       ├── theme/                 # Ant Design 水墨主题
+│       ├── theme/                 # Ant Design 主题
 │       ├── utils/                 # API 封装 + Axios 实例 + Mock
-│       └── styles/                # 水墨特效 CSS
+│       └── styles/                # 特效 CSS
 ├── sql/
 │   ├── init.sql                   # 建表 + 索引 + 触发器 + 初始化角色/权限
 │   └── seed.sql                   # 种子数据
@@ -185,9 +185,9 @@ qt-platform/
 | 服务 | 宿主机端口 | 说明 |
 |------|------------|------|
 | 后端 API | **8081** | Spring Boot（非默认 8080，因本机 httpd 占用）|
-| 前端开发 | **5173** | Vite 开发服务器 |
-| PostgreSQL | **5433** | Docker 容器（非默认 5432，避免本地 PG 冲突）|
-| Redis | **6380** | Docker 容器（非默认 6379，避免本地 Redis 冲突）|
+| 前端开发 | **5173** | Vite 开发服务器（可能自动切换到5174）|
+| PostgreSQL | **5433** | Docker 容器（映射 5433→5432，避免本地 PG 冲突）|
+| Redis | **6380** | Docker 容器（映射 6380→6379，避免本地 Redis 冲突）|
 
 ---
 
@@ -276,7 +276,9 @@ Get-Content sql/seed.sql | docker exec -i qt-dev-postgres psql -U qt_user -d qt_
 ## 阶段一待完成内容
 
 - [x] 前后端联调（Mock → 真实 API 对接，可通过 VITE_ENABLE_MOCK=false 切换）
-- [ ] 邮件服务配置（SMTP 真实发送）
+- [x] 邮件服务配置（QQ邮箱SMTP真实发送）
+- [x] 头像上传功能（支持多格式、圆形裁剪）
+- [x] 修改邮箱功能（验证码发送到新邮箱）
 - [ ] 文件上传/下载端到端测试
 - [ ] 单元测试编写（前端 Jest + 后端 JUnit 5）
 - [ ] 响应式设计优化（移动端适配）

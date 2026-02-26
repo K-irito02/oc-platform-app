@@ -15,6 +15,10 @@ export const authApi = {
     request.post('/auth/reset-password', data),
   changePassword: (data: { oldPassword: string; newPassword: string }) =>
     request.put('/auth/change-password', data),
+  sendChangeEmailCode: (data: { newEmail: string }) =>
+    request.post('/auth/send-change-email-code', data),
+  changeEmail: (data: { code: string; newEmail: string }) =>
+    request.put('/auth/change-email', data),
   getGithubUrl: () => request.get('/auth/oauth/github'),
   githubCallback: (code: string) =>
     request.get(`/auth/oauth/github/callback?code=${code}`),
@@ -32,9 +36,7 @@ export const userApi = {
   updateTheme: (themeConfig: string) =>
     request.put('/users/me/theme', { themeConfig }),
   uploadAvatar: (formData: FormData) =>
-    request.post('/users/me/avatar', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }),
+    request.post('/users/me/avatar', formData),
 };
 
 // ===== Product API =====
@@ -94,6 +96,11 @@ export const fileApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
+};
+
+// ===== System API (Public) =====
+export const systemApi = {
+  getGlobalTheme: () => request.get('/system/theme'),
 };
 
 // ===== Update Check API =====

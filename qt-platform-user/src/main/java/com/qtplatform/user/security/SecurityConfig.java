@@ -49,6 +49,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/comments/**").permitAll()
                         .requestMatchers("/api/v1/updates/check").permitAll()
                         .requestMatchers("/api/v1/downloads/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/system/theme").permitAll()
+                        // 静态资源（头像等）
+                        .requestMatchers("/uploads/**").permitAll()
                         // Swagger & Actuator
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()

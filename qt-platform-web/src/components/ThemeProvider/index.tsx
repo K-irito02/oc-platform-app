@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useAppSelector, useAppDispatch } from '../../store/hooks';
 import { setUserConfig, setSystemConfig, ThemeConfig } from '../../store/slices/themeSlice';
 import { selectUser } from '../../store/slices/authSlice';
-import { adminApi } from '../../utils/api';
+import { systemApi } from '../../utils/api';
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const theme = useAppSelector((state) => state.theme.currentTheme);
@@ -13,7 +13,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     const loadSystemConfig = async () => {
       try {
-        const res: any = await adminApi.getGlobalTheme();
+        const res: any = await systemApi.getGlobalTheme();
         if (res.data && res.data.themeConfig) {
           let config = res.data.themeConfig;
           // Parse potentially nested JSON strings

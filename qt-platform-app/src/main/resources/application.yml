@@ -61,12 +61,13 @@ spring:
           max-idle: 8
           min-idle: 4
 
-  # 邮件
+  # 邮件 (QQ 邮箱 SMTP)
   mail:
-    host: ${MAIL_HOST:smtp.example.com}
+    host: ${MAIL_HOST:smtp.qq.com}
     port: ${MAIL_PORT:465}
-    username: ${MAIL_USERNAME:}
-    password: ${MAIL_PASSWORD:}
+    username: ${MAIL_USERNAME:saokiritoasuna00@qq.com}
+    password: ${MAIL_PASSWORD:iraonttieyyvchbd}
+    default-encoding: UTF-8
     properties:
       mail:
         smtp:
@@ -75,6 +76,8 @@ spring:
             enable: true
           starttls:
             enable: false
+          socketFactory:
+            class: javax.net.ssl.SSLSocketFactory
 
 # MyBatis-Plus
 mybatis-plus:

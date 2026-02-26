@@ -169,13 +169,46 @@ public class AuthService {
         User user = userMapper.findByEmail(request.getEmail())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
-        userMapper.updateById(user);
+        userMapper.updatePassword(user.getId(), passwordEncoder.encode(request.getNewPassword()));
 
         // Invalidate all sessions
         stringRedisTemplate.delete(RedisKeys.AUTH_SESSION + user.getId());
 
         log.info("Password reset for user: {}", user.getUsername());
+    }
+
+    public User getUserById(Long userId) {
+        User user = userMapper.selectById(userId);
+        if (user == null) {
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+        }
+        return user;
+    }
+
+    @Transactional
+    public void changeEmail(Long userId, String code, String newEmail) {
+        User user = userMapper.selectById(userId);
+        if (user == null) {
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        // Verify the code was sent to the CURRENT email
+        if (!emailService.verifyCode(user.getEmail(), code, "CHANGE_EMAIL")) {
+            throw new BusinessException(ErrorCode.VERIFICATION_CODE_INVALID);
+        }
+
+        // Check if new email is already taken
+        if (userMapper.existsByEmail(newEmail)) {
+            throw new BusinessException(ErrorCode.EMAIL_EXISTS);
+        }
+
+        userMapper.updateEmail(user.getId(), newEmail);
+
+        // Invalidate all sessions so user must re-login with new email
+        stringRedisTemplate.delete(RedisKeys.AUTH_SESSION + user.getId());
+
+        log.info("Email changed for user: {} -> new email: {}", user.getUsername(),
+                newEmail.replaceAll("(?<=.{2}).(?=.*@)", "*"));
     }
 
     public void changePassword(Long userId, ChangePasswordRequest request) {
@@ -188,8 +221,7 @@ public class AuthService {
             throw new BusinessException(ErrorCode.OLD_PASSWORD_WRONG);
         }
 
-        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
-        userMapper.updateById(user);
+        userMapper.updatePassword(user.getId(), passwordEncoder.encode(request.getNewPassword()));
 
         // Invalidate all sessions
         stringRedisTemplate.delete(RedisKeys.AUTH_SESSION + user.getId());

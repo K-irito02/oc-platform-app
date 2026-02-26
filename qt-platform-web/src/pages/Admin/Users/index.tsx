@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Table, Input, Select, Space, Tag, Button, message, Modal } from 'antd';
+import { Table, Input, Select, Space, Tag, Button, message, Modal, Card } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { adminApi } from '@/utils/api';
 import type { ColumnsType } from 'antd/es/table';
+import { Search } from 'lucide-react';
 
 export default function AdminUsers() {
   const { t } = useTranslation();
@@ -26,11 +27,12 @@ export default function AdminUsers() {
 
   const handleStatusChange = (userId: number, status: string) => {
     Modal.confirm({
-      title: `确认${status === 'BANNED' ? '封禁' : '激活'}该用户？`,
+      title: status === 'BANNED' ? t('admin.confirmBan') : t('admin.confirmActivate'),
+      content: status === 'BANNED' ? t('admin.banConfirmContent') : t('admin.activateConfirmContent'),
       onOk: async () => {
         try {
           await adminApi.updateUserStatus(userId, status);
-          message.success('操作成功');
+          message.success(t('admin.operationSuccess'));
           loadData();
         } catch { /* handled */ }
       },
@@ -38,29 +40,31 @@ export default function AdminUsers() {
   };
 
   const columns: ColumnsType<any> = [
-    { title: 'ID', dataIndex: 'id', width: 60 },
-    { title: '用户名', dataIndex: 'username' },
-    { title: '邮箱', dataIndex: 'email' },
-    { title: '昵称', dataIndex: 'nickname' },
+    { title: t('admin.id'), dataIndex: 'id', width: 80 },
+    { title: t('admin.username'), dataIndex: 'username', width: 150 },
+    { title: t('admin.email'), dataIndex: 'email', width: 200 },
+    { title: t('admin.nickname'), dataIndex: 'nickname', width: 150 },
     {
-      title: '状态', dataIndex: 'status', width: 100,
+      title: t('admin.status'), dataIndex: 'status', width: 100,
       render: (s: string) => (
-        <Tag color={s === 'ACTIVE' ? 'green' : s === 'BANNED' ? 'red' : 'orange'}>{s}</Tag>
+        <Tag color={s === 'ACTIVE' ? 'green' : s === 'BANNED' ? 'red' : 'orange'}>
+          {s === 'ACTIVE' ? t('admin.active') : s === 'BANNED' ? t('admin.banned') : t('admin.locked')}
+        </Tag>
       ),
     },
     {
-      title: '角色', dataIndex: 'roles',
-      render: (roles: string[]) => roles?.map((r) => <Tag key={r}>{r}</Tag>),
+      title: t('admin.roles'), dataIndex: 'roles',
+      render: (roles: string[]) => roles?.map((r) => <Tag key={r} color="blue">{r}</Tag>),
     },
-    { title: '注册时间', dataIndex: 'createdAt', width: 170, render: (v: string) => v?.substring(0, 19).replace('T', ' ') },
+    { title: t('admin.joinedAt'), dataIndex: 'createdAt', width: 180, render: (v: string) => v?.substring(0, 19).replace('T', ' ') },
     {
-      title: '操作', width: 120, fixed: 'right',
+      title: t('admin.action'), width: 100, fixed: 'right',
       render: (_: any, record: any) => (
         <Space>
           {record.status === 'ACTIVE' ? (
-            <Button size="small" danger onClick={() => handleStatusChange(record.id, 'BANNED')}>封禁</Button>
+            <Button size="small" danger onClick={() => handleStatusChange(record.id, 'BANNED')}>{t('admin.ban')}</Button>
           ) : (
-            <Button size="small" type="primary" onClick={() => handleStatusChange(record.id, 'ACTIVE')}>激活</Button>
+            <Button size="small" type="primary" onClick={() => handleStatusChange(record.id, 'ACTIVE')}>{t('admin.activate')}</Button>
           )}
         </Space>
       ),
@@ -68,25 +72,45 @@ export default function AdminUsers() {
   ];
 
   return (
-    <div className="animate-fade-in">
-      <div style={{ marginBottom: 20 }}>
-        <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 20, color: 'var(--ink-darkest)', marginBottom: 4 }}>{t('admin.users')}</h2>
-        <p style={{ color: 'var(--ink-light)', fontSize: 13, margin: 0 }}>{t('admin.overviewDesc')}</p>
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t('admin.users')}</h2>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">{t('admin.usersDesc')}</p>
+        </div>
+        <Space>
+          <Input 
+            prefix={<Search size={16} className="text-slate-400" />}
+            placeholder={t('admin.searchUser') || "Search users..."} 
+            allowClear 
+            className="w-64"
+            onPressEnter={(e) => { setKeyword(e.currentTarget.value); setPage(1); loadData(); }} 
+          />
+          <Select 
+            placeholder={t('admin.status')} 
+            allowClear 
+            className="w-32"
+            onChange={(v) => { setStatusFilter(v); setPage(1); }}
+            options={[
+              { value: 'ACTIVE', label: t('admin.active') },
+              { value: 'BANNED', label: t('admin.banned') },
+              { value: 'LOCKED', label: t('admin.locked') },
+            ]} 
+          />
+        </Space>
       </div>
-      <Space style={{ marginBottom: 16 }} wrap>
-        <Input.Search placeholder={t('admin.searchUser')} allowClear style={{ width: 280 }}
-          onSearch={(v) => { setKeyword(v); setPage(1); loadData(); }} />
-        <Select placeholder="状态" allowClear style={{ width: 120 }}
-          onChange={(v) => { setStatusFilter(v); setPage(1); }}
-          options={[
-            { value: 'ACTIVE', label: '正常' },
-            { value: 'BANNED', label: '封禁' },
-            { value: 'LOCKED', label: '锁定' },
-          ]} />
-      </Space>
-      <Table columns={columns} dataSource={data} rowKey="id" loading={loading}
-        scroll={{ x: 900 }}
-        pagination={{ current: page, total, pageSize: 20, onChange: setPage, showTotal: (t) => `共 ${t} 条` }} />
+
+      <Card className="border-slate-200 dark:border-slate-800 dark:bg-slate-900 shadow-sm" styles={{ body: { padding: 0 } }}>
+        <Table 
+          columns={columns} 
+          dataSource={data} 
+          rowKey="id" 
+          loading={loading}
+          scroll={{ x: 1000 }}
+          pagination={{ current: page, total, pageSize: 20, onChange: setPage, showTotal: (total) => `${t('admin.total')} ${total} ${t('admin.items')}` }}
+          className="dark:bg-slate-900"
+        />
+      </Card>
     </div>
   );
 }

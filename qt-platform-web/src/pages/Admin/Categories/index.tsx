@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Table, Space, Button, message, Modal, Form, Input, InputNumber } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { Table, Space, Button, message, Modal, Form, Input, InputNumber, Card } from 'antd';
+import { Plus, Edit, Trash2 } from 'lucide-react';
 import { categoryApi, adminApi } from '@/utils/api';
 import type { ColumnsType } from 'antd/es/table';
+import { useTranslation } from 'react-i18next';
 
 export default function AdminCategories() {
+  const { t } = useTranslation();
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -44,10 +46,10 @@ export default function AdminCategories() {
     try {
       if (editing) {
         await adminApi.updateCategory(editing.id, values);
-        message.success('已更新');
+        message.success('Updated successfully');
       } else {
         await adminApi.createCategory(values);
-        message.success('已创建');
+        message.success('Created successfully');
       }
       setModalVisible(false);
       loadData();
@@ -56,12 +58,13 @@ export default function AdminCategories() {
 
   const handleDelete = (id: number) => {
     Modal.confirm({
-      title: '确认删除该分类？',
+      title: 'Delete Category?',
+      content: 'This action cannot be undone.',
       okType: 'danger',
       onOk: async () => {
         try {
           await adminApi.deleteCategory(id);
-          message.success('已删除');
+          message.success('Deleted successfully');
           loadData();
         } catch { /* handled */ }
       },
@@ -71,47 +74,63 @@ export default function AdminCategories() {
   const columns: ColumnsType<any> = [
     { title: 'ID', dataIndex: 'id', width: 60 },
     {
-      title: '名称', dataIndex: 'name',
-      render: (v: string, r: any) => <span style={{ paddingLeft: r.depth * 20 }}>{r.icon ? `${r.icon} ` : ''}{v}</span>,
+      title: 'Name', dataIndex: 'name',
+      render: (v: string, r: any) => <span style={{ paddingLeft: r.depth * 20 }} className="font-medium">{r.icon ? `${r.icon} ` : ''}{v}</span>,
     },
-    { title: '英文名', dataIndex: 'nameEn', ellipsis: true },
+    { title: 'English Name', dataIndex: 'nameEn', ellipsis: true },
     { title: 'Slug', dataIndex: 'slug', width: 140 },
-    { title: '排序', dataIndex: 'sortOrder', width: 70 },
+    { title: 'Sort Order', dataIndex: 'sortOrder', width: 100 },
     {
-      title: '操作', width: 150, fixed: 'right',
+      title: 'Action', width: 150, fixed: 'right',
       render: (_: any, record: any) => (
         <Space size="small">
-          <Button size="small" onClick={() => openEdit(record)}>编辑</Button>
-          <Button size="small" danger onClick={() => handleDelete(record.id)}>删除</Button>
+          <Button size="small" icon={<Edit size={14} />} onClick={() => openEdit(record)} />
+          <Button size="small" danger icon={<Trash2 size={14} />} onClick={() => handleDelete(record.id)} />
         </Space>
       ),
     },
   ];
 
   return (
-    <div className="animate-fade-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 20, color: 'var(--ink-darkest)', marginBottom: 4 }}>分类管理</h2>
-          <p style={{ color: 'var(--ink-light)', fontSize: 13, margin: 0 }}>管理产品分类体系</p>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t('admin.categories')}</h2>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">Manage product category hierarchy.</p>
         </div>
-        <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}
-          style={{ background: 'var(--ink-dark)', border: 'none', borderRadius: 'var(--radius-md)' }}>新建分类</Button>
+        <Button type="primary" icon={<Plus size={16} />} onClick={openCreate} className="bg-blue-600">
+          New Category
+        </Button>
       </div>
-      <Table columns={columns} dataSource={data} rowKey="id" loading={loading} pagination={false} scroll={{ x: 700 }} />
 
-      <Modal title={editing ? '编辑分类' : '新建分类'} open={modalVisible}
-        onOk={handleSave} onCancel={() => setModalVisible(false)} destroyOnClose>
+      <Card className="border-slate-200 dark:border-slate-800 dark:bg-slate-900 shadow-sm" styles={{ body: { padding: 0 } }}>
+        <Table 
+          columns={columns} 
+          dataSource={data} 
+          rowKey="id" 
+          loading={loading} 
+          pagination={false} 
+          scroll={{ x: 800 }} 
+        />
+      </Card>
+
+      <Modal 
+        title={editing ? 'Edit Category' : 'New Category'} 
+        open={modalVisible}
+        onOk={handleSave} 
+        onCancel={() => setModalVisible(false)} 
+        destroyOnClose
+      >
         <Form form={form} layout="vertical">
-          <Form.Item label="名称" name="name" rules={[{ required: true, message: '请输入名称' }]}>
+          <Form.Item label="Name" name="name" rules={[{ required: true, message: 'Name is required' }]}>
             <Input />
           </Form.Item>
-          <Form.Item label="英文名" name="nameEn"><Input /></Form.Item>
-          <Form.Item label="Slug" name="slug" rules={[{ required: true, message: '请输入标识' }]}>
+          <Form.Item label="English Name" name="nameEn"><Input /></Form.Item>
+          <Form.Item label="Slug" name="slug" rules={[{ required: true, message: 'Slug is required' }]}>
             <Input />
           </Form.Item>
-          <Form.Item label="排序" name="sortOrder"><InputNumber min={0} style={{ width: '100%' }} /></Form.Item>
-          <Form.Item label="图标" name="icon"><Input placeholder="emoji 或图标名" /></Form.Item>
+          <Form.Item label="Sort Order" name="sortOrder"><InputNumber min={0} className="w-full" /></Form.Item>
+          <Form.Item label="Icon" name="icon"><Input placeholder="Emoji or Icon Name" /></Form.Item>
         </Form>
       </Modal>
     </div>

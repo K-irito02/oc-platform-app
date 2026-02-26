@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Table, Button, message, Input } from 'antd';
+import { Table, Button, message, Input, Card, Space } from 'antd';
 import { adminApi } from '@/utils/api';
 import type { ColumnsType } from 'antd/es/table';
+import { useTranslation } from 'react-i18next';
+import { Save, X, Edit } from 'lucide-react';
 
 export default function AdminSystem() {
+  const { t } = useTranslation();
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [editingKey, setEditingKey] = useState<string | null>(null);
@@ -22,41 +25,44 @@ export default function AdminSystem() {
   const handleSave = async (key: string) => {
     try {
       await adminApi.updateSystemConfig(key, editingValue);
-      message.success('已保存');
+      message.success('Saved successfully');
       setEditingKey(null);
       loadData();
     } catch { /* handled */ }
   };
 
   const columns: ColumnsType<any> = [
-    { title: '配置项', dataIndex: 'configKey', width: 220 },
+    { title: 'Config Key', dataIndex: 'configKey', width: 220, className: 'font-mono text-sm' },
     {
-      title: '值', dataIndex: 'configValue',
+      title: 'Value', dataIndex: 'configValue',
       render: (v: string, record: any) => {
         if (editingKey === record.configKey) {
           return (
-            <Input.TextArea value={editingValue} onChange={(e) => setEditingValue(e.target.value)}
-              autoSize={{ minRows: 1, maxRows: 4 }} />
+            <Input.TextArea 
+              value={editingValue} 
+              onChange={(e) => setEditingValue(e.target.value)}
+              autoSize={{ minRows: 1, maxRows: 4 }} 
+            />
           );
         }
-        return <span style={{ wordBreak: 'break-all' }}>{v}</span>;
+        return <span className="break-all">{v}</span>;
       },
     },
-    { title: '描述', dataIndex: 'description', ellipsis: true, width: 200 },
+    { title: 'Description', dataIndex: 'description', ellipsis: true, width: 250 },
     {
-      title: '操作', width: 140, fixed: 'right',
+      title: 'Action', width: 140, fixed: 'right',
       render: (_: any, record: any) => {
         if (editingKey === record.configKey) {
           return (
-            <>
-              <Button size="small" type="primary" onClick={() => handleSave(record.configKey)} style={{ marginRight: 8 }}>保存</Button>
-              <Button size="small" onClick={() => setEditingKey(null)}>取消</Button>
-            </>
+            <Space size="small">
+              <Button size="small" type="primary" icon={<Save size={14} />} onClick={() => handleSave(record.configKey)} />
+              <Button size="small" icon={<X size={14} />} onClick={() => setEditingKey(null)} />
+            </Space>
           );
         }
         return (
-          <Button size="small" onClick={() => { setEditingKey(record.configKey); setEditingValue(record.configValue); }}>
-            编辑
+          <Button size="small" icon={<Edit size={14} />} onClick={() => { setEditingKey(record.configKey); setEditingValue(record.configValue); }}>
+            Edit
           </Button>
         );
       },
@@ -64,13 +70,24 @@ export default function AdminSystem() {
   ];
 
   return (
-    <div className="animate-fade-in">
-      <div style={{ marginBottom: 20 }}>
-        <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 20, color: 'var(--ink-darkest)', marginBottom: 4 }}>系统配置</h2>
-        <p style={{ color: 'var(--ink-light)', fontSize: 13, margin: 0 }}>管理平台全局配置参数</p>
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t('admin.system')}</h2>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">Configure global system parameters.</p>
+        </div>
       </div>
-      <Table columns={columns} dataSource={data} rowKey="configKey" loading={loading} pagination={false}
-        scroll={{ x: 800 }} />
+
+      <Card className="border-slate-200 dark:border-slate-800 dark:bg-slate-900 shadow-sm" styles={{ body: { padding: 0 } }}>
+        <Table 
+          columns={columns} 
+          dataSource={data} 
+          rowKey="configKey" 
+          loading={loading} 
+          pagination={false}
+          scroll={{ x: 800 }} 
+        />
+      </Card>
     </div>
   );
 }

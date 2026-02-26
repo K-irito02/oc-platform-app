@@ -8,6 +8,7 @@ import { setCredentials } from '@/store/slices/authSlice';
 import { authApi } from '@/utils/api';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { GlassButton } from '@/components/ui/GlassButton';
+import { AuthPageToolbar } from '@/components/AuthPageToolbar';
 
 export default function Login() {
   const { t } = useTranslation();
@@ -45,6 +46,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
+      <AuthPageToolbar />
       {/* Container */}
       <GlassCard className="w-full max-w-md p-8 sm:p-12 bg-white/60 backdrop-blur-xl border-white/40 shadow-2xl">
         

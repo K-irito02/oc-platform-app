@@ -1,6 +1,7 @@
 package com.qtplatform.user.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.qtplatform.common.exception.BusinessException;
 import com.qtplatform.common.response.ErrorCode;
@@ -15,6 +16,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.UUID;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -133,6 +142,53 @@ public class UserService {
         user.setStatus(status);
         userMapper.updateById(user);
         log.info("User {} status changed to {}", userId, status);
+    }
+
+    public String uploadAvatar(Long userId, MultipartFile file) {
+        User user = userMapper.selectById(userId);
+        if (user == null) {
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        // Validate file
+        if (file.isEmpty()) {
+            throw new BusinessException(ErrorCode.PARAM_INVALID, "File is empty");
+        }
+
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new BusinessException(ErrorCode.FILE_TYPE_NOT_ALLOWED, "Only image files are allowed");
+        }
+
+        // Generate unique filename
+        String originalFilename = file.getOriginalFilename();
+        String extension = "";
+        if (originalFilename != null && originalFilename.contains(".")) {
+            extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+        }
+        String filename = "avatar_" + userId + "_" + UUID.randomUUID().toString().substring(0, 8) + extension;
+
+        // Save file to upload directory
+        try {
+            Path uploadDir = Paths.get("uploads", "avatars");
+            Files.createDirectories(uploadDir);
+            Path filePath = uploadDir.resolve(filename);
+            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+            // Generate URL path
+            String avatarUrl = "/uploads/avatars/" + filename;
+
+            // Update only avatar URL field (avoid inet type conversion issue)
+            LambdaUpdateWrapper<User> updateWrapper = new LambdaUpdateWrapper<>();
+            updateWrapper.eq(User::getId, userId).set(User::getAvatarUrl, avatarUrl);
+            userMapper.update(null, updateWrapper);
+
+            log.info("User {} avatar updated: {}", userId, avatarUrl);
+            return avatarUrl;
+        } catch (IOException e) {
+            log.error("Failed to upload avatar for user {}", userId, e);
+            throw new BusinessException(ErrorCode.FILE_UPLOAD_FAILED, "Failed to upload avatar");
+        }
     }
 
     private UserProfileVO toProfileVO(User user) {

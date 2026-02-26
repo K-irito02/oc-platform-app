@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Table, Space, Tag, Button, message, Modal, Select } from 'antd';
+import { Table, Space, Tag, Button, message, Modal, Select, Card } from 'antd';
 import { adminApi } from '@/utils/api';
 import type { ColumnsType } from 'antd/es/table';
+import { useTranslation } from 'react-i18next';
+import { Check, X, Trash2 } from 'lucide-react';
 
 export default function AdminComments() {
+  const { t } = useTranslation();
   const [data, setData] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -23,11 +26,11 @@ export default function AdminComments() {
 
   const handleAudit = (id: number, status: string) => {
     Modal.confirm({
-      title: `确认${status === 'PUBLISHED' ? '通过' : '拒绝'}该评论？`,
+      title: `Confirm ${status === 'PUBLISHED' ? 'Approve' : 'Reject'}?`,
       onOk: async () => {
         try {
           await adminApi.auditComment(id, status);
-          message.success('操作成功');
+          message.success('Operation successful');
           loadData();
         } catch { /* handled */ }
       },
@@ -36,12 +39,12 @@ export default function AdminComments() {
 
   const handleDelete = (id: number) => {
     Modal.confirm({
-      title: '确认删除该评论？',
+      title: 'Delete Comment?',
       okType: 'danger',
       onOk: async () => {
         try {
           await adminApi.deleteComment(id);
-          message.success('已删除');
+          message.success('Deleted successfully');
           loadData();
         } catch { /* handled */ }
       },
@@ -50,51 +53,65 @@ export default function AdminComments() {
 
   const columns: ColumnsType<any> = [
     { title: 'ID', dataIndex: 'id', width: 60 },
-    { title: '内容', dataIndex: 'content', ellipsis: true },
-    { title: '评分', dataIndex: 'rating', width: 70, render: (v: number) => v ? `${v} ★` : '-' },
-    { title: '产品ID', dataIndex: 'productId', width: 80 },
-    { title: '用户ID', dataIndex: 'userId', width: 80 },
+    { title: 'Content', dataIndex: 'content', ellipsis: true },
+    { title: 'Rating', dataIndex: 'rating', width: 80, render: (v: number) => v ? <span className="text-amber-500 font-bold">{v} ★</span> : '-' },
+    { title: 'Product ID', dataIndex: 'productId', width: 100 },
+    { title: 'User ID', dataIndex: 'userId', width: 100 },
     {
-      title: '状态', dataIndex: 'status', width: 100,
+      title: 'Status', dataIndex: 'status', width: 120,
       render: (s: string) => (
         <Tag color={s === 'PUBLISHED' ? 'green' : s === 'PENDING' ? 'orange' : 'red'}>{s}</Tag>
       ),
     },
-    { title: '时间', dataIndex: 'createdAt', width: 170, render: (v: string) => v?.substring(0, 19).replace('T', ' ') },
+    { title: 'Created At', dataIndex: 'createdAt', width: 180, render: (v: string) => v?.substring(0, 19).replace('T', ' ') },
     {
-      title: '操作', width: 180, fixed: 'right',
+      title: 'Action', width: 180, fixed: 'right',
       render: (_: any, record: any) => (
         <Space size="small">
           {record.status === 'PENDING' && (
             <>
-              <Button size="small" type="primary" onClick={() => handleAudit(record.id, 'PUBLISHED')}>通过</Button>
-              <Button size="small" danger onClick={() => handleAudit(record.id, 'REJECTED')}>拒绝</Button>
+              <Button size="small" type="primary" icon={<Check size={14} />} onClick={() => handleAudit(record.id, 'PUBLISHED')} />
+              <Button size="small" danger icon={<X size={14} />} onClick={() => handleAudit(record.id, 'REJECTED')} />
             </>
           )}
-          <Button size="small" danger onClick={() => handleDelete(record.id)}>删除</Button>
+          <Button size="small" danger icon={<Trash2 size={14} />} onClick={() => handleDelete(record.id)} />
         </Space>
       ),
     },
   ];
 
   return (
-    <div className="animate-fade-in">
-      <div style={{ marginBottom: 20 }}>
-        <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 20, color: 'var(--ink-darkest)', marginBottom: 4 }}>评论管理</h2>
-        <p style={{ color: 'var(--ink-light)', fontSize: 13, margin: 0 }}>审核和管理用户评论</p>
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t('admin.comments')}</h2>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">Moderate user reviews and comments.</p>
+        </div>
+        <Space>
+          <Select 
+            placeholder="Status" 
+            allowClear 
+            className="w-32"
+            onChange={(v) => { setStatusFilter(v); setPage(1); }}
+            options={[
+              { value: 'PENDING', label: 'Pending' },
+              { value: 'PUBLISHED', label: 'Published' },
+              { value: 'REJECTED', label: 'Rejected' },
+            ]} 
+          />
+        </Space>
       </div>
-      <Space style={{ marginBottom: 16 }}>
-        <Select placeholder="状态" allowClear style={{ width: 130 }}
-          onChange={(v) => { setStatusFilter(v); setPage(1); }}
-          options={[
-            { value: 'PENDING', label: '待审核' },
-            { value: 'PUBLISHED', label: '已发布' },
-            { value: 'REJECTED', label: '已拒绝' },
-          ]} />
-      </Space>
-      <Table columns={columns} dataSource={data} rowKey="id" loading={loading}
-        scroll={{ x: 900 }}
-        pagination={{ current: page, total, pageSize: 20, onChange: setPage, showTotal: (t) => `共 ${t} 条` }} />
+
+      <Card className="border-slate-200 dark:border-slate-800 dark:bg-slate-900 shadow-sm" styles={{ body: { padding: 0 } }}>
+        <Table 
+          columns={columns} 
+          dataSource={data} 
+          rowKey="id" 
+          loading={loading}
+          scroll={{ x: 1000 }}
+          pagination={{ current: page, total, pageSize: 20, onChange: setPage, showTotal: (t) => `Total ${t}` }} 
+        />
+      </Card>
     </div>
   );
 }
