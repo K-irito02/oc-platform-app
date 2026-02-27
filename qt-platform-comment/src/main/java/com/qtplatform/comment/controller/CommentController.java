@@ -26,9 +26,11 @@ public class CommentController {
             @PathVariable Long productId,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "time") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortOrder,
             Authentication authentication) {
         Long currentUserId = authentication != null ? (Long) authentication.getPrincipal() : null;
-        return ApiResponse.success(commentService.getProductComments(productId, page, size, currentUserId));
+        return ApiResponse.success(commentService.getProductComments(productId, page, size, currentUserId, sortBy, sortOrder));
     }
 
     @PostMapping("/product/{productId}")

@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Table, Space, Tag, Button, message, Modal, Select, Card } from 'antd';
+import { Table, Space, Tag, Button, message, Modal, Select, Card, Input } from 'antd';
 import { adminApi, categoryApi, productApi } from '@/utils/api';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
-import { Check, X, Trash2, Filter } from 'lucide-react';
+import { Check, X, Trash2, Filter, Search } from 'lucide-react';
 
 interface Category {
   id: number;
@@ -32,7 +32,9 @@ export default function AdminComments() {
   const [products, setProducts] = useState<ProductOption[]>([]);
   const [productFilter, setProductFilter] = useState<number | undefined>();
   const [productSortBy, setProductSortBy] = useState<string>('downloads');
-  const [commentSortBy, setCommentSortBy] = useState<string>('rating');
+  const [commentSortBy, setCommentSortBy] = useState<string>('time');
+  const [commentSortOrder, setCommentSortOrder] = useState<string>('desc');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   useEffect(() => {
     loadCategories();
@@ -47,7 +49,7 @@ export default function AdminComments() {
     }
   }, [categoryFilter]);
 
-  useEffect(() => { loadData(); }, [page, statusFilter, productFilter, commentSortBy]);
+  useEffect(() => { loadData(); }, [page, statusFilter, productFilter, commentSortBy, commentSortOrder, searchQuery]);
 
   const loadCategories = async () => {
     try {
@@ -98,15 +100,29 @@ export default function AdminComments() {
       const params: any = { page, size: 20 };
       if (statusFilter) params.status = statusFilter;
       if (productFilter) params.productId = productFilter;
+      if (searchQuery) params.search = searchQuery;
       
       const res: any = await adminApi.listComments(params);
       let records = res.data.records || [];
       
       // 前端排序评论
-      if (commentSortBy === 'rating') {
-        records.sort((a: any, b: any) => (b.rating || 0) - (a.rating || 0));
-      } else if (commentSortBy === 'likes') {
-        records.sort((a: any, b: any) => (b.likeCount || 0) - (a.likeCount || 0));
+      const isAsc = commentSortOrder === 'asc';
+      switch (commentSortBy) {
+        case 'rating':
+          records.sort((a: any, b: any) => isAsc ? (a.rating || 0) - (b.rating || 0) : (b.rating || 0) - (a.rating || 0));
+          break;
+        case 'likes':
+          records.sort((a: any, b: any) => isAsc ? (a.likeCount || 0) - (b.likeCount || 0) : (b.likeCount || 0) - (a.likeCount || 0));
+          break;
+        case 'replies':
+          records.sort((a: any, b: any) => isAsc ? (a.replyCount || 0) - (b.replyCount || 0) : (b.replyCount || 0) - (a.replyCount || 0));
+          break;
+        case 'time':
+        default:
+          records.sort((a: any, b: any) => isAsc 
+            ? new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime() 
+            : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          break;
       }
       
       setData(records);
@@ -143,19 +159,22 @@ export default function AdminComments() {
 
   const columns: ColumnsType<any> = [
     { title: t('admin.id'), dataIndex: 'id', width: 60 },
-    { title: t('admin.content'), dataIndex: 'content', ellipsis: true },
-    { title: t('admin.rating'), dataIndex: 'rating', width: 80, render: (v: number) => v ? <span className="text-amber-500 font-bold">{v} ★</span> : '-' },
-    { title: t('admin.productId'), dataIndex: 'productId', width: 100 },
-    { title: t('admin.userId'), dataIndex: 'userId', width: 100 },
+    { title: t('admin.content'), dataIndex: 'content', ellipsis: true, width: 200 },
+    { title: t('admin.rating'), dataIndex: 'rating', width: 70, render: (v: number) => v ? <span className="text-amber-500 font-bold">{v} ★</span> : '-' },
+    { title: t('admin.likeCount'), dataIndex: 'likeCount', width: 90, render: (v: number) => <span className="text-blue-500">{v || 0}</span> },
+    { title: t('admin.replyCount'), dataIndex: 'replyCount', width: 90, render: (v: number) => <span className="text-green-500">{v || 0}</span> },
+    { title: t('admin.productId'), dataIndex: 'productId', width: 80 },
+    { title: t('admin.userId'), dataIndex: 'userId', width: 80 },
+    { title: t('admin.parentId'), dataIndex: 'parentId', width: 80, render: (v: number) => v ? <span className="text-purple-500">{v}</span> : '-' },
     {
-      title: t('admin.status'), dataIndex: 'status', width: 120,
+      title: t('admin.status'), dataIndex: 'status', width: 100,
       render: (s: string) => (
         <Tag color={s === 'PUBLISHED' ? 'green' : s === 'PENDING' ? 'orange' : 'red'}>{s}</Tag>
       ),
     },
-    { title: t('admin.createdAt'), dataIndex: 'createdAt', width: 180, render: (v: string) => v?.substring(0, 19).replace('T', ' ') },
+    { title: t('admin.createdAt'), dataIndex: 'createdAt', width: 160, render: (v: string) => v?.substring(0, 19).replace('T', ' ') },
     {
-      title: t('admin.action'), width: 180, fixed: 'right',
+      title: t('admin.action'), width: 140, fixed: 'right',
       render: (_: any, record: any) => (
         <Space size="small">
           {record.status === 'PENDING' && (
@@ -229,19 +248,41 @@ export default function AdminComments() {
             />
           )}
           
-          {/* 评论排序规则 */}
-          {productFilter && (
-            <Select
-              placeholder={t('admin.commentSortBy') || 'Comment Sort'}
-              className="w-36"
-              value={commentSortBy}
-              onChange={(v) => { setCommentSortBy(v); }}
-              options={[
-                { value: 'rating', label: t('admin.byCommentRating') || 'By Rating' },
-                { value: 'likes', label: t('admin.byLikes') || 'By Likes' },
-              ]}
-            />
-          )}
+          {/* 评论排序规则 - 与产品详情页一致 */}
+          <Select
+            placeholder={t('admin.commentSortBy') || 'Comment Sort'}
+            className="w-32"
+            value={commentSortBy}
+            onChange={(v) => { setCommentSortBy(v); }}
+            options={[
+              { value: 'time', label: t('productDetail.sortByTime') || 'Time' },
+              { value: 'likes', label: t('productDetail.sortByLikes') || 'Likes' },
+              { value: 'rating', label: t('productDetail.sortByRating') || 'Rating' },
+              { value: 'replies', label: t('productDetail.sortByReplies') || 'Replies' },
+            ]}
+          />
+          
+          {/* 排序顺序 */}
+          <Select
+            className="w-24"
+            value={commentSortOrder}
+            onChange={(v) => { setCommentSortOrder(v); }}
+            options={[
+              { value: 'desc', label: '↓' },
+              { value: 'asc', label: '↑' },
+            ]}
+          />
+          
+          {/* 搜索框 */}
+          <Input
+            placeholder={t('admin.searchUserIdEmail')}
+            allowClear
+            style={{ width: 180, height: 32 }}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onPressEnter={() => { setPage(1); loadData(); }}
+            prefix={<Search size={14} className="text-slate-400" />}
+          />
           
           {/* 状态筛选 */}
           <Select 

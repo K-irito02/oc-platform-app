@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Form, Input, Select, Button, Card, Upload, message, Spin, Tabs, Image, Modal } from 'antd';
+import { Form, Input, Select, Button, Card, Upload, message, Spin, Tabs, Image, Modal, Table, Tag, Popconfirm } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { adminApi, categoryApi, fileApi } from '@/utils/api';
-import { ArrowLeft, Upload as UploadIcon, Plus, Trash2, Play, Image as ImageIcon, Film, Package } from 'lucide-react';
+import { ArrowLeft, Upload as UploadIcon, Plus, Trash2, Play, Image as ImageIcon, Film, Package, HardDrive, Monitor } from 'lucide-react';
 import type { UploadProps } from 'antd/es/upload/interface';
+import type { ColumnsType } from 'antd/es/table';
 
 const { TextArea } = Input;
 
@@ -28,6 +29,30 @@ interface ProductData {
   isFeatured?: boolean;
 }
 
+interface ProductVersion {
+  id: number;
+  versionNumber: string;
+  platform: string;
+  architecture?: string;
+  fileName: string;
+  fileSize: number;
+  fileRecordId?: number;
+  status: string;
+  isLatest?: boolean;
+  releaseNotes?: string;
+  createdAt?: string;
+  publishedAt?: string;
+}
+
+// 系统平台选项
+const PLATFORM_OPTIONS = [
+  { value: 'WINDOWS', label: 'Windows', icon: '🪟' },
+  { value: 'MACOS', label: 'macOS', icon: '🍎' },
+  { value: 'LINUX', label: 'Linux', icon: '🐧' },
+  { value: 'ANDROID', label: 'Android', icon: '🤖' },
+  { value: 'IOS', label: 'iOS', icon: '📱' },
+];
+
 interface Category {
   id: number;
   name: string;
@@ -50,13 +75,28 @@ export default function ProductEdit() {
   const [screenshots, setScreenshots] = useState<string[]>([]);
   const [demoVideoUrl, setDemoVideoUrl] = useState<string>('');
   const [previewVideo, setPreviewVideo] = useState(false);
+    const [versions, setVersions] = useState<ProductVersion[]>([]);
+  const [versionModalOpen, setVersionModalOpen] = useState(false);
+  const [versionForm] = Form.useForm();
+  const [uploadingVersion, setUploadingVersion] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState<{ id: number; name: string; size: number; checksum: string; path: string } | null>(null);
 
   useEffect(() => {
     loadCategories();
     if (id) {
       loadProduct(parseInt(id));
+      loadVersions(parseInt(id));
     }
   }, [id]);
+
+  const loadVersions = async (productId: number) => {
+    try {
+      const res: any = await adminApi.getVersions(productId);
+      setVersions(res.data || []);
+    } catch (e) {
+      console.error('Failed to load versions', e);
+    }
+  };
 
   const loadCategories = async () => {
     try {
@@ -91,11 +131,94 @@ export default function ProductEdit() {
       setBannerUrl(data.bannerUrl || '');
       setScreenshots(data.screenshots || []);
       setDemoVideoUrl(data.demoVideoUrl || '');
-    } catch (e) {
+          } catch (e) {
       message.error(t('productEdit.loadFailed'));
     } finally {
       setLoading(false);
     }
+  };
+
+  // 上传应用程序文件
+  const handleVersionFileUpload = async (file: File) => {
+    setUploadingVersion(true);
+    try {
+      const res: any = await fileApi.uploadApplication(file);
+      setUploadedFile({
+        id: res.data.id,
+        name: res.data.originalName,
+        size: res.data.fileSize,
+        checksum: res.data.checksumSha256,
+        path: res.data.filePath,
+      });
+      versionForm.setFieldsValue({ fileName: res.data.originalName });
+      message.success(t('productEdit.fileUploaded'));
+    } catch (e) {
+      message.error(t('productEdit.uploadFailed'));
+    } finally {
+      setUploadingVersion(false);
+    }
+  };
+
+  // 创建新版本
+  const handleCreateVersion = async (values: any) => {
+    if (!uploadedFile) {
+      message.error(t('productEdit.pleaseUploadFile'));
+      return;
+    }
+    if (!product?.id) return;
+
+    try {
+      await adminApi.createVersion(product.id, {
+        versionNumber: values.versionNumber,
+        platform: values.platform,
+        architecture: values.architecture || 'x64',
+        fileName: uploadedFile.name,
+        fileSize: uploadedFile.size,
+        filePath: uploadedFile.path,
+        checksumSha256: uploadedFile.checksum,
+        fileRecordId: uploadedFile.id,
+        releaseNotes: values.releaseNotes,
+        releaseNotesEn: values.releaseNotesEn,
+      });
+      message.success(t('productEdit.versionCreated'));
+      setVersionModalOpen(false);
+      versionForm.resetFields();
+      setUploadedFile(null);
+      loadVersions(product.id);
+    } catch (e) {
+      message.error(t('productEdit.versionCreateFailed'));
+    }
+  };
+
+  // 发布版本
+  const handlePublishVersion = async (versionId: number) => {
+    try {
+      await adminApi.publishVersion(versionId);
+      message.success(t('productEdit.versionPublished'));
+      if (product?.id) loadVersions(product.id);
+    } catch (e) {
+      message.error(t('productEdit.publishFailed'));
+    }
+  };
+
+  // 删除版本
+  const handleDeleteVersion = async (versionId: number) => {
+    try {
+      await adminApi.deleteVersion(versionId);
+      message.success(t('productEdit.versionDeleted'));
+      if (product?.id) loadVersions(product.id);
+    } catch (e) {
+      message.error(t('productEdit.deleteFailed'));
+    }
+  };
+
+  // 格式化文件大小
+  const formatSize = (bytes: number) => {
+    if (!bytes) return '-';
+    if (bytes >= 1073741824) return (bytes / 1073741824).toFixed(1) + ' GB';
+    if (bytes >= 1048576) return (bytes / 1048576).toFixed(1) + ' MB';
+    if (bytes >= 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return bytes + ' B';
   };
 
   const handleSave = async (values: any) => {
@@ -295,10 +418,7 @@ export default function ProductEdit() {
                       <Input placeholder={t('productEdit.sourcePlaceholder')} />
                     </Form.Item>
 
-                    <Form.Item name="tags" label={t('productEdit.tags')} className="md:col-span-2">
-                      <Input placeholder={t('productEdit.tagsPlaceholder')} />
-                    </Form.Item>
-                  </div>
+                                      </div>
 
                   <Form.Item
                     name="description"
@@ -485,13 +605,98 @@ export default function ProductEdit() {
                 </div>
               ),
             },
+            // 版本管理标签页
+            {
+              key: 'versions',
+              label: (
+                <span className="flex items-center gap-2">
+                  <HardDrive size={16} />
+                  {t('productEdit.versions')} ({versions.length})
+                </span>
+              ),
+              children: (
+                <Card className="border-slate-200 dark:border-slate-700 dark:bg-slate-900">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold">{t('productEdit.versionManagement')}</h3>
+                    <Button type="primary" icon={<Plus size={16} />} onClick={() => setVersionModalOpen(true)} disabled={!id}>
+                      {t('productEdit.addVersion')}
+                    </Button>
+                  </div>
+                  
+                  {!id && (
+                    <div className="text-center py-8 text-gray-500">
+                      {t('productEdit.saveFirstToAddVersion')}
+                    </div>
+                  )}
+                  
+                  <Table
+                    dataSource={versions}
+                    rowKey="id"
+                    columns={[
+                      { 
+                        title: t('productEdit.version'), 
+                        dataIndex: 'versionNumber',
+                        render: (v: string, record: ProductVersion) => (
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-medium">{v}</span>
+                            {record.isLatest && <Tag color="green">{t('productEdit.latest')}</Tag>}
+                          </div>
+                        )
+                      },
+                      { 
+                        title: t('productEdit.platform'), 
+                        dataIndex: 'platform',
+                        render: (p: string) => {
+                          const platform = PLATFORM_OPTIONS.find(opt => opt.value === p);
+                          return platform ? `${platform.icon} ${platform.label}` : p;
+                        }
+                      },
+                      { 
+                        title: t('productEdit.fileSize'), 
+                        dataIndex: 'fileSize',
+                        render: (size: number) => formatSize(size)
+                      },
+                      { 
+                        title: t('admin.status'), 
+                        dataIndex: 'status',
+                        render: (s: string) => (
+                          <Tag color={s === 'PUBLISHED' ? 'green' : s === 'DRAFT' ? 'default' : 'orange'}>
+                            {s}
+                          </Tag>
+                        )
+                      },
+                      {
+                        title: t('admin.action'),
+                        render: (_: unknown, record: ProductVersion) => (
+                          <div className="flex gap-2">
+                            {record.status !== 'PUBLISHED' && (
+                              <Button size="small" type="primary" onClick={() => handlePublishVersion(record.id)}>
+                                {t('admin.publish')}
+                              </Button>
+                            )}
+                            <Popconfirm
+                              title={t('productEdit.confirmDelete')}
+                              onConfirm={() => handleDeleteVersion(record.id)}
+                            >
+                              <Button size="small" danger icon={<Trash2 size={14} />} />
+                            </Popconfirm>
+                          </div>
+                        )
+                      }
+                    ] as ColumnsType<ProductVersion>}
+                    pagination={false}
+                    locale={{ emptyText: t('productEdit.noVersions') }}
+                  />
+                </Card>
+              ),
+            },
           ]}
         />
 
         <div className="flex justify-end gap-4 mt-6">
-          <Button onClick={() => navigate('/admin/products')}>{t('productEdit.cancel') || 'Cancel'}</Button>
+          <Button onClick={() => navigate('/admin/products')}>{t('productEdit.cancel')}</Button>
           <Button type="primary" htmlType="submit" loading={saving} disabled={uploading}>
-            {id ? (t('productEdit.saveChanges') || 'Save Changes') : (t('productEdit.createProduct') || 'Create Product')}
+            {id ? t('productEdit.saveChanges') : t('productEdit.createProduct')}
           </Button>
         </div>
       </Form>
@@ -509,6 +714,107 @@ export default function ProductEdit() {
           autoPlay
           className="w-full rounded-lg"
         />
+      </Modal>
+
+      {/* 添加版本弹窗 */}
+      <Modal
+        open={versionModalOpen}
+        onCancel={() => {
+          setVersionModalOpen(false);
+          versionForm.resetFields();
+          setUploadedFile(null);
+        }}
+        title={<span className="flex items-center gap-2"><Monitor size={18} /> {t('productEdit.addNewVersion')}</span>}
+        footer={null}
+        width={600}
+        destroyOnClose
+      >
+        <Form form={versionForm} layout="vertical" onFinish={handleCreateVersion} className="mt-4">
+          <div className="grid grid-cols-2 gap-4">
+            <Form.Item
+              name="versionNumber"
+              label={t('productEdit.versionNumber')}
+              rules={[{ required: true, message: t('productEdit.versionRequired') }]}
+            >
+              <Input placeholder="1.0.0" />
+            </Form.Item>
+
+            <Form.Item
+              name="platform"
+              label={t('productEdit.platform')}
+              rules={[{ required: true, message: t('productEdit.platformRequired') }]}
+            >
+              <Select placeholder={t('productEdit.selectPlatform')}>
+                {PLATFORM_OPTIONS.map(p => (
+                  <Select.Option key={p.value} value={p.value}>
+                    {p.icon} {p.label}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </div>
+
+          <Form.Item
+            name="architecture"
+            label={t('productEdit.architecture')}
+            initialValue="x64"
+          >
+            <Select>
+              <Select.Option value="x86">x86 (32-bit)</Select.Option>
+              <Select.Option value="x64">x64 (64-bit)</Select.Option>
+              <Select.Option value="arm64">ARM64</Select.Option>
+              <Select.Option value="universal">Universal</Select.Option>
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            label={t('productEdit.applicationFile')}
+            required
+          >
+            <Upload
+              beforeUpload={(file) => {
+                handleVersionFileUpload(file);
+                return false;
+              }}
+              showUploadList={false}
+              accept=".exe,.msi,.dmg,.pkg,.deb,.rpm,.AppImage,.zip,.tar.gz"
+            >
+              <Button icon={<UploadIcon size={14} />} loading={uploadingVersion}>
+                {t('productEdit.uploadApplication')}
+              </Button>
+            </Upload>
+            {uploadedFile && (
+              <div className="mt-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
+                  <HardDrive size={16} />
+                  <span className="font-medium">{uploadedFile.name}</span>
+                  <span className="text-sm text-green-600 dark:text-green-500">({formatSize(uploadedFile.size)})</span>
+                </div>
+              </div>
+            )}
+          </Form.Item>
+
+          <Form.Item name="releaseNotes" label={t('productEdit.releaseNotes')}>
+            <TextArea rows={3} placeholder={t('productEdit.releaseNotesPlaceholder')} />
+          </Form.Item>
+
+          <Form.Item name="releaseNotesEn" label={t('productEdit.releaseNotesEn')}>
+            <TextArea rows={3} placeholder="What's new in this version..." />
+          </Form.Item>
+
+          <div className="flex justify-end gap-3 mt-4">
+            <Button onClick={() => {
+              setVersionModalOpen(false);
+              versionForm.resetFields();
+              setUploadedFile(null);
+            }}>
+              {t('common.cancel')}
+            </Button>
+            <Button type="primary" htmlType="submit" disabled={!uploadedFile}>
+              {t('productEdit.createVersion')}
+            </Button>
+          </div>
+        </Form>
       </Modal>
     </div>
   );

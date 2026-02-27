@@ -250,7 +250,7 @@ Get-Content sql/seed.sql | docker exec -i qt-dev-postgres psql -U qt_user -d qt_
 - [x] **用户模块**: 邮箱注册/登录、GitHub OAuth、JWT 认证、邮箱验证码、密码找回/重置、个人信息管理、语言偏好
 - [x] **产品模块**: 产品 CRUD、分类管理、产品列表（分页/筛选/排序）、产品详情、语义化版本管理、多平台支持、灰度发布
 - [x] **文件模块**: 文件上传/下载、断点续传、SHA256 校验、MinIO 对象存储
-- [x] **评论模块**: 评论 CRUD、评分（1-5 星）、评论点赞、树形回复
+- [x] **评论模块**: 评论 CRUD、评分（1-5 星）、评论点赞、树形回复、回复计数、限流
 - [x] **通知/审计**: 站内通知、审计日志
 - [x] **管理后台**: 仪表盘统计、用户管理（封禁/角色）、产品审核、评论管理、分类管理、系统配置
 - [x] **安全体系**: Spring Security + JWT + RBAC（5 角色 17 权限）、登录限流、CORS
@@ -286,6 +286,11 @@ Get-Content sql/seed.sql | docker exec -i qt-dev-postgres psql -U qt_user -d qt_
 - [x] 文件上传功能（支持多格式、圆形裁剪）
 - [x] 修改邮箱功能（验证码发送到新邮箱）
 - [x] 产品截图上传和显示功能
+- [x] 文件下载功能（支持LOCAL和MINIO存储类型）
+- [x] 评论回复功能（带回复按钮和@用户功能）
+- [x] 评论排序功能（时间/点赞数/回复数）
+- [x] 评论限流功能（60秒内只能发布一条）
+- [x] 管理后台UI统一（搜索框高度、国际化）
 - [ ] 文件上传/下载端到端测试
 - [ ] 单元测试编写（前端 Jest + 后端 JUnit 5）
 - [ ] 响应式设计优化（移动端适配）
@@ -329,7 +334,9 @@ Get-Content sql/seed.sql | docker exec -i qt-dev-postgres psql -U qt_user -d qt_
 | 架构文档 | `Planning Document/Architecture Document.md` | 完整技术架构设计 |
 | 阶段一设计 | `Planning Document/Phase One.md` | MVP 详细设计文档 |
 | 设计系统 | `src/design-system/MASTER.md` | Glassmorphism 设计规范 |
-| 项目记忆 | `Memory/` | AI 辅助开发记忆系统 |
+| 项目记忆 | `../Memory/` | AI 辅助开发记忆系统（位于上级目录）|
+| AI技能 | `../.windsurf/skills/` | Windsurf AI 技能文件 |
+| AI工作流 | `../.windsurf/workflows/` | Windsurf AI 工作流 |
 | 代码规范 | `.windsurf/rules/` | 前后端代码规范 |
 | 前端测试素材 | `Front-end testing/` | 背景图片/视频 |
 

@@ -52,16 +52,19 @@ export const AdminHeader = ({ collapsed, setCollapsed }: AdminHeaderProps) => {
         <button 
           onClick={() => setCollapsed(!collapsed)}
           className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 md:hidden"
+          title={collapsed ? 'Expand menu' : 'Collapse menu'}
+          aria-label={collapsed ? 'Expand menu' : 'Collapse menu'}
         >
           <Menu size={20} />
         </button>
         
         {/* Search Bar (Optional) */}
         <div className="hidden md:flex items-center relative">
-          <Search size={16} className="absolute left-3 text-slate-400" />
+          <Search size={16} className="absolute left-3 text-slate-400 z-10" />
           <Input 
-            placeholder="Search..." 
-            className="w-64 pl-9 bg-slate-100 dark:bg-slate-800 border-none rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 focus:bg-white dark:focus:bg-slate-900 transition-colors" 
+            placeholder={t('admin.searchProduct')}
+            className="w-64 pl-9 bg-slate-100 dark:bg-slate-800 border-none rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 focus:bg-white dark:focus:bg-slate-900 transition-colors"
+            style={{ height: 36 }}
           />
         </div>
       </div>

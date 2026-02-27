@@ -7,10 +7,12 @@ import com.qtplatform.file.service.FileStorageService;
 import com.qtplatform.file.service.MinioStorageService;
 import io.minio.StatObjectResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +23,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/files")
 @RequiredArgsConstructor
@@ -29,6 +32,7 @@ public class FileController {
     private final FileStorageService fileStorageService;
     private final MinioStorageService minioStorageService;
     private final FileRecordMapper fileRecordMapper;
+    private final JdbcTemplate jdbcTemplate;
 
     @PostMapping("/upload")
     @PreAuthorize("isAuthenticated()")
@@ -116,24 +120,64 @@ public class FileController {
             return ResponseEntity.notFound().build();
         }
 
-        String bucket = record.getBucketName();
-        String objectName = record.getFilePath();
-        
-        if (!"MINIO".equals(record.getStorageType())) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        StatObjectResponse stat = minioStorageService.getFileInfo(bucket, objectName);
-        InputStream inputStream = minioStorageService.downloadFile(bucket, objectName);
-
         String encodedFileName = URLEncoder.encode(record.getOriginalName(), StandardCharsets.UTF_8)
                 .replaceAll("\\+", "%20");
 
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encodedFileName)
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .contentLength(stat.size())
-                .body(new InputStreamResource(inputStream));
+        // 支持 LOCAL 和 MINIO 两种存储类型
+        if ("MINIO".equals(record.getStorageType())) {
+            String bucket = record.getBucketName();
+            String objectName = record.getFilePath();
+            StatObjectResponse stat = minioStorageService.getFileInfo(bucket, objectName);
+            InputStream inputStream = minioStorageService.downloadFile(bucket, objectName);
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encodedFileName)
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .contentLength(stat.size())
+                    .body(new InputStreamResource(inputStream));
+        } else if ("LOCAL".equals(record.getStorageType())) {
+            try {
+                java.nio.file.Path filePath = fileStorageService.getFilePath(record.getFilePath());
+                InputStream inputStream = java.nio.file.Files.newInputStream(filePath);
+                long fileSize = java.nio.file.Files.size(filePath);
+
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encodedFileName)
+                        .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                        .contentLength(fileSize)
+                        .body(new InputStreamResource(inputStream));
+            } catch (Exception e) {
+                log.error("Failed to download local file: {}", record.getFilePath(), e);
+                return ResponseEntity.notFound().build();
+            }
+        } else {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    /**
+     * 通过产品版本ID下载文件
+     * 首先查询版本关联的 fileRecordId，然后下载对应的文件
+     */
+    @GetMapping("/download/version/{versionId}")
+    public ResponseEntity<InputStreamResource> downloadByVersionId(@PathVariable Long versionId) {
+        // 查询版本信息获取 fileRecordId
+        Long fileRecordId = null;
+        try {
+            fileRecordId = jdbcTemplate.queryForObject(
+                "SELECT file_record_id FROM product_versions WHERE id = ?",
+                Long.class, versionId);
+        } catch (Exception e) {
+            log.warn("Failed to find file_record_id for version {}", versionId);
+        }
+
+        if (fileRecordId == null) {
+            // 如果没有 fileRecordId，尝试直接使用 versionId 作为 fileId（向后兼容）
+            log.info("No file_record_id found for version {}, trying versionId as fileId", versionId);
+            return downloadFile(versionId);
+        }
+
+        return downloadFile(fileRecordId);
     }
 
     @GetMapping("/download-url/{fileId}")

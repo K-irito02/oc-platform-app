@@ -78,18 +78,18 @@ export default function AdminUsers() {
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t('admin.users')}</h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm">{t('admin.usersDesc')}</p>
         </div>
-        <Space>
+        <Space className="flex items-center">
           <Input 
             prefix={<Search size={16} className="text-slate-400" />}
-            placeholder={t('admin.searchUser') || "Search users..."} 
+            placeholder={t('admin.searchUser')} 
             allowClear 
-            className="w-64"
+            style={{ width: 200, height: 32 }}
             onPressEnter={(e) => { setKeyword(e.currentTarget.value); setPage(1); loadData(); }} 
           />
           <Select 
             placeholder={t('admin.status')} 
             allowClear 
-            className="w-32"
+            style={{ width: 120, height: 32 }}
             onChange={(v) => { setStatusFilter(v); setPage(1); }}
             options={[
               { value: 'ACTIVE', label: t('admin.active') },

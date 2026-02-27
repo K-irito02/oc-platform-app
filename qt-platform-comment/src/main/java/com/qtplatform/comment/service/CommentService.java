@@ -28,13 +28,35 @@ public class CommentService {
     private final ProductCommentMapper commentMapper;
     private final CommentLikeMapper commentLikeMapper;
 
-    public PageResponse<CommentVO> getProductComments(Long productId, int page, int size, Long currentUserId) {
+    public PageResponse<CommentVO> getProductComments(Long productId, int page, int size, Long currentUserId,
+                                                      String sortBy, String sortOrder) {
         Page<ProductComment> pageParam = new Page<>(page, size);
         LambdaQueryWrapper<ProductComment> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(ProductComment::getProductId, productId)
                 .eq(ProductComment::getStatus, "PUBLISHED")
-                .isNull(ProductComment::getParentId)
-                .orderByDesc(ProductComment::getCreatedAt);
+                .isNull(ProductComment::getParentId);
+        
+        // Apply sorting
+        boolean isAsc = "asc".equalsIgnoreCase(sortOrder);
+        switch (sortBy != null ? sortBy : "time") {
+            case "likes":
+                if (isAsc) wrapper.orderByAsc(ProductComment::getLikeCount);
+                else wrapper.orderByDesc(ProductComment::getLikeCount);
+                break;
+            case "rating":
+                if (isAsc) wrapper.orderByAsc(ProductComment::getRating);
+                else wrapper.orderByDesc(ProductComment::getRating);
+                break;
+            case "replies":
+                if (isAsc) wrapper.orderByAsc(ProductComment::getReplyCount);
+                else wrapper.orderByDesc(ProductComment::getReplyCount);
+                break;
+            case "time":
+            default:
+                if (isAsc) wrapper.orderByAsc(ProductComment::getCreatedAt);
+                else wrapper.orderByDesc(ProductComment::getCreatedAt);
+                break;
+        }
 
         Page<ProductComment> result = commentMapper.selectPage(pageParam, wrapper);
         List<CommentVO> vos = result.getRecords().stream()
@@ -46,6 +68,14 @@ public class CommentService {
 
     @Transactional
     public CommentVO createComment(Long productId, CreateCommentRequest request, Long userId, String ipAddress) {
+        // 限流：防止用户频繁发布评论（同一用户60秒内只能发布一条评论）
+        LambdaQueryWrapper<ProductComment> rateLimitCheck = new LambdaQueryWrapper<>();
+        rateLimitCheck.eq(ProductComment::getUserId, userId)
+                .ge(ProductComment::getCreatedAt, java.time.OffsetDateTime.now().minusSeconds(60));
+        if (commentMapper.selectCount(rateLimitCheck) > 0) {
+            throw new BusinessException(ErrorCode.RATE_LIMIT_EXCEEDED, "评论发布过于频繁，请稍后再试");
+        }
+        
         // Check for duplicate rating
         if (request.getRating() != null && request.getParentId() == null) {
             LambdaQueryWrapper<ProductComment> ratingCheck = new LambdaQueryWrapper<>();
@@ -74,9 +104,15 @@ public class CommentService {
                 .rating(request.getParentId() == null ? request.getRating() : null)
                 .status("PENDING")
                 .likeCount(0)
+                .replyCount(0)
                 .ipAddress(ipAddress)
                 .build();
         commentMapper.insert(comment);
+        
+        // 更新父评论的reply_count
+        if (request.getParentId() != null) {
+            commentMapper.incrementReplyCount(request.getParentId());
+        }
 
         log.info("Comment created: id={}, product={}, user={}", comment.getId(), productId, userId);
         return toVO(comment, false);
@@ -184,16 +220,37 @@ public class CommentService {
     }
 
     private CommentVO toVO(ProductComment c, boolean liked) {
+        String username = commentMapper.getUsernameById(c.getUserId());
+        String nickname = commentMapper.getNicknameById(c.getUserId());
+        String avatarUrl = commentMapper.getAvatarUrlById(c.getUserId());
+        
+        // 获取回复目标用户信息
+        Long replyToUserId = null;
+        String replyToUsername = null;
+        if (c.getParentId() != null) {
+            ProductComment parentComment = commentMapper.selectById(c.getParentId());
+            if (parentComment != null) {
+                replyToUserId = parentComment.getUserId();
+                replyToUsername = commentMapper.getUsernameById(parentComment.getUserId());
+            }
+        }
+        
         return CommentVO.builder()
                 .id(c.getId())
                 .productId(c.getProductId())
                 .userId(c.getUserId())
+                .username(username)
+                .nickname(nickname)
+                .avatarUrl(avatarUrl)
                 .parentId(c.getParentId())
                 .content(c.getContent())
                 .rating(c.getRating())
                 .status(c.getStatus())
-                .likeCount(c.getLikeCount())
+                .likeCount(c.getLikeCount() != null ? c.getLikeCount() : 0)
+                .replyCount(c.getReplyCount() != null ? c.getReplyCount() : 0)
                 .liked(liked)
+                .replyToUserId(replyToUserId)
+                .replyToUsername(replyToUsername)
                 .createdAt(c.getCreatedAt())
                 .updatedAt(c.getUpdatedAt())
                 .build();

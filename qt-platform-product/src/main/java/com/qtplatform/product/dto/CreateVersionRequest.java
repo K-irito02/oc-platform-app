@@ -33,6 +33,7 @@ public class CreateVersionRequest {
 
     private String checksumMd5;
     private String signature;
+    private Long fileRecordId;  // 关联的文件记录ID
     private Boolean isMandatory;
     private Integer rolloutPercentage;
     private String releaseNotes;

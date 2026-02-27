@@ -62,7 +62,7 @@ export const categoryApi = {
 
 // ===== Comment API =====
 export const commentApi = {
-  getProductComments: (productId: number, params: { page?: number; size?: number }) =>
+  getProductComments: (productId: number, params: { page?: number; size?: number; sortBy?: string; sortOrder?: string }) =>
     request.get(`/comments/product/${productId}`, { params }),
   create: (productId: number, data: { content: string; parentId?: number; rating?: number }) =>
     request.post(`/comments/product/${productId}`, data),
@@ -125,6 +125,12 @@ export const fileApi = {
     formData.append('productId', String(productId));
     return request.post('/files/upload/product-download', formData);
   },
+  uploadApplication: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('type', 'application');
+    return request.post('/files/upload', formData);
+  },
   getDownloadUrl: (fileId: number, expiry = 60) =>
     request.get(`/files/download-url/${fileId}`, { params: { expiry } }),
   download: (fileId: number) => `/api/v1/files/download/${fileId}`,
@@ -162,9 +168,15 @@ export const adminApi = {
   auditProduct: (id: number, status: string) =>
     request.put(`/admin/products/${id}/audit`, { status }),
   createVersion: (productId: number, data: Record<string, unknown>) =>
-    request.post(`/admin/products/${productId}/versions`, data),
+    request.post(`/products/${productId}/versions`, data),
+  updateVersion: (versionId: number, data: Record<string, unknown>) =>
+    request.put(`/products/versions/${versionId}`, data),
+  deleteVersion: (versionId: number) =>
+    request.delete(`/products/versions/${versionId}`),
   publishVersion: (versionId: number) =>
-    request.put(`/admin/products/versions/${versionId}/publish`),
+    request.post(`/products/versions/${versionId}/publish`),
+  getVersions: (productId: number) =>
+    request.get(`/products/${productId}/versions/all`),
   // Comments
   listComments: (params: { page?: number; size?: number; status?: string; productId?: number }) =>
     request.get('/admin/comments', { params }),

@@ -32,6 +32,7 @@ public class ProductVersion {
     private String checksumMd5;
     private String checksumSha256;
     private String signature;
+    private Long fileRecordId;  // 关联的文件记录ID，用于下载
     private Long downloadCount;
     private Boolean isMandatory;
     private Boolean isLatest;

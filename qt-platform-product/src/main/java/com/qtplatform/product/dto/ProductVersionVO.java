@@ -24,6 +24,7 @@ public class ProductVersionVO {
     private String fileName;
     private Long fileSize;
     private String checksumSha256;
+    private Long fileRecordId;
     private Long downloadCount;
     private Boolean isMandatory;
     private Boolean isLatest;

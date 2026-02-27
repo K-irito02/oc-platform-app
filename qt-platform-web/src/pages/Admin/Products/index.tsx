@@ -186,15 +186,15 @@ export default function AdminProducts() {
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t('admin.products')}</h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm">{t('admin.manageProducts')}</p>
         </div>
-        <Space wrap>
-          <Button type="primary" icon={<Plus size={16} />} onClick={() => navigate('/admin/products/new')}>
-            {t('admin.newProduct') || 'New Product'}
+        <Space className="flex items-center">
+          <Button type="primary" icon={<Plus size={16} />} style={{ height: 32 }} onClick={() => navigate('/admin/products/new')}>
+            {t('admin.newProduct')}
           </Button>
           <Input 
             prefix={<Search size={16} className="text-slate-400" />}
-            placeholder={t('admin.searchProduct') || "Search products..."}
+            placeholder={t('admin.searchProduct')}
             allowClear 
-            className="w-48"
+            style={{ width: 180, height: 32 }}
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             onPressEnter={() => { setPage(1); loadData(); }} 

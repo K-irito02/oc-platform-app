@@ -25,7 +25,10 @@ public class CommentVO {
     private Integer rating;
     private String status;
     private Integer likeCount;
+    private Integer replyCount;
     private Boolean liked; // current user liked or not
+    private Long replyToUserId; // 回复的目标用户ID
+    private String replyToUsername; // 回复的目标用户名
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
     private List<CommentVO> replies;

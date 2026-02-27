@@ -4,7 +4,7 @@ import { useAppSelector } from '@/store/hooks';
 import { productApi, commentApi } from '@/utils/api';
 import { Button, Tag, Tabs, Rate, Avatar, Form, Input, message, Spin, Empty, Card, Progress } from 'antd';
 const { TextArea } = Input;
-import { Github, ExternalLink, Star, Clock, Eye, Download as DownloadIcon, Terminal, Shield, CheckCircle, Tag as TagIcon, User, Play, Pause, Volume2, VolumeX, Maximize } from 'lucide-react';
+import { Github, ExternalLink, Star, Clock, Eye, Download as DownloadIcon, Terminal, Shield, CheckCircle, Tag as TagIcon, User, Play, Pause, Volume2, VolumeX, Maximize, ThumbsUp, MessageCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import ScreenshotGallery from '@/components/ScreenshotGallery';
 
@@ -160,15 +160,12 @@ const MOCK_VERSIONS = [
   { id: 4, versionNumber: 'v4.9.2', platform: 'Windows', fileSize: 440 * 1024 * 1024, isLatest: false, createdAt: '2026-04-01' },
 ];
 
-const MOCK_COMMENTS = [
-  { id: 1, nickname: 'AlexDev', content: 'Best IDE I have ever used! The AI features are game changing.', rating: 5, createdAt: '2026-05-16' },
-  { id: 2, nickname: 'CodeMaster', content: 'Solid performance, but the dark mode needs some tweaking.', rating: 4, createdAt: '2026-05-15' },
-];
 
 export default function ProductDetail() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { slug } = useParams<{ slug: string }>();
   const { isAuthenticated } = useAppSelector((s) => s.auth);
+  const isEnglish = i18n.language === 'en-US' || i18n.language === 'en';
 
   const [product, setProduct] = useState<any>(null);
   const [versions, setVersions] = useState<any[]>([]);
@@ -178,6 +175,9 @@ export default function ProductDetail() {
   const [_commentLoading, setCommentLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [form] = Form.useForm();
+  const [commentSortBy, setCommentSortBy] = useState<string>('time');
+  const [commentSortOrder, setCommentSortOrder] = useState<string>('desc');
+  const [replyingTo, setReplyingTo] = useState<{id: number, name: string} | null>(null);
 
   useEffect(() => { 
     if (slug) {
@@ -214,8 +214,8 @@ export default function ProductDetail() {
   const useMockData = () => {
     setProduct(MOCK_PRODUCT);
     setVersions(MOCK_VERSIONS);
-    setComments(MOCK_COMMENTS);
-    setCommentTotal(MOCK_COMMENTS.length);
+    setComments([]);
+    setCommentTotal(0);
   };
 
   const loadVersions = async (productId: number) => {
@@ -225,44 +225,99 @@ export default function ProductDetail() {
     } catch { /* handled */ }
   };
 
-  const loadComments = async (productId: number, page: number) => {
+  const loadComments = async (productId: number, page: number, sortBy?: string, sortOrder?: string) => {
     setCommentLoading(true);
     try {
-      const res: any = await commentApi.getProductComments(productId, { page, size: 10 });
+      const res: any = await commentApi.getProductComments(productId, { 
+        page, 
+        size: 10,
+        sortBy: sortBy || commentSortBy,
+        sortOrder: sortOrder || commentSortOrder
+      });
       setComments(res.data.records || []);
       setCommentTotal(res.data.total || 0);
     } catch { /* handled */ } finally { setCommentLoading(false); }
+  };
+
+  const handleSortChange = (sortBy: string, sortOrder: string) => {
+    setCommentSortBy(sortBy);
+    setCommentSortOrder(sortOrder);
+    if (product?.id) {
+      loadComments(product.id, 1, sortBy, sortOrder);
+    }
+  };
+
+  const handleLikeComment = async (commentId: number, liked: boolean) => {
+    if (!isAuthenticated) {
+      message.warning(t('productDetail.loginToLike'));
+      return;
+    }
+    try {
+      if (liked) {
+        await commentApi.unlike(commentId);
+      } else {
+        await commentApi.like(commentId);
+      }
+      // Refresh comments
+      if (product?.id) {
+        loadComments(product.id, 1);
+      }
+    } catch {
+      message.error(t('productDetail.likeFailed'));
+    }
+  };
+
+  const handleReplyComment = (commentId: number, userName: string) => {
+    setReplyingTo({ id: commentId, name: userName });
+    form.setFieldsValue({ content: `@${userName} ` });
+    // Scroll to comment form
+    const formElement = document.querySelector('.comment-form-card');
+    formElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
+  const cancelReply = () => {
+    setReplyingTo(null);
+    form.setFieldsValue({ content: '' });
   };
 
   const handleComment = async (values: any) => {
     if (!product) return;
     setSubmitting(true);
     try {
-      await commentApi.create(product.id, { content: values.content, rating: values.rating });
+      const payload: any = { content: values.content, rating: values.rating };
+      if (replyingTo) {
+        payload.parentId = replyingTo.id;
+      }
+      await commentApi.create(product.id, payload);
       message.success('Comment submitted, pending review');
       form.resetFields();
+      setReplyingTo(null);
       loadComments(product.id, 1);
     } catch { 
        message.success('(Mock) Comment submitted successfully!');
        setComments([{ id: Date.now(), nickname: 'You', content: values.content, rating: values.rating, createdAt: new Date().toISOString() }, ...comments]);
        form.resetFields();
+       setReplyingTo(null);
     } finally { setSubmitting(false); }
   };
 
-  const handleDownload = async (versionId: number) => {
+  const handleDownload = async (versionId: number, fileRecordId?: number) => {
     try {
       // Increment download count
       await productApi.incrementVersionDownload(versionId);
       if (product?.id) {
         await productApi.incrementDownload(product.id);
       }
-      // Trigger actual download via file API
-      window.open(`/api/v1/files/download/${versionId}`, '_blank');
     } catch (err) {
-      console.error('Download error:', err);
-      // Still allow download even if count increment fails
-      window.open(`/api/v1/files/download/${versionId}`, '_blank');
+      console.error('Download count error:', err);
     }
+    
+    // 使用后端完整URL进行下载（window.open不走Vite代理）
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081';
+    const downloadPath = fileRecordId 
+      ? `/api/v1/files/download/${fileRecordId}` 
+      : `/api/v1/files/download/version/${versionId}`;
+    window.open(`${baseUrl}${downloadPath}`, '_blank');
   };
 
   const formatSize = (bytes: number) => {
@@ -277,6 +332,10 @@ export default function ProductDetail() {
   if (!product) return <div className="flex justify-center items-center min-h-[60vh]"><Empty description={t('productDetail.productNotFound')} /></div>;
 
   const latestVersion = versions.find((v: any) => v.isLatest) || versions[0];
+  
+  // 根据当前语言选择显示内容
+  const displayName = (isEnglish && product.nameEn) ? product.nameEn : product.name;
+  const displayDescription = (isEnglish && product.descriptionEn) ? product.descriptionEn : product.description;
 
   return (
     <div className="bg-white dark:bg-slate-950 min-h-screen pb-20">
@@ -299,12 +358,12 @@ export default function ProductDetail() {
             {/* Info */}
             <div className="flex-1 w-full">
               <div className="flex flex-wrap items-center gap-3 mb-4">
-                <h1 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white tracking-tight">{product.name}</h1>
+                <h1 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white tracking-tight">{displayName}</h1>
                 {product.isFeatured && <Tag color="gold" className="px-2 py-1 text-xs font-semibold uppercase tracking-wider rounded-md border-none">Featured</Tag>}
               </div>
               
               <p className="text-lg md:text-xl text-slate-600 dark:text-slate-300 mb-8 max-w-3xl leading-relaxed">
-                {product.description ? product.description.split('\n')[0].substring(0, 150) + '...' : 'No description available.'}
+                {displayDescription ? displayDescription.split('\n')[0].substring(0, 150) + '...' : t('home.noDescription')}
               </p>
 
               <div className="flex flex-wrap gap-4">
@@ -314,7 +373,7 @@ export default function ProductDetail() {
                     size="large" 
                     icon={<DownloadIcon size={20} />} 
                     className="h-14 px-8 text-lg rounded-xl bg-blue-600 hover:bg-blue-700 border-none shadow-lg shadow-blue-600/20"
-                    onClick={() => handleDownload(latestVersion.id)}
+                    onClick={() => handleDownload(latestVersion.id, latestVersion.fileRecordId)}
                   >
                     {t('productDetail.download')} {latestVersion.versionNumber}
                   </Button>
@@ -369,7 +428,7 @@ export default function ProductDetail() {
                   key: 'overview',
                   label: t('productDetail.overview'),
                   children: (
-                    <div className="bg-white dark:bg-slate-900 mt-4 space-y-8">
+                    <div className="bg-white dark:bg-slate-900 mt-4 p-6 space-y-8 min-h-[400px]">
                       {/* Demo Video */}
                       {product.demoVideoUrl && (
                         <div>
@@ -385,7 +444,7 @@ export default function ProductDetail() {
                         </div>
                       )}
                       {/* Description */}
-                      <MarkdownRenderer content={product.description} />
+                      <MarkdownRenderer content={displayDescription} />
                     </div>
                   )
                 },
@@ -407,7 +466,7 @@ export default function ProductDetail() {
                               <span>{v.createdAt?.substring(0, 10)}</span>
                             </div>
                           </div>
-                          <Button type="primary" ghost icon={<DownloadIcon size={16} />} onClick={() => handleDownload(v.id)}>
+                          <Button type="primary" ghost icon={<DownloadIcon size={16} />} onClick={() => handleDownload(v.id, v.fileRecordId)}>
                             {formatSize(v.fileSize)}
                           </Button>
                         </div>
@@ -421,12 +480,21 @@ export default function ProductDetail() {
                   children: (
                     <div className="mt-6 space-y-8">
                       {isAuthenticated ? (
-                        <Card className="dark:bg-slate-900 dark:border-slate-800 shadow-sm" styles={{ body: { padding: '1.5rem' } }}>
-                          <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-white">{t('productDetail.writeReview')}</h3>
+                        <Card className="comment-form-card dark:bg-slate-900 dark:border-slate-800 shadow-sm" styles={{ body: { padding: '1.5rem' } }}>
+                          <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                              {replyingTo ? `${t('productDetail.reply')} @${replyingTo.name}` : t('productDetail.writeReview')}
+                            </h3>
+                            {replyingTo && (
+                              <Button size="small" onClick={cancelReply}>{t('common.cancel')}</Button>
+                            )}
+                          </div>
                           <Form form={form} onFinish={handleComment} layout="vertical">
-                            <Form.Item name="rating" label={t('productDetail.rating')} initialValue={5}>
-                              <Rate />
-                            </Form.Item>
+                            {!replyingTo && (
+                              <Form.Item name="rating" label={t('productDetail.rating')} initialValue={5}>
+                                <Rate />
+                              </Form.Item>
+                            )}
                             <Form.Item name="content" rules={[{ required: true, message: t('productDetail.commentPlaceholder') }]}>
                               <TextArea rows={4} placeholder={t('productDetail.commentPlaceholder')} className="rounded-xl resize-none" />
                             </Form.Item>
@@ -442,18 +510,76 @@ export default function ProductDetail() {
                         </div>
                       )}
                       
+                      {/* Sort Options */}
+                      {comments.length > 0 && (
+                        <div className="flex items-center gap-4 flex-wrap">
+                          <span className="text-sm text-slate-500 dark:text-slate-400">{t('productDetail.sortBy')}:</span>
+                          <div className="flex gap-2 flex-wrap">
+                            <Button 
+                              size="small" 
+                              type={commentSortBy === 'time' ? 'primary' : 'default'}
+                              onClick={() => handleSortChange('time', commentSortOrder === 'desc' && commentSortBy === 'time' ? 'asc' : 'desc')}
+                            >
+                              {t('productDetail.sortByTime')} {commentSortBy === 'time' && (commentSortOrder === 'desc' ? '↓' : '↑')}
+                            </Button>
+                            <Button 
+                              size="small" 
+                              type={commentSortBy === 'likes' ? 'primary' : 'default'}
+                              onClick={() => handleSortChange('likes', commentSortOrder === 'desc' && commentSortBy === 'likes' ? 'asc' : 'desc')}
+                            >
+                              {t('productDetail.sortByLikes')} {commentSortBy === 'likes' && (commentSortOrder === 'desc' ? '↓' : '↑')}
+                            </Button>
+                            <Button 
+                              size="small" 
+                              type={commentSortBy === 'rating' ? 'primary' : 'default'}
+                              onClick={() => handleSortChange('rating', commentSortOrder === 'desc' && commentSortBy === 'rating' ? 'asc' : 'desc')}
+                            >
+                              {t('productDetail.sortByRating')} {commentSortBy === 'rating' && (commentSortOrder === 'desc' ? '↓' : '↑')}
+                            </Button>
+                            <Button 
+                              size="small" 
+                              type={commentSortBy === 'replies' ? 'primary' : 'default'}
+                              onClick={() => handleSortChange('replies', commentSortOrder === 'desc' && commentSortBy === 'replies' ? 'asc' : 'desc')}
+                            >
+                              {t('productDetail.sortByReplies')} {commentSortBy === 'replies' && (commentSortOrder === 'desc' ? '↓' : '↑')}
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+
                       <div className="space-y-6">
                         {comments.map((c) => (
                           <div key={c.id} className="flex gap-4">
-                            <Avatar className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-md mt-1">{c.nickname?.[0]}</Avatar>
+                            <Avatar className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-md mt-1">{c.nickname?.[0] || c.username?.[0] || 'U'}</Avatar>
                             <div className="flex-1">
                               <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl rounded-tl-none border border-slate-100 dark:border-slate-800">
                                 <div className="flex items-center justify-between mb-2">
-                                  <h4 className="font-bold text-slate-900 dark:text-white">{c.nickname || 'User'}</h4>
+                                  <h4 className="font-bold text-slate-900 dark:text-white">{c.nickname || c.username || 'User'}</h4>
                                   <span className="text-xs text-slate-400">{c.createdAt?.substring(0, 10)}</span>
                                 </div>
-                                <div className="mb-2"><Rate disabled defaultValue={c.rating} style={{ fontSize: 12 }} /></div>
+                                {c.rating && <div className="mb-2"><Rate disabled defaultValue={c.rating} style={{ fontSize: 12 }} /></div>}
                                 <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">{c.content}</p>
+                                <div className="mt-3 flex items-center gap-4">
+                                  <button 
+                                    onClick={() => handleLikeComment(c.id, c.liked)}
+                                    className={`flex items-center gap-1 text-sm transition-colors ${c.liked ? 'text-blue-600' : 'text-slate-400 hover:text-blue-600'}`}
+                                  >
+                                    <ThumbsUp size={14} className={c.liked ? 'fill-current' : ''} />
+                                    <span>{c.likeCount || 0}</span>
+                                  </button>
+                                  {isAuthenticated && (
+                                    <button 
+                                      onClick={() => handleReplyComment(c.id, c.nickname || c.username)}
+                                      className="flex items-center gap-1 text-sm text-slate-400 hover:text-blue-600 transition-colors"
+                                    >
+                                      <MessageCircle size={14} />
+                                      <span>{t('productDetail.reply')}</span>
+                                    </button>
+                                  )}
+                                  {c.replyCount > 0 && (
+                                    <span className="text-xs text-slate-400">{c.replyCount} {t('productDetail.sortByReplies')}</span>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -495,15 +621,6 @@ export default function ProductDetail() {
                 <div className="flex justify-between py-3 border-b border-slate-100 dark:border-slate-800">
                   <span className="text-slate-500 flex items-center gap-2"><User size={16} /> {t('productDetail.developer')}</span>
                   <span className="font-medium dark:text-slate-200">{product.username || 'Official'}</span>
-                </div>
-              </div>
-              
-              <div className="mt-6">
-                <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">{t('productDetail.tags')}</h4>
-                <div className="flex flex-wrap gap-2">
-                  {product.tags?.map((tag: string) => (
-                    <Tag key={tag} className="m-0 px-3 py-1 bg-slate-100 dark:bg-slate-800 border-none text-slate-600 dark:text-slate-300 rounded-full">{tag}</Tag>
-                  ))}
                 </div>
               </div>
             </Card>

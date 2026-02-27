@@ -49,6 +49,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/comments/**").permitAll()
                         .requestMatchers("/api/v1/updates/check").permitAll()
                         .requestMatchers("/api/v1/downloads/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/files/download/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/files/download-url/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/system/theme").permitAll()
                         // 静态资源（头像等）
                         .requestMatchers("/uploads/**").permitAll()

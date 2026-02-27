@@ -33,6 +33,24 @@ public class VersionService {
                 .map(this::toVO).collect(Collectors.toList());
     }
 
+    public List<ProductVersionVO> getAllVersionsByProduct(Long productId) {
+        LambdaQueryWrapper<ProductVersion> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ProductVersion::getProductId, productId)
+                .orderByDesc(ProductVersion::getVersionCode);
+        return versionMapper.selectList(wrapper).stream()
+                .map(this::toVO).collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void deleteVersion(Long versionId) {
+        ProductVersion version = versionMapper.selectById(versionId);
+        if (version == null) {
+            throw new BusinessException(ErrorCode.VERSION_NOT_FOUND);
+        }
+        versionMapper.deleteById(versionId);
+        log.info("Version {} deleted", versionId);
+    }
+
     public ProductVersionVO getLatestVersion(Long productId) {
         LambdaQueryWrapper<ProductVersion> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(ProductVersion::getProductId, productId)
@@ -81,6 +99,7 @@ public class VersionService {
                 .checksumSha256(request.getChecksumSha256())
                 .checksumMd5(request.getChecksumMd5())
                 .signature(request.getSignature())
+                .fileRecordId(request.getFileRecordId())
                 .downloadCount(0L)
                 .isMandatory(request.getIsMandatory() != null ? request.getIsMandatory() : false)
                 .isLatest(true)
@@ -154,6 +173,7 @@ public class VersionService {
                 .fileName(v.getFileName())
                 .fileSize(v.getFileSize())
                 .checksumSha256(v.getChecksumSha256())
+                .fileRecordId(v.getFileRecordId())
                 .downloadCount(v.getDownloadCount())
                 .isMandatory(v.getIsMandatory())
                 .isLatest(v.getIsLatest())

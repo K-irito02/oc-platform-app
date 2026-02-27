@@ -53,7 +53,8 @@ public enum ErrorCode {
     COMMENT_NOT_FOUND(60001, "评论不存在"),
     COMMENT_ALREADY_LIKED(60002, "已经点赞过"),
     COMMENT_SELF_REPLY(60003, "不能回复自己的评论"),
-    DUPLICATE_RATING(60004, "已经评分过该产品");
+    DUPLICATE_RATING(60004, "已经评分过该产品"),
+    RATE_LIMIT_EXCEEDED(60005, "评论发布过于频繁，请稍后再试");
 
     private final int code;
     private final String message;

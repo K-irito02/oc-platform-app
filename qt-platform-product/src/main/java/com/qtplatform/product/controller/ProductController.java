@@ -93,11 +93,31 @@ public class ProductController {
         return ApiResponse.success();
     }
 
+    @GetMapping("/{id}/versions/all")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public ApiResponse<List<ProductVersionVO>> getAllVersions(@PathVariable Long id) {
+        return ApiResponse.success(versionService.getAllVersionsByProduct(id));
+    }
+
     @PostMapping("/{id}/versions")
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ApiResponse<ProductVersionVO> createVersion(@PathVariable Long id,
                                                        @Valid @RequestBody CreateVersionRequest request) {
         return ApiResponse.success(versionService.createVersion(id, request));
+    }
+
+    @PostMapping("/versions/{vid}/publish")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public ApiResponse<Void> publishVersion(@PathVariable Long vid) {
+        versionService.publishVersion(vid);
+        return ApiResponse.success();
+    }
+
+    @DeleteMapping("/versions/{vid}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public ApiResponse<Void> deleteVersion(@PathVariable Long vid) {
+        versionService.deleteVersion(vid);
+        return ApiResponse.success();
     }
 
     @PostMapping("/{id}/versions/{vid}/rollback")
