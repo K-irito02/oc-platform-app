@@ -30,6 +30,7 @@
 | Spring Data JPA | 3.2.x | ORM（简单 CRUD） |
 | PostgreSQL | 15.x | 主数据库（JSONB + 全文检索 + 表分区） |
 | Redis | 7.x | 缓存 + 限流（单机模式） |
+| MinIO | Latest | 对象存储（图片/视频上传） |
 | SpringDoc OpenAPI | 2.x | API 文档（Swagger UI） |
 
 ### 基础设施
@@ -49,7 +50,7 @@
 
 | 软件 | 版本 | 安装方式 |
 |------|------|---------|
-| JDK | OpenJDK 17+ (Temurin) | [adoptium.net](https://adoptium.net) |
+| JDK | OpenJDK 17.0.15 (Temurin) | [adoptium.net](https://adoptium.net) |
 | Node.js | 22.x LTS | nvm-windows |
 | Maven | 3.9.x | 官网安装 |
 | Docker Desktop | Latest | 官网安装，启用 WSL2 |
@@ -75,14 +76,15 @@ docker compose -f docker-compose.dev.yml up -d
 |------|---------|------------|----------|--------|------|
 | PostgreSQL 15 | qt-dev-postgres | **5433** | 5432 | qt_user | 3143285505 |
 | Redis 7 | qt-dev-redis | **6380** | 6379 | 无 | 3143285505 |
+| MinIO | qt-dev-minio | **9000** | 9000 | minioadmin | minioadmin |
 
-> **重要**: PostgreSQL 端口为 **5433**（非默认 5432），Redis 端口为 **6380**（非默认 6379），避免与本地已安装的 PostgreSQL/Redis 冲突。
+> **重要**: PostgreSQL 端口为 **5433**（非默认 5432），Redis 端口为 **6380**（非默认 6379），MinIO 端口为 **9000**，避免与本地已安装的服务冲突。
 
 验证服务是否正常启动：
 
 ```bash
 docker compose -f docker-compose.dev.yml ps
-# 应看到两个服务状态为 healthy
+# 应看到三个服务状态为 healthy
 ```
 
 PostgreSQL 启动时会自动执行 `sql/init.sql` 建表和初始化管理员账号。
@@ -115,6 +117,7 @@ java -jar qt-platform-app/target/qt-platform-app-1.0.0-SNAPSHOT.jar --spring.pro
 启动成功后可访问：
 - **API 地址**: http://localhost:8081
 - **Swagger UI**: http://localhost:8081/swagger-ui.html
+- **MinIO Console**: http://localhost:9001
 
 > **注**: 后端端口为 **8081**（非默认 8080），因本机 Apache httpd 占用 8080。
 
@@ -149,7 +152,7 @@ qt-platform/
 ├── qt-platform-user/              # 用户模块（认证、OAuth、用户管理、Spring Security）
 ├── qt-platform-product/           # 产品模块（产品、版本、分类、下载、更新检查）
 ├── qt-platform-comment/           # 评论模块（评论 CRUD、评分、点赞）
-├── qt-platform-file/              # 文件模块（上传、存储、校验）
+├── qt-platform-file/              # 文件模块（MinIO 存储、上传、校验）
 ├── qt-platform-admin/             # 后台管理模块（仪表盘、审核、系统配置）
 ├── qt-platform-app/               # 主应用启动模块（聚合所有模块 + 配置文件）
 │   ├── Dockerfile                 # 后端多阶段构建
@@ -188,6 +191,8 @@ qt-platform/
 | 前端开发 | **5173** | Vite 开发服务器（可能自动切换到5174）|
 | PostgreSQL | **5433** | Docker 容器（映射 5433→5432，避免本地 PG 冲突）|
 | Redis | **6380** | Docker 容器（映射 6380→6379，避免本地 Redis 冲突）|
+| MinIO | **9000** | 对象存储服务（API）|
+| MinIO Console | **9001** | 对象存储管理界面|
 
 ---
 
@@ -197,6 +202,7 @@ qt-platform/
 |------|--------|------|--------|
 | PostgreSQL | qt_user | **3143285505** | qt_platform |
 | Redis | 无 | **3143285505** | — |
+| MinIO | minioadmin | minioadmin | — |
 
 ---
 
@@ -243,7 +249,7 @@ Get-Content sql/seed.sql | docker exec -i qt-dev-postgres psql -U qt_user -d qt_
 - [x] **公共模块**: 统一响应 `ApiResponse<T>` / `PageResponse<T>`、全局异常处理、JWT 工具、Redis/Jackson/MyBatis-Plus 配置
 - [x] **用户模块**: 邮箱注册/登录、GitHub OAuth、JWT 认证、邮箱验证码、密码找回/重置、个人信息管理、语言偏好
 - [x] **产品模块**: 产品 CRUD、分类管理、产品列表（分页/筛选/排序）、产品详情、语义化版本管理、多平台支持、灰度发布
-- [x] **文件模块**: 文件上传/下载、断点续传、SHA256 校验、本地存储
+- [x] **文件模块**: 文件上传/下载、断点续传、SHA256 校验、MinIO 对象存储
 - [x] **评论模块**: 评论 CRUD、评分（1-5 星）、评论点赞、树形回复
 - [x] **通知/审计**: 站内通知、审计日志
 - [x] **管理后台**: 仪表盘统计、用户管理（封禁/角色）、产品审核、评论管理、分类管理、系统配置
@@ -277,8 +283,9 @@ Get-Content sql/seed.sql | docker exec -i qt-dev-postgres psql -U qt_user -d qt_
 
 - [x] 前后端联调（Mock → 真实 API 对接，可通过 VITE_ENABLE_MOCK=false 切换）
 - [x] 邮件服务配置（QQ邮箱SMTP真实发送）
-- [x] 头像上传功能（支持多格式、圆形裁剪）
+- [x] 文件上传功能（支持多格式、圆形裁剪）
 - [x] 修改邮箱功能（验证码发送到新邮箱）
+- [x] 产品截图上传和显示功能
 - [ ] 文件上传/下载端到端测试
 - [ ] 单元测试编写（前端 Jest + 后端 JUnit 5）
 - [ ] 响应式设计优化（移动端适配）

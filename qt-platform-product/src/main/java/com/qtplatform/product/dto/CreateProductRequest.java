@@ -24,8 +24,11 @@ public class CreateProductRequest {
     private Long categoryId;
     private String iconUrl;
     private String bannerUrl;
+    private List<String> screenshots;
+    private String demoVideoUrl;
     private String homepageUrl;
     private String sourceUrl;
     private String license;
     private List<String> tags;
+    private String status;
 }

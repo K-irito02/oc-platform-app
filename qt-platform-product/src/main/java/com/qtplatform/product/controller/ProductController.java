@@ -49,6 +49,16 @@ public class ProductController {
         return ApiResponse.success(productService.getProductBySlug(slug));
     }
 
+    @GetMapping("/public/{slug}")
+    public ApiResponse<ProductVO> getPublicProductBySlug(@PathVariable String slug) {
+        return ApiResponse.success(productService.getProductBySlug(slug));
+    }
+
+    @GetMapping("/public/id/{id}")
+    public ApiResponse<ProductVO> getPublicProductById(@PathVariable Long id) {
+        return ApiResponse.success(productService.getProductById(id));
+    }
+
     @GetMapping("/{id}/versions")
     public ApiResponse<List<ProductVersionVO>> getVersions(@PathVariable Long id) {
         return ApiResponse.success(versionService.getVersionsByProduct(id));
@@ -94,6 +104,18 @@ public class ProductController {
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ApiResponse<Void> rollbackVersion(@PathVariable Long id, @PathVariable Long vid) {
         versionService.rollbackVersion(id, vid);
+        return ApiResponse.success();
+    }
+
+    @PostMapping("/{id}/download")
+    public ApiResponse<Void> incrementDownloadCount(@PathVariable Long id) {
+        productService.incrementDownloadCount(id);
+        return ApiResponse.success();
+    }
+
+    @PostMapping("/versions/{vid}/download")
+    public ApiResponse<Void> incrementVersionDownloadCount(@PathVariable Long vid) {
+        versionService.incrementDownloadCount(vid);
         return ApiResponse.success();
     }
 }

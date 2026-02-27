@@ -192,8 +192,8 @@ public class AuthService {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
 
-        // Verify the code was sent to the CURRENT email
-        if (!emailService.verifyCode(user.getEmail(), code, "CHANGE_EMAIL")) {
+        // Verify the code was sent to the NEW email
+        if (!emailService.verifyCode(newEmail, code, "CHANGE_EMAIL")) {
             throw new BusinessException(ErrorCode.VERIFICATION_CODE_INVALID);
         }
 

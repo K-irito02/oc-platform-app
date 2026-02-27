@@ -8,7 +8,6 @@ import com.qtplatform.common.response.PageResponse;
 import com.qtplatform.product.dto.*;
 import com.qtplatform.product.entity.Category;
 import com.qtplatform.product.entity.Product;
-import com.qtplatform.product.entity.ProductVersion;
 import com.qtplatform.product.repository.CategoryMapper;
 import com.qtplatform.product.repository.ProductMapper;
 import com.qtplatform.product.repository.ProductVersionMapper;
@@ -120,6 +119,7 @@ public class ProductService {
             throw new BusinessException(ErrorCode.PRODUCT_SLUG_EXISTS);
         }
 
+        String status = StringUtils.hasText(request.getStatus()) ? request.getStatus() : "DRAFT";
         Product product = Product.builder()
                 .name(request.getName())
                 .nameEn(request.getNameEn())
@@ -128,9 +128,11 @@ public class ProductService {
                 .descriptionEn(request.getDescriptionEn())
                 .categoryId(request.getCategoryId())
                 .developerId(developerId)
-                .status("DRAFT")
+                .status(status)
                 .iconUrl(request.getIconUrl())
                 .bannerUrl(request.getBannerUrl())
+                .screenshots(request.getScreenshots())
+                .demoVideoUrl(request.getDemoVideoUrl())
                 .homepageUrl(request.getHomepageUrl())
                 .sourceUrl(request.getSourceUrl())
                 .license(request.getLicense())
@@ -159,10 +161,13 @@ public class ProductService {
         if (request.getCategoryId() != null) product.setCategoryId(request.getCategoryId());
         if (request.getIconUrl() != null) product.setIconUrl(request.getIconUrl());
         if (request.getBannerUrl() != null) product.setBannerUrl(request.getBannerUrl());
+        if (request.getScreenshots() != null) product.setScreenshots(request.getScreenshots());
+        if (request.getDemoVideoUrl() != null) product.setDemoVideoUrl(request.getDemoVideoUrl());
         if (request.getHomepageUrl() != null) product.setHomepageUrl(request.getHomepageUrl());
         if (request.getSourceUrl() != null) product.setSourceUrl(request.getSourceUrl());
         if (request.getLicense() != null) product.setLicense(request.getLicense());
         if (request.getIsFeatured() != null) product.setIsFeatured(request.getIsFeatured());
+        if (StringUtils.hasText(request.getStatus())) product.setStatus(request.getStatus());
 
         productMapper.updateById(product);
         return toProductVO(product);
@@ -189,6 +194,10 @@ public class ProductService {
         }
         productMapper.updateById(product);
         log.info("Product {} audit -> {}", id, status);
+    }
+
+    public void incrementDownloadCount(Long productId) {
+        productMapper.incrementDownloadCount(productId, 1L);
     }
 
     private ProductVO toProductVO(Product product) {

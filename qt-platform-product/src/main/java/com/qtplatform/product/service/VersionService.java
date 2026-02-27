@@ -137,6 +137,10 @@ public class VersionService {
         versionMapper.updateById(version);
     }
 
+    public void incrementDownloadCount(Long versionId) {
+        versionMapper.incrementDownloadCount(versionId);
+    }
+
     private ProductVersionVO toVO(ProductVersion v) {
         return ProductVersionVO.builder()
                 .id(v.getId())

@@ -1,9 +1,91 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAppSelector } from '@/store/hooks';
 import { productApi, commentApi } from '@/utils/api';
-import { Button, Tag, Tabs, Rate, Avatar, Form, Input, message, Spin, Empty, Card } from 'antd';
-import { Github, ExternalLink, Star, Clock, Eye, Download as DownloadIcon, Terminal, Shield, CheckCircle, Tag as TagIcon, User } from 'lucide-react';
+import { Button, Tag, Tabs, Rate, Avatar, Form, Input, message, Spin, Empty, Card, Progress } from 'antd';
+const { TextArea } = Input;
+import { Github, ExternalLink, Star, Clock, Eye, Download as DownloadIcon, Terminal, Shield, CheckCircle, Tag as TagIcon, User, Play, Pause, Volume2, VolumeX, Maximize } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+
+// Video Player Component
+const VideoPlayer = ({ src, poster }: { src: string; poster?: string }) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
+
+  const handleFullscreen = () => {
+    if (videoRef.current) {
+      videoRef.current.requestFullscreen();
+    }
+  };
+
+  const handleTimeUpdate = () => {
+    if (videoRef.current) {
+      const percent = (videoRef.current.currentTime / videoRef.current.duration) * 100;
+      setProgress(percent);
+    }
+  };
+
+  return (
+    <div className="relative rounded-2xl overflow-hidden bg-black group">
+      <video
+        ref={videoRef}
+        src={src}
+        poster={poster}
+        className="w-full aspect-video object-cover"
+        onTimeUpdate={handleTimeUpdate}
+        onEnded={() => setIsPlaying(false)}
+      />
+      {/* Play overlay */}
+      {!isPlaying && (
+        <div 
+          className="absolute inset-0 flex items-center justify-center bg-black/30 cursor-pointer"
+          onClick={togglePlay}
+        >
+          <div className="w-20 h-20 rounded-full bg-white/90 flex items-center justify-center shadow-2xl hover:scale-110 transition-transform">
+            <Play size={36} className="text-slate-900 ml-1" />
+          </div>
+        </div>
+      )}
+      {/* Controls */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+        <Progress percent={progress} showInfo={false} strokeColor="#3b82f6" trailColor="rgba(255,255,255,0.2)" size="small" />
+        <div className="flex items-center justify-between mt-2">
+          <div className="flex items-center gap-3">
+            <button onClick={togglePlay} className="text-white hover:text-blue-400 transition-colors" title={isPlaying ? 'Pause' : 'Play'} aria-label={isPlaying ? 'Pause' : 'Play'}>
+              {isPlaying ? <Pause size={20} /> : <Play size={20} />}
+            </button>
+            <button onClick={toggleMute} className="text-white hover:text-blue-400 transition-colors" title={isMuted ? 'Unmute' : 'Mute'} aria-label={isMuted ? 'Unmute' : 'Mute'}>
+              {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+            </button>
+          </div>
+          <button onClick={handleFullscreen} className="text-white hover:text-blue-400 transition-colors" title="Fullscreen" aria-label="Fullscreen">
+            <Maximize size={20} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // Simple Markdown Renderer Component
 const MarkdownRenderer = ({ content }: { content: string }) => {
@@ -83,6 +165,7 @@ const MOCK_COMMENTS = [
 ];
 
 export default function ProductDetail() {
+  const { t } = useTranslation();
   const { slug } = useParams<{ slug: string }>();
   const { isAuthenticated } = useAppSelector((s) => s.auth);
 
@@ -165,6 +248,22 @@ export default function ProductDetail() {
     } finally { setSubmitting(false); }
   };
 
+  const handleDownload = async (versionId: number) => {
+    try {
+      // Increment download count
+      await productApi.incrementVersionDownload(versionId);
+      if (product?.id) {
+        await productApi.incrementDownload(product.id);
+      }
+      // Trigger actual download via file API
+      window.open(`/api/v1/files/download/${versionId}`, '_blank');
+    } catch (err) {
+      console.error('Download error:', err);
+      // Still allow download even if count increment fails
+      window.open(`/api/v1/files/download/${versionId}`, '_blank');
+    }
+  };
+
   const formatSize = (bytes: number) => {
     if (!bytes) return '-';
     if (bytes >= 1073741824) return (bytes / 1073741824).toFixed(1) + ' GB';
@@ -174,7 +273,7 @@ export default function ProductDetail() {
   };
 
   if (loading) return <div className="flex justify-center items-center min-h-[60vh]"><Spin size="large" /></div>;
-  if (!product) return <div className="flex justify-center items-center min-h-[60vh]"><Empty description="Product not found" /></div>;
+  if (!product) return <div className="flex justify-center items-center min-h-[60vh]"><Empty description={t('productDetail.productNotFound')} /></div>;
 
   const latestVersion = versions.find((v: any) => v.isLatest) || versions[0];
 
@@ -214,19 +313,19 @@ export default function ProductDetail() {
                     size="large" 
                     icon={<DownloadIcon size={20} />} 
                     className="h-14 px-8 text-lg rounded-xl bg-blue-600 hover:bg-blue-700 border-none shadow-lg shadow-blue-600/20"
-                    href={`/api/v1/downloads/${product.id}/${latestVersion.id}`}
+                    onClick={() => handleDownload(latestVersion.id)}
                   >
-                    Download {latestVersion.versionNumber}
+                    {t('productDetail.download')} {latestVersion.versionNumber}
                   </Button>
                 )}
                 {product.homepageUrl && (
                   <Button size="large" icon={<ExternalLink size={20} />} href={product.homepageUrl} target="_blank" className="h-14 px-6 rounded-xl">
-                    Website
+                    {t('productDetail.website')}
                   </Button>
                 )}
                 {product.sourceUrl && (
                   <Button size="large" icon={<Github size={20} />} href={product.sourceUrl} target="_blank" className="h-14 px-6 rounded-xl">
-                    Source
+                    {t('productDetail.source')}
                   </Button>
                 )}
               </div>
@@ -245,19 +344,19 @@ export default function ProductDetail() {
             {/* Stats Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-slate-200 dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800">
               <div className="bg-slate-50 dark:bg-slate-900 p-6 text-center group hover:bg-white dark:hover:bg-slate-800 transition-colors">
-                <div className="text-slate-500 dark:text-slate-400 text-sm mb-2 flex items-center justify-center gap-1.5 font-medium"><DownloadIcon size={16}/> Downloads</div>
+                <div className="text-slate-500 dark:text-slate-400 text-sm mb-2 flex items-center justify-center gap-1.5 font-medium"><DownloadIcon size={16}/> {t('productDetail.downloads')}</div>
                 <div className="text-2xl font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">{product.downloadCount?.toLocaleString()}</div>
               </div>
               <div className="bg-slate-50 dark:bg-slate-900 p-6 text-center group hover:bg-white dark:hover:bg-slate-800 transition-colors">
-                <div className="text-slate-500 dark:text-slate-400 text-sm mb-2 flex items-center justify-center gap-1.5 font-medium"><Star size={16}/> Rating</div>
+                <div className="text-slate-500 dark:text-slate-400 text-sm mb-2 flex items-center justify-center gap-1.5 font-medium"><Star size={16}/> {t('productDetail.rating')}</div>
                 <div className="text-2xl font-bold text-slate-900 dark:text-white group-hover:text-amber-500 transition-colors">{product.ratingAverage?.toFixed(1)}</div>
               </div>
               <div className="bg-slate-50 dark:bg-slate-900 p-6 text-center group hover:bg-white dark:hover:bg-slate-800 transition-colors">
-                <div className="text-slate-500 dark:text-slate-400 text-sm mb-2 flex items-center justify-center gap-1.5 font-medium"><Eye size={16}/> Views</div>
+                <div className="text-slate-500 dark:text-slate-400 text-sm mb-2 flex items-center justify-center gap-1.5 font-medium"><Eye size={16}/> {t('productDetail.views')}</div>
                 <div className="text-2xl font-bold text-slate-900 dark:text-white">{product.viewCount?.toLocaleString()}</div>
               </div>
               <div className="bg-slate-50 dark:bg-slate-900 p-6 text-center group hover:bg-white dark:hover:bg-slate-800 transition-colors">
-                <div className="text-slate-500 dark:text-slate-400 text-sm mb-2 flex items-center justify-center gap-1.5 font-medium"><Clock size={16}/> Updated</div>
+                <div className="text-slate-500 dark:text-slate-400 text-sm mb-2 flex items-center justify-center gap-1.5 font-medium"><Clock size={16}/> {t('productDetail.updated')}</div>
                 <div className="text-lg font-bold text-slate-900 dark:text-white mt-1">{product.updatedAt?.substring(0, 10)}</div>
               </div>
             </div>
@@ -267,16 +366,40 @@ export default function ProductDetail() {
               items={[
                 {
                   key: 'overview',
-                  label: 'Overview',
+                  label: t('productDetail.overview'),
                   children: (
-                    <div className="bg-white dark:bg-slate-900 mt-4">
-                       <MarkdownRenderer content={product.description} />
+                    <div className="bg-white dark:bg-slate-900 mt-4 space-y-8">
+                      {/* Demo Video */}
+                      {product.demoVideoUrl && (
+                        <div>
+                          <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">{t('productDetail.demoVideo')}</h3>
+                          <VideoPlayer src={product.demoVideoUrl} poster={product.bannerUrl} />
+                        </div>
+                      )}
+                      {/* Screenshots */}
+                      {product.screenshots && product.screenshots.length > 0 && (
+                        <div>
+                          <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">{t('productDetail.screenshots')}</h3>
+                          <div className="grid grid-cols-2 gap-4">
+                            {product.screenshots.map((screenshot: string, idx: number) => (
+                              <img 
+                                key={idx} 
+                                src={screenshot} 
+                                alt={`Screenshot ${idx + 1}`}
+                                className="rounded-xl border border-slate-200 dark:border-slate-700 hover:scale-105 transition-transform cursor-pointer"
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {/* Description */}
+                      <MarkdownRenderer content={product.description} />
                     </div>
                   )
                 },
                 {
                   key: 'versions',
-                  label: `Versions (${versions.length})`,
+                  label: `${t('productDetail.versions')} (${versions.length})`,
                   children: (
                     <div className="mt-4 space-y-3">
                       {versions.map((v) => (
@@ -284,7 +407,7 @@ export default function ProductDetail() {
                           <div>
                             <div className="flex items-center gap-3">
                               <span className="font-bold text-lg text-slate-900 dark:text-white">{v.versionNumber}</span>
-                              {v.isLatest && <Tag color="green" className="rounded-full px-2">Latest</Tag>}
+                              {v.isLatest && <Tag color="green" className="rounded-full px-2">{t('productDetail.latest')}</Tag>}
                             </div>
                             <div className="text-sm text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-3">
                               <span className="flex items-center gap-1"><Terminal size={12}/> {v.platform}</span>
@@ -292,7 +415,7 @@ export default function ProductDetail() {
                               <span>{v.createdAt?.substring(0, 10)}</span>
                             </div>
                           </div>
-                          <Button type="primary" ghost icon={<DownloadIcon size={16} />} href={`/api/v1/downloads/${product.id}/${v.id}`}>
+                          <Button type="primary" ghost icon={<DownloadIcon size={16} />} onClick={() => handleDownload(v.id)}>
                             {formatSize(v.fileSize)}
                           </Button>
                         </div>
@@ -302,28 +425,28 @@ export default function ProductDetail() {
                 },
                 {
                   key: 'comments',
-                  label: `Reviews (${commentTotal})`,
+                  label: `${t('productDetail.reviews')} (${commentTotal})`,
                   children: (
                     <div className="mt-6 space-y-8">
                       {isAuthenticated ? (
                         <Card className="dark:bg-slate-900 dark:border-slate-800 shadow-sm" styles={{ body: { padding: '1.5rem' } }}>
-                          <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-white">Write a Review</h3>
+                          <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-white">{t('productDetail.writeReview')}</h3>
                           <Form form={form} onFinish={handleComment} layout="vertical">
-                            <Form.Item name="rating" label="Rating" initialValue={5}>
+                            <Form.Item name="rating" label={t('productDetail.rating')} initialValue={5}>
                               <Rate />
                             </Form.Item>
-                            <Form.Item name="content" rules={[{ required: true, message: 'Please write something' }]}>
-                              <Input.TextArea rows={4} placeholder="Share your experience with this product..." className="rounded-xl resize-none" />
+                            <Form.Item name="content" rules={[{ required: true, message: t('productDetail.commentPlaceholder') }]}>
+                              <TextArea rows={4} placeholder={t('productDetail.commentPlaceholder')} className="rounded-xl resize-none" />
                             </Form.Item>
                             <div className="flex justify-end">
-                              <Button type="primary" htmlType="submit" loading={submitting} className="px-6 rounded-lg bg-blue-600">Submit Review</Button>
+                              <Button type="primary" htmlType="submit" loading={submitting}>{t('productDetail.submitReview')}</Button>
                             </div>
                           </Form>
                         </Card>
                       ) : (
                         <div className="text-center py-10 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
-                          <p className="text-slate-600 dark:text-slate-400 mb-4">Please log in to leave a review.</p>
-                          <Link to="/login"><Button type="primary">Log In</Button></Link>
+                          <p className="text-slate-600 dark:text-slate-400 mb-4">{t('productDetail.loginToReview')}</p>
+                          <Link to="/login"><Button type="primary">{t('productDetail.login')}</Button></Link>
                         </div>
                       )}
                       
@@ -343,6 +466,16 @@ export default function ProductDetail() {
                             </div>
                           </div>
                         ))}
+                        {comments.length === 0 && (
+                          <div className="text-center py-10 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
+                            <p className="text-slate-600 dark:text-slate-400 mb-4">{t('productDetail.noReviews')}</p>
+                            {isAuthenticated ? (
+                              <Button type="link" className="text-blue-600 hover:text-blue-700">{t('productDetail.beFirstToReview')}</Button>
+                            ) : (
+                              <Link to="/login"><Button type="primary">{t('productDetail.login')}</Button></Link>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   )
@@ -353,28 +486,28 @@ export default function ProductDetail() {
 
           {/* Sidebar Column */}
           <div className="space-y-8">
-            <Card title="Information" bordered={false} className="shadow-sm dark:bg-slate-900 dark:border-slate-800 sticky top-24">
+            <Card title={t('productDetail.information')} bordered={false} className="shadow-sm dark:bg-slate-900 dark:border-slate-800 sticky top-24">
               <div className="space-y-4">
                 <div className="flex justify-between py-3 border-b border-slate-100 dark:border-slate-800">
-                  <span className="text-slate-500 flex items-center gap-2"><Shield size={16}/> License</span>
+                  <span className="text-slate-500 flex items-center gap-2"><Shield size={16}/> {t('productDetail.license')}</span>
                   <span className="font-medium dark:text-slate-200">{product.license || 'Proprietary'}</span>
                 </div>
                 <div className="flex justify-between py-3 border-b border-slate-100 dark:border-slate-800">
-                  <span className="text-slate-500 flex items-center gap-2"><TagIcon size={16}/> Category</span>
+                  <span className="text-slate-500 flex items-center gap-2"><TagIcon size={16}/> {t('productDetail.category')}</span>
                   <span className="font-medium dark:text-slate-200">{product.categoryName || 'Uncategorized'}</span>
                 </div>
                 <div className="flex justify-between py-3 border-b border-slate-100 dark:border-slate-800">
-                  <span className="text-slate-500 flex items-center gap-2"><CheckCircle size={16}/> Version</span>
+                  <span className="text-slate-500 flex items-center gap-2"><CheckCircle size={16}/> {t('productDetail.version')}</span>
                   <span className="font-medium dark:text-slate-200">{latestVersion?.versionNumber || '-'}</span>
                 </div>
                 <div className="flex justify-between py-3 border-b border-slate-100 dark:border-slate-800">
-                  <span className="text-slate-500 flex items-center gap-2"><User size={16} /> Developer</span>
+                  <span className="text-slate-500 flex items-center gap-2"><User size={16} /> {t('productDetail.developer')}</span>
                   <span className="font-medium dark:text-slate-200">{product.username || 'Official'}</span>
                 </div>
               </div>
               
               <div className="mt-6">
-                <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">Tags</h4>
+                <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">{t('productDetail.tags')}</h4>
                 <div className="flex flex-wrap gap-2">
                   {product.tags?.map((tag: string) => (
                     <Tag key={tag} className="m-0 px-3 py-1 bg-slate-100 dark:bg-slate-800 border-none text-slate-600 dark:text-slate-300 rounded-full">{tag}</Tag>

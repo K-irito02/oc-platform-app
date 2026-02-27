@@ -58,8 +58,8 @@ export default function AdminCategories() {
 
   const handleDelete = (id: number) => {
     Modal.confirm({
-      title: 'Delete Category?',
-      content: 'This action cannot be undone.',
+      title: t('admin.confirmDelete'),
+      content: t('admin.cannotUndo'),
       okType: 'danger',
       onOk: async () => {
         try {
@@ -72,16 +72,16 @@ export default function AdminCategories() {
   };
 
   const columns: ColumnsType<any> = [
-    { title: 'ID', dataIndex: 'id', width: 60 },
+    { title: t('admin.id'), dataIndex: 'id', width: 60 },
     {
-      title: 'Name', dataIndex: 'name',
+      title: t('admin.name'), dataIndex: 'name',
       render: (v: string, r: any) => <span style={{ paddingLeft: r.depth * 20 }} className="font-medium">{r.icon ? `${r.icon} ` : ''}{v}</span>,
     },
-    { title: 'English Name', dataIndex: 'nameEn', ellipsis: true },
-    { title: 'Slug', dataIndex: 'slug', width: 140 },
-    { title: 'Sort Order', dataIndex: 'sortOrder', width: 100 },
+    { title: t('admin.englishName'), dataIndex: 'nameEn', ellipsis: true },
+    { title: t('admin.slug'), dataIndex: 'slug', width: 140 },
+    { title: t('admin.sortOrder'), dataIndex: 'sortOrder', width: 100 },
     {
-      title: 'Action', width: 150, fixed: 'right',
+      title: t('admin.action'), width: 150, fixed: 'right',
       render: (_: any, record: any) => (
         <Space size="small">
           <Button size="small" icon={<Edit size={14} />} onClick={() => openEdit(record)} />
@@ -96,10 +96,10 @@ export default function AdminCategories() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t('admin.categories')}</h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm">Manage product category hierarchy.</p>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">{t('admin.manageCategories')}</p>
         </div>
         <Button type="primary" icon={<Plus size={16} />} onClick={openCreate} className="bg-blue-600">
-          New Category
+          {t('admin.newCategory')}
         </Button>
       </div>
 
@@ -115,22 +115,22 @@ export default function AdminCategories() {
       </Card>
 
       <Modal 
-        title={editing ? 'Edit Category' : 'New Category'} 
+        title={editing ? t('admin.editCategory') : t('admin.newCategory')} 
         open={modalVisible}
         onOk={handleSave} 
         onCancel={() => setModalVisible(false)} 
         destroyOnClose
       >
         <Form form={form} layout="vertical">
-          <Form.Item label="Name" name="name" rules={[{ required: true, message: 'Name is required' }]}>
+          <Form.Item label={t('admin.name')} name="name" rules={[{ required: true, message: t('admin.nameRequired') }]}>
             <Input />
           </Form.Item>
-          <Form.Item label="English Name" name="nameEn"><Input /></Form.Item>
-          <Form.Item label="Slug" name="slug" rules={[{ required: true, message: 'Slug is required' }]}>
+          <Form.Item label={t('admin.englishName')} name="nameEn"><Input /></Form.Item>
+          <Form.Item label={t('admin.slug')} name="slug" rules={[{ required: true, message: t('admin.slugRequired') }]}>
             <Input />
           </Form.Item>
-          <Form.Item label="Sort Order" name="sortOrder"><InputNumber min={0} className="w-full" /></Form.Item>
-          <Form.Item label="Icon" name="icon"><Input placeholder="Emoji or Icon Name" /></Form.Item>
+          <Form.Item label={t('admin.sortOrder')} name="sortOrder"><InputNumber min={0} className="w-full" /></Form.Item>
+          <Form.Item label={t('admin.icon')} name="icon"><Input placeholder={t('admin.categoryIconPlaceholder')} /></Form.Item>
         </Form>
       </Modal>
     </div>

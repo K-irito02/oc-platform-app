@@ -25,6 +25,8 @@ public class FileRecord {
     private String mimeType;
     private String checksumSha256;
     private String storageType;
+    private String bucketName;
+    private String fileUrl;
     private Long uploadedBy;
     private OffsetDateTime createdAt;
 }

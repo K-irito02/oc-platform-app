@@ -44,11 +44,14 @@ export const productApi = {
   list: (params: { page?: number; size?: number; categoryId?: number; sort?: string; keyword?: string }) =>
     request.get('/products', { params }),
   getFeatured: () => request.get('/products/featured'),
+  getBySlug: (slug: string) => request.get(`/products/public/${slug}`),
+  getById: (id: number) => request.get(`/products/public/id/${id}`),
   search: (params: { q: string; page?: number; size?: number }) =>
     request.get('/products/search', { params }),
-  getBySlug: (slug: string) => request.get(`/products/${slug}`),
   getVersions: (id: number) => request.get(`/products/${id}/versions`),
   getLatestVersion: (id: number) => request.get(`/products/${id}/versions/latest`),
+  incrementDownload: (id: number) => request.post(`/products/${id}/download`),
+  incrementVersionDownload: (versionId: number) => request.post(`/products/versions/${versionId}/download`),
 };
 
 // ===== Category API =====
@@ -92,10 +95,39 @@ export const fileApi = {
   uploadImage: (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
-    return request.post('/files/upload/image', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    return request.post('/files/upload/image', formData);
   },
+  uploadVideo: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return request.post('/files/upload/video', formData);
+  },
+  uploadAvatar: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return request.post('/files/upload/avatar', formData);
+  },
+  uploadProductImage: (file: File, productId: number) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('productId', String(productId));
+    return request.post('/files/upload/product-image', formData);
+  },
+  uploadProductVideo: (file: File, productId: number) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('productId', String(productId));
+    return request.post('/files/upload/product-video', formData);
+  },
+  uploadProductDownload: (file: File, productId: number) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('productId', String(productId));
+    return request.post('/files/upload/product-download', formData);
+  },
+  getDownloadUrl: (fileId: number, expiry = 60) =>
+    request.get(`/files/download-url/${fileId}`, { params: { expiry } }),
+  download: (fileId: number) => `/api/v1/files/download/${fileId}`,
 };
 
 // ===== System API (Public) =====

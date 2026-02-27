@@ -9,7 +9,7 @@ export default function AdminTheme() {
       <h2 className="text-2xl font-bold mb-6 text-slate-800 dark:text-slate-100">{t('admin.theme') || 'Theme Settings'}</h2>
       <Card className="dark:bg-slate-800 dark:border-slate-700">
         <p className="text-slate-600 dark:text-slate-300">
-          Global theme settings are coming soon. Use the toggle in the navbar to switch between Light and Dark modes.
+          {t('admin.themeComingSoon')}
         </p>
       </Card>
     </div>

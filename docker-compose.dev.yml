@@ -33,6 +33,25 @@ services:
       timeout: 5s
       retries: 3
 
+  minio:
+    image: minio/minio:latest
+    container_name: qt-dev-minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: "3143285505"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_dev_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   postgres_dev_data:
   redis_dev_data:
+  minio_dev_data:

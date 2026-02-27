@@ -1,7 +1,7 @@
 package com.qtplatform.product.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import com.qtplatform.common.handler.JsonbTypeHandler;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -32,8 +32,8 @@ public class Product {
     private String iconUrl;
     private String bannerUrl;
 
-    @TableField(typeHandler = JacksonTypeHandler.class)
-    private List<Object> screenshots;
+    @TableField(typeHandler = JsonbTypeHandler.class)
+    private List<String> screenshots;
 
     private String demoVideoUrl;
     private String homepageUrl;

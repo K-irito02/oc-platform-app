@@ -226,6 +226,16 @@ export default function Profile() {
               </p>
             </div>
             <Form form={emailForm} layout="vertical" onFinish={onEmailChange}>
+              <Form.Item
+                label={t('profile.newEmail')}
+                name="newEmail"
+                rules={[
+                  { required: true, message: t('profile.newEmailRequired') },
+                  { type: 'email', message: t('profile.emailFormatError') },
+                ]}
+              >
+                <Input size="large" prefix={<Mail size={16} className="text-slate-400" />} placeholder={t('profile.newEmailPlaceholder')} />
+              </Form.Item>
               <Form.Item label={t('profile.verificationCode')} name="code" rules={[{ required: true, message: t('profile.codeRequired') }]}>
                 <div className="flex gap-3">
                   <Input size="large" prefix={<ShieldCheck size={16} className="text-slate-400" />} placeholder="123456" />
@@ -239,16 +249,6 @@ export default function Profile() {
                     {emailCountdown > 0 ? `${emailCountdown}s` : t('profile.sendCode')}
                   </Button>
                 </div>
-              </Form.Item>
-              <Form.Item
-                label={t('profile.newEmail')}
-                name="newEmail"
-                rules={[
-                  { required: true, message: t('profile.newEmailRequired') },
-                  { type: 'email', message: t('profile.emailFormatError') },
-                ]}
-              >
-                <Input size="large" prefix={<Mail size={16} className="text-slate-400" />} placeholder={t('profile.newEmailPlaceholder')} />
               </Form.Item>
               <Form.Item>
                 <Button type="primary" htmlType="submit" loading={loading} size="large" className="bg-blue-600">

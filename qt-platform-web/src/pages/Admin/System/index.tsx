@@ -32,9 +32,9 @@ export default function AdminSystem() {
   };
 
   const columns: ColumnsType<any> = [
-    { title: 'Config Key', dataIndex: 'configKey', width: 220, className: 'font-mono text-sm' },
+    { title: t('admin.configKey'), dataIndex: 'configKey', width: 220, className: 'font-mono text-sm' },
     {
-      title: 'Value', dataIndex: 'configValue',
+      title: t('admin.value'), dataIndex: 'configValue',
       render: (v: string, record: any) => {
         if (editingKey === record.configKey) {
           return (
@@ -48,9 +48,9 @@ export default function AdminSystem() {
         return <span className="break-all">{v}</span>;
       },
     },
-    { title: 'Description', dataIndex: 'description', ellipsis: true, width: 250 },
+    { title: t('admin.description'), dataIndex: 'description', ellipsis: true, width: 250 },
     {
-      title: 'Action', width: 140, fixed: 'right',
+      title: t('admin.action'), width: 140, fixed: 'right',
       render: (_: any, record: any) => {
         if (editingKey === record.configKey) {
           return (
@@ -62,7 +62,7 @@ export default function AdminSystem() {
         }
         return (
           <Button size="small" icon={<Edit size={14} />} onClick={() => { setEditingKey(record.configKey); setEditingValue(record.configValue); }}>
-            Edit
+            {t('admin.edit')}
           </Button>
         );
       },
@@ -74,7 +74,7 @@ export default function AdminSystem() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t('admin.system')}</h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm">Configure global system parameters.</p>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">{t('admin.configureSystem')}</p>
         </div>
       </div>
 

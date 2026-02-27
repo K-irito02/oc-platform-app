@@ -26,6 +26,7 @@ const ComingSoon = lazy(() => import('@/pages/ComingSoon'));
 const AdminDashboard = lazy(() => import('@/pages/Admin/Dashboard'));
 const AdminUsers = lazy(() => import('@/pages/Admin/Users'));
 const AdminProducts = lazy(() => import('@/pages/Admin/Products'));
+const AdminProductEdit = lazy(() => import('@/pages/Admin/Products/ProductEdit'));
 const AdminComments = lazy(() => import('@/pages/Admin/Comments'));
 const AdminCategories = lazy(() => import('@/pages/Admin/Categories'));
 const AdminTheme = lazy(() => import('@/pages/Admin/Theme'));
@@ -70,6 +71,8 @@ const router = createBrowserRouter([
       { index: true, element: LazyLoad(AdminDashboard) },
       { path: 'users', element: LazyLoad(AdminUsers) },
       { path: 'products', element: LazyLoad(AdminProducts) },
+      { path: 'products/new', element: LazyLoad(AdminProductEdit) },
+      { path: 'products/:id/edit', element: LazyLoad(AdminProductEdit) },
       { path: 'comments', element: LazyLoad(AdminComments) },
       { path: 'categories', element: LazyLoad(AdminCategories) },
       { path: 'theme', element: LazyLoad(AdminTheme) },

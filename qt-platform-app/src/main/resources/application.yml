@@ -114,6 +114,16 @@ storage:
     - deb
     - rpm
 
+# MinIO 对象存储
+minio:
+  endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY:minioadmin}
+  secret-key: ${MINIO_SECRET_KEY:3143285505}
+  bucket-avatars: ${MINIO_BUCKET_AVATARS:avatars}
+  bucket-products: ${MINIO_BUCKET_PRODUCTS:products}
+  bucket-videos: ${MINIO_BUCKET_VIDEOS:videos}
+  bucket-downloads: ${MINIO_BUCKET_DOWNLOADS:downloads}
+
 # OAuth
 oauth:
   github:

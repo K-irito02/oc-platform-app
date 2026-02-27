@@ -345,7 +345,9 @@ CREATE TABLE file_records (
     mime_type       VARCHAR(100),
     checksum_sha256 VARCHAR(64),
     storage_type    VARCHAR(20) DEFAULT 'LOCAL'
-                    CHECK (storage_type IN ('LOCAL', 'COS')),
+                    CHECK (storage_type IN ('LOCAL', 'MINIO', 'COS')),
+    bucket_name     VARCHAR(100),
+    file_url        VARCHAR(1000),
     uploaded_by     BIGINT REFERENCES users(id),
     created_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );

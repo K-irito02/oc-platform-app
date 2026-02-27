@@ -1,6 +1,7 @@
 package com.qtplatform.product.repository;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.qtplatform.product.entity.Product;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -12,8 +13,11 @@ import java.util.Optional;
 @Mapper
 public interface ProductMapper extends BaseMapper<Product> {
 
-    @Select("SELECT * FROM products WHERE slug = #{slug}")
-    Optional<Product> findBySlug(@Param("slug") String slug);
+    default Optional<Product> findBySlug(String slug) {
+        LambdaQueryWrapper<Product> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Product::getSlug, slug);
+        return Optional.ofNullable(selectOne(wrapper));
+    }
 
     @Select("SELECT EXISTS(SELECT 1 FROM products WHERE slug = #{slug})")
     boolean existsBySlug(@Param("slug") String slug);

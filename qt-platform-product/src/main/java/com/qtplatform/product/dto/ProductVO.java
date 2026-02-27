@@ -28,7 +28,7 @@ public class ProductVO {
     private String status;
     private String iconUrl;
     private String bannerUrl;
-    private List<Object> screenshots;
+    private List<String> screenshots;
     private String demoVideoUrl;
     private String homepageUrl;
     private String sourceUrl;
