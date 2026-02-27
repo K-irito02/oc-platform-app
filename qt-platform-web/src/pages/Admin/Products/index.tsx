@@ -186,20 +186,20 @@ export default function AdminProducts() {
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t('admin.products')}</h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm">{t('admin.manageProducts')}</p>
         </div>
-        <Space className="flex items-center">
-          <Button type="primary" icon={<Plus size={16} />} style={{ height: 32 }} onClick={() => navigate('/admin/products/new')}>
+        <div className="flex items-center gap-3">
+          <Button type="primary" icon={<Plus size={16} />} className="h-9" onClick={() => navigate('/admin/products/new')}>
             {t('admin.newProduct')}
           </Button>
           <Input 
             prefix={<Search size={16} className="text-slate-400" />}
             placeholder={t('admin.searchProduct')}
             allowClear 
-            style={{ width: 180, height: 32 }}
+            className="w-72 md:w-80 h-9"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             onPressEnter={() => { setPage(1); loadData(); }} 
           />
-        </Space>
+        </div>
       </div>
 
       {/* 多级筛选区域 */}
@@ -216,7 +216,7 @@ export default function AdminProducts() {
           <Select
             placeholder={t('admin.selectCategory') || 'Select Category'}
             allowClear
-            className="w-40"
+            className="w-44 h-9"
             value={categoryFilter}
             onChange={(v) => { setCategoryFilter(v); setProductFilter(undefined); setPage(1); }}
             options={categories.map(c => ({ value: c.id, label: c.name }))}
@@ -226,7 +226,7 @@ export default function AdminProducts() {
           {categoryFilter && (
             <Select
               placeholder={t('admin.sortBy') || 'Sort By'}
-              className="w-36"
+              className="w-40 h-9"
               value={sortBy}
               onChange={(v) => { setSortBy(v); setProductFilter(undefined); }}
               options={[

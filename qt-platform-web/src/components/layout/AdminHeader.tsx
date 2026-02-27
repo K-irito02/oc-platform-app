@@ -47,7 +47,7 @@ export const AdminHeader = ({ collapsed, setCollapsed }: AdminHeaderProps) => {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between px-6 py-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+    <header className="sticky top-0 z-30 flex items-center justify-between px-6 h-14 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
       <div className="flex items-center gap-4">
         <button 
           onClick={() => setCollapsed(!collapsed)}
@@ -58,13 +58,12 @@ export const AdminHeader = ({ collapsed, setCollapsed }: AdminHeaderProps) => {
           <Menu size={20} />
         </button>
         
-        {/* Search Bar (Optional) */}
+        {/* Search Bar */}
         <div className="hidden md:flex items-center relative">
           <Search size={16} className="absolute left-3 text-slate-400 z-10" />
           <Input 
             placeholder={t('admin.searchProduct')}
-            className="w-64 pl-9 bg-slate-100 dark:bg-slate-800 border-none rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 focus:bg-white dark:focus:bg-slate-900 transition-colors"
-            style={{ height: 36 }}
+            className="w-72 pl-9 h-9 bg-slate-100 dark:bg-slate-800 border-none rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 focus:bg-white dark:focus:bg-slate-900 transition-colors"
           />
         </div>
       </div>

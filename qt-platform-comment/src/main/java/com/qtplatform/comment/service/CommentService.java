@@ -211,7 +211,7 @@ public class CommentService {
         List<ProductComment> replies = commentMapper.selectList(replyWrapper);
         if (!replies.isEmpty()) {
             vo.setReplies(replies.stream()
-                    .map(r -> toVO(r, currentUserId != null && commentLikeMapper.existsByCommentAndUser(r.getId(), currentUserId)))
+                    .map(r -> toVOWithReplies(r, currentUserId))
                     .collect(Collectors.toList()));
         } else {
             vo.setReplies(Collections.emptyList());

@@ -39,8 +39,8 @@ export const AdminSidebar = ({ collapsed, setCollapsed }: AdminSidebarProps) => 
       "hidden md:flex flex-col h-screen sticky top-0 z-40 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transition-all duration-300",
       collapsed ? "w-20" : "w-64"
     )}>
-      {/* Logo Section */}
-      <div className={cn("flex items-center gap-3 h-16 border-b border-slate-200 dark:border-slate-800", collapsed ? "justify-center px-0" : "px-6")}>
+      {/* Logo Section - 与 AdminHeader 高度对齐 */}
+      <div className={cn("flex items-center gap-3 h-14 border-b border-slate-200 dark:border-slate-800", collapsed ? "justify-center px-0" : "px-6")}>
         <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
           Q
         </div>

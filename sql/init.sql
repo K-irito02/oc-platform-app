@@ -232,6 +232,7 @@ CREATE TABLE product_comments (
     status      VARCHAR(20) DEFAULT 'PENDING'
                 CHECK (status IN ('PENDING', 'PUBLISHED', 'REJECTED', 'HIDDEN')),
     like_count  INTEGER DEFAULT 0,
+    reply_count INTEGER DEFAULT 0,
     ip_address  INET,
     created_at  TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at  TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP

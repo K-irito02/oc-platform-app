@@ -78,18 +78,18 @@ export default function AdminUsers() {
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t('admin.users')}</h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm">{t('admin.usersDesc')}</p>
         </div>
-        <Space className="flex items-center">
+        <div className="flex items-center gap-3">
           <Input 
             prefix={<Search size={16} className="text-slate-400" />}
-            placeholder={t('admin.searchUser')} 
+            placeholder={t('admin.searchUserIdEmail')} 
             allowClear 
-            style={{ width: 200, height: 32 }}
+            className="w-72 md:w-80 h-9"
             onPressEnter={(e) => { setKeyword(e.currentTarget.value); setPage(1); loadData(); }} 
           />
           <Select 
             placeholder={t('admin.status')} 
             allowClear 
-            style={{ width: 120, height: 32 }}
+            className="w-36 h-9"
             onChange={(v) => { setStatusFilter(v); setPage(1); }}
             options={[
               { value: 'ACTIVE', label: t('admin.active') },
@@ -97,7 +97,7 @@ export default function AdminUsers() {
               { value: 'LOCKED', label: t('admin.locked') },
             ]} 
           />
-        </Space>
+        </div>
       </div>
 
       <Card className="border-slate-200 dark:border-slate-800 dark:bg-slate-900 shadow-sm" styles={{ body: { padding: 0 } }}>

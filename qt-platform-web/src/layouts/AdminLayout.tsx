@@ -14,27 +14,28 @@ export default function AdminLayout() {
   const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
-    // Wait for auth check to complete (if loading from persistence)
-    // Note: In a real app, we might have an 'isLoading' flag in auth state
-    if (!isAuthenticated) {
-      // Small delay to prevent flash if persistence is loading
-      const timer = setTimeout(() => {
-         if (!isAuthenticated) navigate('/login');
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-    
-    if (user) {
-      // Check roles. Handle case where roles might be undefined or empty
-      const roles = user.roles || [];
-      const isAdmin = roles.some((r: string) => ['ADMIN', 'SUPER_ADMIN'].includes(r));
-      
-      if (!isAdmin) {
-        navigate('/');
-      } else {
-        setChecking(false);
+    // Wait for auth state to be loaded from localStorage
+    const timer = setTimeout(() => {
+      if (!isAuthenticated) {
+        navigate('/login');
+        return;
       }
-    }
+      
+      if (user) {
+        // Check roles. Handle case where roles might be undefined or empty
+        const roles = user.roles || [];
+        const isAdmin = roles.some((r: string) => ['ADMIN', 'SUPER_ADMIN'].includes(r));
+        
+        if (!isAdmin) {
+          navigate('/');
+          return;
+        }
+      }
+      
+      setChecking(false);
+    }, 100); // Small delay to ensure auth state is loaded
+
+    return () => clearTimeout(timer);
   }, [user, isAuthenticated, navigate]);
 
   if (checking) {

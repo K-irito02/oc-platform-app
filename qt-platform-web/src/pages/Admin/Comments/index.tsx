@@ -212,7 +212,7 @@ export default function AdminComments() {
           <Select
             placeholder={t('admin.selectCategory') || 'Select Category'}
             allowClear
-            className="w-40"
+            className="w-44 h-9"
             value={categoryFilter}
             onChange={(v) => { setCategoryFilter(v); setProductFilter(undefined); setPage(1); }}
             options={categories.map(c => ({ value: c.id, label: c.name }))}
@@ -222,7 +222,7 @@ export default function AdminComments() {
           {categoryFilter && (
             <Select
               placeholder={t('admin.productSortBy') || 'Product Sort'}
-              className="w-36"
+              className="w-40 h-9"
               value={productSortBy}
               onChange={(v) => { setProductSortBy(v); setProductFilter(undefined); }}
               options={[
@@ -238,7 +238,7 @@ export default function AdminComments() {
             <Select
               placeholder={t('admin.selectProduct') || 'Select Product'}
               allowClear
-              className="w-48"
+              className="w-52 h-9"
               value={productFilter}
               onChange={(v) => { setProductFilter(v); setPage(1); }}
               options={sortedProducts.map(p => ({
@@ -251,7 +251,7 @@ export default function AdminComments() {
           {/* 评论排序规则 - 与产品详情页一致 */}
           <Select
             placeholder={t('admin.commentSortBy') || 'Comment Sort'}
-            className="w-32"
+            className="w-36 h-9"
             value={commentSortBy}
             onChange={(v) => { setCommentSortBy(v); }}
             options={[
@@ -264,7 +264,7 @@ export default function AdminComments() {
           
           {/* 排序顺序 */}
           <Select
-            className="w-24"
+            className="w-20 h-9"
             value={commentSortOrder}
             onChange={(v) => { setCommentSortOrder(v); }}
             options={[
@@ -277,7 +277,7 @@ export default function AdminComments() {
           <Input
             placeholder={t('admin.searchUserIdEmail')}
             allowClear
-            style={{ width: 180, height: 32 }}
+            className="w-72 md:w-80 h-9"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onPressEnter={() => { setPage(1); loadData(); }}
@@ -288,7 +288,7 @@ export default function AdminComments() {
           <Select 
             placeholder={t('admin.status') || 'Status'} 
             allowClear 
-            className="w-32"
+            className="w-36 h-9"
             value={statusFilter}
             onChange={(v) => { setStatusFilter(v); setPage(1); }}
             options={[

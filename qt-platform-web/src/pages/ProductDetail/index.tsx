@@ -161,6 +161,107 @@ const MOCK_VERSIONS = [
 ];
 
 
+// 仿抖音风格的评论组件
+const CommentItem = ({ comment, isAuthenticated, handleLikeComment, handleReplyComment, t, isReply = false, replyToName }: any) => {
+  const [showAllReplies, setShowAllReplies] = useState(false);
+  const replies = comment.replies || [];
+  const visibleReplies = showAllReplies ? replies : replies.slice(0, 2);
+  const hasMoreReplies = replies.length > 2;
+
+  return (
+    <div className={`flex gap-3 ${isReply ? '' : ''}`}>
+      <Avatar 
+        src={comment.avatarUrl} 
+        size={isReply ? 28 : 36}
+        className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white shrink-0"
+      >
+        {comment.nickname?.[0] || comment.username?.[0] || 'U'}
+      </Avatar>
+      <div className="flex-1 min-w-0">
+        {/* 评论内容区 */}
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={`font-semibold text-slate-900 dark:text-white ${isReply ? 'text-sm' : ''}`}>
+              {comment.nickname || comment.username || 'User'}
+            </span>
+            {comment.rating && !isReply && (
+              <Rate disabled defaultValue={comment.rating} className="text-xs" style={{ fontSize: 10 }} />
+            )}
+          </div>
+          
+          {/* 评论文字 - 显示 @被回复人 */}
+          <p className={`text-slate-700 dark:text-slate-300 leading-relaxed ${isReply ? 'text-sm' : ''}`}>
+            {replyToName && (
+              <span className="text-blue-500 font-medium mr-1">@{replyToName}</span>
+            )}
+            {comment.content}
+          </p>
+          
+          {/* 操作按钮 */}
+          <div className="flex items-center gap-4 pt-1">
+            <span className="text-xs text-slate-400">{comment.createdAt?.substring(0, 10)}</span>
+            <button 
+              onClick={() => handleLikeComment(comment.id, comment.liked)}
+              className={`flex items-center gap-1 text-xs transition-colors ${comment.liked ? 'text-rose-500' : 'text-slate-400 hover:text-rose-500'}`}
+            >
+              <ThumbsUp size={12} className={comment.liked ? 'fill-current' : ''} />
+              <span>{comment.likeCount || 0}</span>
+            </button>
+            {isAuthenticated && (
+              <button 
+                onClick={() => handleReplyComment(comment.id, comment.nickname || comment.username)}
+                className="text-xs text-slate-400 hover:text-blue-500 transition-colors"
+              >
+                {t('productDetail.reply')}
+              </button>
+            )}
+            {!isReply && comment.replyCount > 0 && (
+              <span className="text-xs text-slate-400">
+                {comment.replyCount} {t('productDetail.replies') || '条回复'}
+              </span>
+            )}
+          </div>
+        </div>
+        
+        {/* 嵌套回复区域 - 仿抖音风格 */}
+        {replies.length > 0 && (
+          <div className="mt-3 space-y-3 pl-0 border-l-2 border-slate-100 dark:border-slate-800 ml-0">
+            {visibleReplies.map((reply: any) => (
+              <div key={reply.id} className="pl-3">
+                <CommentItem 
+                  comment={reply} 
+                  isAuthenticated={isAuthenticated} 
+                  handleLikeComment={handleLikeComment} 
+                  handleReplyComment={handleReplyComment} 
+                  t={t}
+                  isReply={true}
+                  replyToName={reply.replyToUsername || comment.nickname || comment.username}
+                />
+              </div>
+            ))}
+            {hasMoreReplies && !showAllReplies && (
+              <button 
+                onClick={() => setShowAllReplies(true)}
+                className="pl-3 text-sm text-blue-500 hover:text-blue-600 font-medium"
+              >
+                {t('productDetail.viewMoreReplies') || `展开更多 ${replies.length - 2} 条回复`}
+              </button>
+            )}
+            {showAllReplies && hasMoreReplies && (
+              <button 
+                onClick={() => setShowAllReplies(false)}
+                className="pl-3 text-sm text-slate-400 hover:text-slate-500"
+              >
+                {t('productDetail.collapseReplies') || '收起回复'}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export default function ProductDetail() {
   const { t, i18n } = useTranslation();
   const { slug } = useParams<{ slug: string }>();
@@ -549,40 +650,14 @@ export default function ProductDetail() {
 
                       <div className="space-y-6">
                         {comments.map((c) => (
-                          <div key={c.id} className="flex gap-4">
-                            <Avatar className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-md mt-1">{c.nickname?.[0] || c.username?.[0] || 'U'}</Avatar>
-                            <div className="flex-1">
-                              <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl rounded-tl-none border border-slate-100 dark:border-slate-800">
-                                <div className="flex items-center justify-between mb-2">
-                                  <h4 className="font-bold text-slate-900 dark:text-white">{c.nickname || c.username || 'User'}</h4>
-                                  <span className="text-xs text-slate-400">{c.createdAt?.substring(0, 10)}</span>
-                                </div>
-                                {c.rating && <div className="mb-2"><Rate disabled defaultValue={c.rating} style={{ fontSize: 12 }} /></div>}
-                                <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">{c.content}</p>
-                                <div className="mt-3 flex items-center gap-4">
-                                  <button 
-                                    onClick={() => handleLikeComment(c.id, c.liked)}
-                                    className={`flex items-center gap-1 text-sm transition-colors ${c.liked ? 'text-blue-600' : 'text-slate-400 hover:text-blue-600'}`}
-                                  >
-                                    <ThumbsUp size={14} className={c.liked ? 'fill-current' : ''} />
-                                    <span>{c.likeCount || 0}</span>
-                                  </button>
-                                  {isAuthenticated && (
-                                    <button 
-                                      onClick={() => handleReplyComment(c.id, c.nickname || c.username)}
-                                      className="flex items-center gap-1 text-sm text-slate-400 hover:text-blue-600 transition-colors"
-                                    >
-                                      <MessageCircle size={14} />
-                                      <span>{t('productDetail.reply')}</span>
-                                    </button>
-                                  )}
-                                  {c.replyCount > 0 && (
-                                    <span className="text-xs text-slate-400">{c.replyCount} {t('productDetail.sortByReplies')}</span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
+                          <CommentItem 
+                            key={c.id} 
+                            comment={c} 
+                            isAuthenticated={isAuthenticated} 
+                            handleLikeComment={handleLikeComment} 
+                            handleReplyComment={handleReplyComment} 
+                            t={t} 
+                          />
                         ))}
                         {comments.length === 0 && (
                           <div className="text-center py-10 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
@@ -604,7 +679,7 @@ export default function ProductDetail() {
 
           {/* Sidebar Column */}
           <div className="space-y-8">
-            <Card title={t('productDetail.information')} bordered={false} className="shadow-sm dark:bg-slate-900 dark:border-slate-800 sticky top-24">
+            <Card title={t('productDetail.information')} bordered={false} className="shadow-sm dark:bg-slate-900 dark:border-slate-800 sticky top-20">
               <div className="space-y-4">
                 <div className="flex justify-between py-3 border-b border-slate-100 dark:border-slate-800">
                   <span className="text-slate-500 flex items-center gap-2"><Shield size={16}/> {t('productDetail.license')}</span>
