@@ -191,10 +191,10 @@ export default function AdminProducts() {
             {t('admin.newProduct')}
           </Button>
           <Input 
-            prefix={<Search size={16} className="text-slate-400" />}
+            prefix={<Search size={14} className="text-slate-400 shrink-0" />}
             placeholder={t('admin.searchProduct')}
             allowClear 
-            className="w-72 md:w-80 h-9"
+            className="w-80 md:w-96 h-9"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             onPressEnter={() => { setPage(1); loadData(); }} 

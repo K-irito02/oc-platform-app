@@ -165,7 +165,10 @@
     "likeFailed": "Like failed",
     "sortByReplies": "Replies",
     "rateLimitExceeded": "Comment rate limit exceeded, please try again later",
-    "reply": "Reply"
+    "reply": "Reply",
+    "replies": "replies",
+    "viewMoreReplies": "View more replies",
+    "collapseReplies": "Collapse replies"
   },
   "admin": {
     "dashboard": "Dashboard",
@@ -312,11 +315,7 @@
     "commentSortBy": "Comment Sort",
     "byCommentRating": "By Rating",
     "byLikes": "By Likes",
-    "byReplies": "By Replies",
-    "likeCount": "Likes",
-    "replyCount": "Replies",
-    "parentId": "Reply To",
-    "searchUserIdEmail": "User ID / Email"
+    "byReplies": "By Replies"
   },
   "productEdit": {
     "title": "Edit Product",

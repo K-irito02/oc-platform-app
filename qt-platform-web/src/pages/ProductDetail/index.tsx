@@ -4,7 +4,7 @@ import { useAppSelector } from '@/store/hooks';
 import { productApi, commentApi } from '@/utils/api';
 import { Button, Tag, Tabs, Rate, Avatar, Form, Input, message, Spin, Empty, Card, Progress } from 'antd';
 const { TextArea } = Input;
-import { Github, ExternalLink, Star, Clock, Eye, Download as DownloadIcon, Terminal, Shield, CheckCircle, Tag as TagIcon, User, Play, Pause, Volume2, VolumeX, Maximize, ThumbsUp, MessageCircle } from 'lucide-react';
+import { Github, ExternalLink, Star, Clock, Eye, Download as DownloadIcon, Terminal, Shield, CheckCircle, Tag as TagIcon, User, Play, Pause, Volume2, VolumeX, Maximize, ThumbsUp } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import ScreenshotGallery from '@/components/ScreenshotGallery';
 
@@ -69,7 +69,7 @@ const VideoPlayer = ({ src, poster }: { src: string; poster?: string }) => {
       )}
       {/* Controls */}
       <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-        <Progress percent={progress} showInfo={false} strokeColor="#3b82f6" trailColor="rgba(255,255,255,0.2)" size="small" />
+        <Progress percent={progress} showInfo={false} strokeColor="#3b82f6" railColor="rgba(255,255,255,0.2)" size="small" />
         <div className="flex items-center justify-between mt-2">
           <div className="flex items-center gap-3">
             <button onClick={togglePlay} className="text-white hover:text-blue-400 transition-colors" title={isPlaying ? 'Pause' : 'Play'} aria-label={isPlaying ? 'Pause' : 'Play'}>
@@ -648,27 +648,30 @@ export default function ProductDetail() {
                         </div>
                       )}
 
-                      <div className="space-y-6">
-                        {comments.map((c) => (
-                          <CommentItem 
-                            key={c.id} 
-                            comment={c} 
-                            isAuthenticated={isAuthenticated} 
-                            handleLikeComment={handleLikeComment} 
-                            handleReplyComment={handleReplyComment} 
-                            t={t} 
-                          />
-                        ))}
-                        {comments.length === 0 && (
-                          <div className="text-center py-10 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
-                            <p className="text-slate-600 dark:text-slate-400 mb-4">{t('productDetail.noReviews')}</p>
-                            {isAuthenticated ? (
-                              <Button type="link" className="text-blue-600 hover:text-blue-700">{t('productDetail.beFirstToReview')}</Button>
-                            ) : (
-                              <Link to="/login"><Button type="primary">{t('productDetail.login')}</Button></Link>
-                            )}
-                          </div>
-                        )}
+                      {/* 评论列表区域 - 支持滚动查看 */}
+                      <div className="max-h-[600px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent">
+                        <div className="space-y-6">
+                          {comments.map((c) => (
+                            <CommentItem 
+                              key={c.id} 
+                              comment={c} 
+                              isAuthenticated={isAuthenticated} 
+                              handleLikeComment={handleLikeComment} 
+                              handleReplyComment={handleReplyComment} 
+                              t={t} 
+                            />
+                          ))}
+                          {comments.length === 0 && (
+                            <div className="text-center py-10 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
+                              <p className="text-slate-600 dark:text-slate-400 mb-4">{t('productDetail.noReviews')}</p>
+                              {isAuthenticated ? (
+                                <Button type="link" className="text-blue-600 hover:text-blue-700">{t('productDetail.beFirstToReview')}</Button>
+                              ) : (
+                                <Link to="/login"><Button type="primary">{t('productDetail.login')}</Button></Link>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   )
@@ -679,7 +682,7 @@ export default function ProductDetail() {
 
           {/* Sidebar Column */}
           <div className="space-y-8">
-            <Card title={t('productDetail.information')} bordered={false} className="shadow-sm dark:bg-slate-900 dark:border-slate-800 sticky top-20">
+            <Card title={t('productDetail.information')} variant="borderless" className="shadow-sm dark:bg-slate-900 dark:border-slate-800 sticky top-20">
               <div className="space-y-4">
                 <div className="flex justify-between py-3 border-b border-slate-100 dark:border-slate-800">
                   <span className="text-slate-500 flex items-center gap-2"><Shield size={16}/> {t('productDetail.license')}</span>

@@ -41,7 +41,7 @@ export default function AdminLayout() {
   if (checking) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-950">
-        <Spin size="large" tip={t('common.loading')} />
+        <Spin size="large"><span className="mt-4 text-slate-500">{t('common.loading')}</span></Spin>
       </div>
     );
   }

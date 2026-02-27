@@ -277,11 +277,11 @@ export default function AdminComments() {
           <Input
             placeholder={t('admin.searchUserIdEmail')}
             allowClear
-            className="w-72 md:w-80 h-9"
+            className="w-80 md:w-96 h-9"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onPressEnter={() => { setPage(1); loadData(); }}
-            prefix={<Search size={14} className="text-slate-400" />}
+            prefix={<Search size={14} className="text-slate-400 shrink-0" />}
           />
           
           {/* 状态筛选 */}

@@ -160,7 +160,7 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({ currentAvatar, onUpl
             </Button>
           </Space>
         }
-        destroyOnClose
+        destroyOnHidden
       >
         {previewUrl && (
           <div style={{ position: 'relative', width: '100%', height: 320, background: '#333', borderRadius: 8, overflow: 'hidden' }}>

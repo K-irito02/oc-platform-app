@@ -706,7 +706,7 @@ export default function ProductEdit() {
         onCancel={() => setPreviewVideo(false)}
         footer={null}
         width={900}
-        destroyOnClose
+        destroyOnHidden
       >
         <video
           src={demoVideoUrl}
@@ -727,7 +727,7 @@ export default function ProductEdit() {
         title={<span className="flex items-center gap-2"><Monitor size={18} /> {t('productEdit.addNewVersion')}</span>}
         footer={null}
         width={600}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form form={versionForm} layout="vertical" onFinish={handleCreateVersion} className="mt-4">
           <div className="grid grid-cols-2 gap-4">

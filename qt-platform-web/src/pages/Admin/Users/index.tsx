@@ -80,10 +80,10 @@ export default function AdminUsers() {
         </div>
         <div className="flex items-center gap-3">
           <Input 
-            prefix={<Search size={16} className="text-slate-400" />}
+            prefix={<Search size={14} className="text-slate-400 shrink-0" />}
             placeholder={t('admin.searchUserIdEmail')} 
             allowClear 
-            className="w-72 md:w-80 h-9"
+            className="w-80 md:w-96 h-9"
             onPressEnter={(e) => { setKeyword(e.currentTarget.value); setPage(1); loadData(); }} 
           />
           <Select 

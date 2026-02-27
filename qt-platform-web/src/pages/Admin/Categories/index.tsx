@@ -119,7 +119,7 @@ export default function AdminCategories() {
         open={modalVisible}
         onOk={handleSave} 
         onCancel={() => setModalVisible(false)} 
-        destroyOnClose
+        destroyOnHidden
       >
         <Form form={form} layout="vertical">
           <Form.Item label={t('admin.name')} name="name" rules={[{ required: true, message: t('admin.nameRequired') }]}>
