@@ -1,0 +1,36 @@
+{
+  "name": "project-manager",
+  "description": "Qt Platform 项目管理技能 - 自动化检查/执行项目依赖、后端/前端构建及运行",
+  "triggers": [
+    "启动项目",
+    "停止项目",
+    "重启项目",
+    "start project",
+    "stop project",
+    "restart project",
+    "运行项目",
+    "关闭项目",
+    "检查项目状态",
+    "project status"
+  ],
+  "workingDirectory": "e:/oc/qt-platform",
+  "services": {
+    "frontend": {
+      "port": 5173,
+      "command": "npm run dev",
+      "cwd": "qt-platform-web"
+    },
+    "backend": {
+      "port": 8081,
+      "command": "java -jar qt-platform-app/target/qt-platform-app-1.0.0-SNAPSHOT.jar --spring.profiles.active=dev"
+    },
+    "postgres": {
+      "port": 5433,
+      "container": "qt-dev-postgres"
+    },
+    "redis": {
+      "port": 6380,
+      "container": "qt-dev-redis"
+    }
+  }
+}
