@@ -6,6 +6,7 @@ import { Button, Tag, Tabs, Rate, Avatar, Form, Input, message, Spin, Empty, Car
 const { TextArea } = Input;
 import { Github, ExternalLink, Star, Clock, Eye, Download as DownloadIcon, Terminal, Shield, CheckCircle, Tag as TagIcon, User, Play, Pause, Volume2, VolumeX, Maximize } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import ScreenshotGallery from '@/components/ScreenshotGallery';
 
 // Video Player Component
 const VideoPlayer = ({ src, poster }: { src: string; poster?: string }) => {
@@ -380,16 +381,7 @@ export default function ProductDetail() {
                       {product.screenshots && product.screenshots.length > 0 && (
                         <div>
                           <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">{t('productDetail.screenshots')}</h3>
-                          <div className="grid grid-cols-2 gap-4">
-                            {product.screenshots.map((screenshot: string, idx: number) => (
-                              <img 
-                                key={idx} 
-                                src={screenshot} 
-                                alt={`Screenshot ${idx + 1}`}
-                                className="rounded-xl border border-slate-200 dark:border-slate-700 hover:scale-105 transition-transform cursor-pointer"
-                              />
-                            ))}
-                          </div>
+                          <ScreenshotGallery screenshots={product.screenshots} />
                         </div>
                       )}
                       {/* Description */}

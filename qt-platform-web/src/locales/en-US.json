@@ -155,6 +155,7 @@
     "tags": "Tags",
     "latest": "Latest",
     "featured": "Featured",
+    "viewFull": "View Full",
     "productNotFound": "Product not found"
   },
   "admin": {
