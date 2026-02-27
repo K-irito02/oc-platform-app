@@ -119,8 +119,8 @@ Front-end testing/
 # ===== AI/IDE 相关 =====
 #.trae/
 #.windsurf/
-#.cursor
-.vscode
+#.cursor/
+.vscode/
 
 # ===== Git =====
 .git

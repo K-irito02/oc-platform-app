@@ -1,24 +1,166 @@
-# Logs
-logs
+# ===== Java / Maven =====
+target/
+*.class
+*.jar
+*.war
+*.ear
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
+*.iml
+*.ipr
+*.iws
+
+# ===== Spring Boot =====
+application-*.yml
+application-*.properties
+!application.yml
+!application.properties
+
+# ===== IDE =====
+.idea/
+.vscode/
+.settings/
+.project
+.classpath
+.factorypath
+.springBeans
+.sts4-cache/
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+*~
+
+# ===== Environment =====
+.env
+*.env.local
+*.env.production
+.env.development
+.env.test
+
+# ===== Node.js (前端) =====
+qt-platform-web/node_modules/
+qt-platform-web/dist/
+qt-platform-web/.env.local
+qt-platform-web/.env.production
+qt-platform-web/.env.development
+qt-platform-web/.env.test
+qt-platform-web/npm-debug.log*
+qt-platform-web/yarn-debug.log*
+qt-platform-web/yarn-error.log*
+qt-platform-web/lerna-debug.log*
+qt-platform-web/.pnpm-debug.log*
+qt-platform-web/.yarn-integrity
+
+# ===== 前端构建产物 =====
+qt-platform-web/coverage/
+qt-platform-web/.nyc_output/
+qt-platform-web/.cache/
+qt-platform-web/.temp/
+qt-platform-web/.vite/
+
+# ===== Docker =====
+docker-compose.override.yml
+.dockerignore
+
+# ===== Logs =====
+logs/
+*.log
+nohup.out
+
+# ===== 上传文件 =====
+uploads/
+files/
+static/
+temp/
+
+# ===== 数据库 =====
+*.db
+*.sqlite
+*.sqlite3
+
+# ===== 测试 =====
+.mvn/test-results/
+test-results/
+*.lcov
+coverage/
+
+# ===== 备份文件 =====
+*.bak
+*.backup
+*.old
+*.orig
+*.rej
+
+# ===== 压缩文件 =====
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# ===== 前端测试素材 =====
+Front-end testing/
+*.pdf
+*.doc
+*.docx
+*.xls
+*.xlsx
+*.ppt
+*.pptx
+*.mp4
+*.jpg
+
+# ===== AI/IDE 相关 =====
+#.trae/
+#.windsurf/
+#.cursor/
+.vscode/
+
+# ===== Git =====
+.git
+.gitignore
+.gitattributes
+
+# ===== 项目特定 =====
+# PostgreSQL 数据目录
+data/
+pgdata/
+
+# Redis 数据目录
+redis-data/
+
+# 临时文件
+tmp/
+temp/
+
+# 缓存
+.cache/
+.cache-loader/
+
+# 编辑器配置
+.editorconfig
+
+# Lerna
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# ===== 开发工具 =====
+.sonar/
+.pmd/
+.checkstyle/
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+# ===== 运行时 =====
+pid
+*.pid
+*.seed
+*.pid.lock
+
+# ===== 可选：开发环境特定 =====
+# 如果需要保留某些开发文件，可以在这里取消注释
+# !docker-compose.dev.yml
+# !sql/seed.sql
