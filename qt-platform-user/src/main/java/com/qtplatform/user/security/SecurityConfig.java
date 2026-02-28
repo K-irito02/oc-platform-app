@@ -47,11 +47,13 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/products/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/categories/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/comments/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/feedbacks").permitAll()
                         .requestMatchers("/api/v1/updates/check").permitAll()
                         .requestMatchers("/api/v1/downloads/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/files/download/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/files/download-url/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/system/theme").permitAll()
+                        .requestMatchers("/api/v1/public/**").permitAll()
                         // 静态资源（头像等）
                         .requestMatchers("/uploads/**").permitAll()
                         // Swagger & Actuator

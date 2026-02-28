@@ -4,10 +4,14 @@ import { Search, ArrowRight, Star, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { productApi, categoryApi } from '@/utils/api';
+import { useSiteName } from '@/components/SiteLogo';
+import FeedbackSection from '@/components/home/FeedbackSection';
+import InfoCards from '@/components/home/InfoCards';
 
 export default function Home() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const siteName = useSiteName();
   const [featured, setFeatured] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,7 +47,7 @@ export default function Home() {
       <section className="relative overflow-hidden pt-20 pb-32 lg:pt-32 lg:pb-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-8">
-            {t('home.heroTitle1')} <span className="text-blue-600">{t('home.heroTitle2')}</span>
+            {t('home.welcomeTo')} <span className="text-blue-600">{siteName}</span>
           </h1>
           <p className="mt-4 max-w-2xl mx-auto text-xl text-slate-500 dark:text-slate-400 mb-12">
             {t('home.heroDesc')}
@@ -146,28 +150,11 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* Feedback & Info Section */}
       <section className="py-24">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="bg-blue-600 rounded-3xl p-12 md:p-20 text-white shadow-2xl relative overflow-hidden">
-            <div className="relative z-10">
-              <h2 className="text-3xl md:text-4xl font-bold mb-6">{t('home.ctaTitle')}</h2>
-              <p className="text-blue-100 text-lg mb-10 max-w-2xl mx-auto">
-                {t('home.ctaDesc')}
-              </p>
-              <Button 
-                size="large" 
-                className="h-14 px-8 text-lg rounded-full bg-white text-blue-600 hover:bg-blue-50 border-none font-semibold"
-                onClick={() => navigate('/coming-soon')}
-              >
-                {t('home.ctaButton')}
-              </Button>
-            </div>
-            
-            {/* Decorative circles */}
-            <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 bg-white/10 rounded-full blur-3xl" />
-            <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 bg-white/10 rounded-full blur-3xl" />
-          </div>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <FeedbackSection />
+          <InfoCards />
         </div>
       </section>
     </div>

@@ -73,6 +73,16 @@ export const commentApi = {
   unlike: (id: number) => request.delete(`/comments/${id}/like`),
 };
 
+// ===== Feedback API =====
+export const feedbackApi = {
+  create: (data: { content: string; email?: string; contact?: string; nickname?: string; parentId?: number; isPublic?: boolean }) =>
+    request.post('/feedbacks', data),
+  list: (params: { page?: number; size?: number; sortBy?: string; sortOrder?: string }) =>
+    request.get('/feedbacks', { params }),
+  like: (id: number) => request.post(`/feedbacks/${id}/like`),
+  unlike: (id: number) => request.delete(`/feedbacks/${id}/like`),
+};
+
 // ===== Notification API =====
 export const notificationApi = {
   list: (params: { page?: number; size?: number; isRead?: boolean }) =>
@@ -201,4 +211,10 @@ export const adminApi = {
   getGlobalTheme: () => request.get('/admin/system/theme'),
   updateGlobalTheme: (themeConfig: string) =>
     request.put('/admin/system/theme', { themeConfig }),
+  // Feedbacks
+  listFeedbacks: (params: { page?: number; size?: number; status?: string; keyword?: string }) =>
+    request.get('/feedbacks/admin', { params }),
+  updateFeedbackStatus: (id: number, status: string) =>
+    request.put(`/feedbacks/admin/${id}/status`, null, { params: { status } }),
+  deleteFeedback: (id: number) => request.delete(`/feedbacks/admin/${id}`),
 };

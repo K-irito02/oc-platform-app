@@ -536,9 +536,10 @@ WHERE u.username = 'admin' AND r.code = 'SUPER_ADMIN';
 
 -- 系统配置
 INSERT INTO system_configs (config_key, config_value, description) VALUES
-    ('site.name',           'Qt 产品发布平台',        '站点名称'),
-    ('site.name_en',        'Qt Product Platform',   '站点英文名称'),
-    ('site.description',    'Qt 软件产品发布与分发',   '站点描述'),
+    ('site.name',           '桐人创研',               '站点中文名称'),
+    ('site.name_en',        'KiritoLab',             '站点英文名称'),
+    ('site.description',    '免费提供个人开发的工具类应用程序', '站点描述'),
+    ('site.logo',           '',                       '站点Logo图片URL'),
     ('upload.max_file_size', '1073741824',            '最大上传文件大小（字节）'),
     ('comment.auto_approve', 'false',                 '评论是否自动通过审核'),
     ('register.enabled',     'true',                  '是否开放注册');

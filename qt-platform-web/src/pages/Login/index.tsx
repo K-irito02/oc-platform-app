@@ -10,6 +10,7 @@ import { authApi } from '@/utils/api';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { GlassButton } from '@/components/ui/GlassButton';
 import { AuthPageToolbar } from '@/components/AuthPageToolbar';
+import { SiteLogo } from '@/components/SiteLogo';
 
 export default function Login() {
   const { t } = useTranslation();
@@ -53,8 +54,8 @@ export default function Login() {
         
         {/* Header */}
         <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/30 mb-6">
-            <span className="text-white font-bold text-3xl">Qt</span>
+          <div className="inline-flex items-center justify-center mb-6">
+            <SiteLogo size="xl" />
           </div>
           <h1 className="text-3xl font-bold text-slate-800 tracking-tight mb-2">
             {t('auth.welcomeBack') || 'Welcome Back'}

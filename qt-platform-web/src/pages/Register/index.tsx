@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { User, Mail, Lock, ShieldCheck, ArrowRight } from 'lucide-react';
 import { authApi } from '@/utils/api';
 import { AuthPageToolbar } from '@/components/AuthPageToolbar';
+import { SiteLogo } from '@/components/SiteLogo';
 
 export default function Register() {
   const { t } = useTranslation();
@@ -61,8 +62,8 @@ export default function Register() {
       <AuthPageToolbar />
       <div className="w-full max-w-xl">
         <div className="text-center mb-10">
-          <Link to="/" className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-blue-600 text-white font-bold text-2xl mb-6 shadow-lg shadow-blue-600/20">
-            Q
+          <Link to="/" className="inline-flex items-center justify-center mb-6">
+            <SiteLogo size="lg" className="shadow-lg shadow-blue-600/20" />
           </Link>
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">{t('auth.registerTitle')}</h1>
           <p className="text-slate-500 dark:text-slate-400">{t('auth.registerSubtitle')}</p>

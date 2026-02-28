@@ -28,6 +28,7 @@ const AdminUsers = lazy(() => import('@/pages/Admin/Users'));
 const AdminProducts = lazy(() => import('@/pages/Admin/Products'));
 const AdminProductEdit = lazy(() => import('@/pages/Admin/Products/ProductEdit'));
 const AdminComments = lazy(() => import('@/pages/Admin/Comments'));
+const AdminFeedbacks = lazy(() => import('@/pages/Admin/Feedbacks'));
 const AdminCategories = lazy(() => import('@/pages/Admin/Categories'));
 const AdminTheme = lazy(() => import('@/pages/Admin/Theme'));
 const AdminSystem = lazy(() => import('@/pages/Admin/System'));
@@ -74,6 +75,7 @@ const router = createBrowserRouter([
       { path: 'products/new', element: LazyLoad(AdminProductEdit) },
       { path: 'products/:id/edit', element: LazyLoad(AdminProductEdit) },
       { path: 'comments', element: LazyLoad(AdminComments) },
+      { path: 'feedbacks', element: LazyLoad(AdminFeedbacks) },
       { path: 'categories', element: LazyLoad(AdminCategories) },
       { path: 'theme', element: LazyLoad(AdminTheme) },
       { path: 'system', element: LazyLoad(AdminSystem) },

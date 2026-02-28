@@ -6,6 +6,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { authApi } from '@/utils/api';
 import { AuthPageToolbar } from '@/components/AuthPageToolbar';
+import { SiteLogo } from '@/components/SiteLogo';
 
 const { Paragraph } = Typography;
 
@@ -49,8 +50,8 @@ export default function ForgotPassword() {
       <AuthPageToolbar />
       <div className="paper-card animate-ink-spread" style={{ width: '100%', maxWidth: 420, padding: '44px 40px 32px' }}>
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <div className="ink-seal" style={{ margin: '0 auto 16px', width: 44, height: 44, fontSize: 16 }} aria-hidden="true">
-            密
+          <div className="flex justify-center mb-4">
+            <SiteLogo size="lg" />
           </div>
           <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 24, color: 'var(--ink-darkest)', letterSpacing: '0.08em', marginBottom: 8 }}>
             {t('auth.resetPasswordTitle')}

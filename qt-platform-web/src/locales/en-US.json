@@ -21,6 +21,47 @@
     "collapse": "Collapse",
     "expand": "Expand"
   },
+  "feedback": {
+    "title": "Message",
+    "subtitle": "Share your thoughts, feedback and suggestions",
+    "email": "Email (Optional)",
+    "contact": "Contact (Optional)",
+    "content": "Content",
+    "submit": "Submit Message",
+    "success": "Message submitted successfully!",
+    "board": "Message Board",
+    "placeholder": "Enter your message...",
+    "contentRequired": "Please enter message content",
+    "loginToMessage": "Please login to leave a message",
+    "loginRequired": "Please login first",
+    "submitFailed": "Failed to submit message, please try again",
+    "showInBoard": "Show publicly on message board",
+    "anonymous": "Anonymous",
+    "reply": "Reply",
+    "replyingTo": "Replying to",
+    "repliesCount": "replies",
+    "viewReplies": "View {{count}} replies",
+    "viewMoreReplies": "View {{count}} more replies",
+    "collapseReplies": "Collapse all replies",
+    "noMessages": "No messages yet",
+    "beFirst": "Be the first to leave a message",
+    "sortByTime": "Time",
+    "sortByLikes": "Likes",
+    "loginToLike": "Please login to like",
+    "likeFailed": "Operation failed",
+    "rateLimitExceeded": "Too many messages, please wait {{seconds}} seconds",
+    "sortByReplies": "Replies"
+  },
+  "disclaimer": {
+    "title": "Free Disclaimer",
+    "content": "This application is completely free to use with no hidden charges. However, third-party services (such as LLM APIs) may require you to bear the costs.",
+    "thirdParty": "Excluding 3rd Party Services"
+  },
+  "update": {
+    "title": "Update Notice",
+    "content": "This project is independently developed, so updates may be slow. More exciting products are under development, stay tuned!",
+    "stayTuned": "Stay Tuned"
+  },
   "nav": {
     "products": "Products",
     "developers": "Developers",
@@ -47,12 +88,18 @@
     "featureDevDesc": "Complete RESTful API for easy integration into Qt client update workflows",
     "heroTitle1": "The Hub for",
     "heroTitle2": "Qt Applications",
-    "heroDesc": "Distribute and manage your Qt applications with ease. Multi-platform support, version control, and automated updates.",
+    "welcomeTo": "Welcome to",
+    "heroDesc": "Discover and download free utility applications to boost your daily efficiency.",
     "searchPlaceholder": "Search applications...",
     "handPicked": "Hand-picked quality applications",
-    "ctaTitle": "Start Managing Your Apps",
-    "ctaDesc": "The modern platform for distributing and managing Qt applications.",
-    "ctaButton": "Get Started",
+    "whyChooseUs": "Why Choose Us",
+    "whyChooseUsDesc": "We are dedicated to creating simple and practical utility applications to help with your daily work",
+    "featureFreeTitle": "Completely Free",
+    "featureFreeDesc": "All applications are free forever, no hidden charges, no ads, focused on delivering value to users.",
+    "featureCrossTitle": "Cross-Platform",
+    "featureCrossDesc": "Support for Windows, macOS, Linux and other major operating systems, use anytime, anywhere.",
+    "featureUpdateTitle": "Continuous Updates",
+    "featureUpdateDesc": "Regular releases with bug fixes and new features to keep applications in top shape.",
     "noFeatured": "No featured products yet",
     "noDescription": "No description provided.",
     "featured": "Featured"
@@ -179,8 +226,12 @@
     "products": "Products",
     "categories": "Categories",
     "comments": "Comments",
+    "feedbacks": "Feedbacks",
     "theme": "Theme",
     "system": "System",
+    "hide": "Hide",
+    "operationFailed": "Operation failed",
+    "deleteFailed": "Delete failed",
     "backToFront": "Back to Site",
     "totalUsers": "Total Users",
     "totalProducts": "Total Products",
@@ -326,6 +377,13 @@
     "byCommentRating": "By Rating",
     "byLikes": "By Likes",
     "byReplies": "By Replies"
+  },
+  "adminFeedback": {
+    "title": "Feedback Management",
+    "desc": "Manage user feedbacks and replies",
+    "searchPlaceholder": "Search content, username or email",
+    "isPublic": "Public",
+    "email": "Email"
   },
   "productEdit": {
     "title": "Edit Product",
@@ -498,6 +556,18 @@
     "dark": "Dark",
     "system": "System"
   },
+  "logo": {
+    "upload": "Upload Logo",
+    "hint": "Supports JPG/PNG/WebP/GIF, max 5MB",
+    "cropTitle": "Crop Logo",
+    "confirmCrop": "Crop & Upload",
+    "scrollToZoom": "Scroll to zoom, drag to move",
+    "uploadSuccess": "Logo uploaded successfully",
+    "uploadFailed": "Logo upload failed",
+    "editLogo": "Edit Site Logo",
+    "currentLogo": "Current Logo",
+    "noLogo": "No logo set"
+  },
   "avatar": {
     "change": "Change Avatar",
     "hint": "Supports JPG/PNG/WebP/GIF/BMP, max 5MB",
@@ -514,8 +584,8 @@
     "subtitle": "This feature is under development. Stay tuned for updates."
   },
   "footer": {
-    "copyright": "© 2026 Qt Product Platform",
-    "siteDesc": "The modern platform for distributing and managing Qt applications.",
+    "copyright": "© 2026 KiritoLab",
+    "siteDesc": "Free utility applications to meet your everyday needs.",
     "product": "Product",
     "resources": "Resources",
     "company": "Company",

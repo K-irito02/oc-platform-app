@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Github, Twitter, Linkedin } from 'lucide-react';
+import { SiteLogo } from '@/components/SiteLogo';
 
 export const Footer = () => {
   const { t } = useTranslation();
@@ -31,10 +32,7 @@ export const Footer = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center mb-4">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl mr-2">
-                Q
-              </div>
-              <span className="font-bold text-xl text-slate-900 dark:text-white">{t('common.siteName')}</span>
+              <SiteLogo size="md" showText textClassName="text-xl" />
             </div>
             <p className="text-slate-500 dark:text-slate-400 text-sm mb-6 max-w-xs">
               {t('footer.siteDesc')}

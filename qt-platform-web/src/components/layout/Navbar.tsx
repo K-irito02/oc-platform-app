@@ -6,6 +6,7 @@ import { Button, Dropdown, Avatar } from 'antd';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { logout } from '@/store/slices/authSlice';
 import { setSystemConfig } from '@/store/slices/themeSlice';
+import { SiteLogo } from '@/components/SiteLogo';
 
 export const Navbar = () => {
   const { t, i18n } = useTranslation();
@@ -82,10 +83,7 @@ export const Navbar = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex-shrink-0 flex items-center cursor-pointer" onClick={() => navigate('/')}>
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl mr-2">
-              Q
-            </div>
-            <span className="font-bold text-xl text-slate-900 dark:text-white">Qt Platform</span>
+            <SiteLogo size="md" showText textClassName="text-xl" />
           </div>
 
           {/* Desktop Nav */}

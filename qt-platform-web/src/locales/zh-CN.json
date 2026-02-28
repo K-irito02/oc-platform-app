@@ -21,6 +21,47 @@
     "collapse": "收起",
     "expand": "展开"
   },
+  "feedback": {
+    "title": "留言",
+    "subtitle": "说出你的想法，提出反馈和修改建议",
+    "email": "邮箱（选填）",
+    "contact": "联系方式（选填）",
+    "content": "内容",
+    "submit": "提交留言",
+    "success": "留言提交成功！",
+    "board": "留言板",
+    "placeholder": "请输入您的留言...",
+    "contentRequired": "请输入留言内容",
+    "loginToMessage": "登录后才能留言",
+    "loginRequired": "请先登录",
+    "submitFailed": "留言提交失败，请重试",
+    "showInBoard": "在留言板公开显示",
+    "anonymous": "匿名用户",
+    "reply": "回复",
+    "replyingTo": "回复",
+    "repliesCount": "条回复",
+    "viewReplies": "查看 {{count}} 条回复",
+    "viewMoreReplies": "展开更多 {{count}} 条回复",
+    "collapseReplies": "收起全部回复",
+    "noMessages": "暂无留言",
+    "beFirst": "成为第一个留言者",
+    "sortByTime": "时间",
+    "sortByLikes": "点赞数",
+    "loginToLike": "请登录后点赞",
+    "likeFailed": "操作失败",
+    "rateLimitExceeded": "留言过于频繁，请 {{seconds}} 秒后再试",
+    "sortByReplies": "回复数"
+  },
+  "disclaimer": {
+    "title": "免费声明",
+    "content": "本应用完全免费使用，无任何隐藏收费。但接入的第三方服务（如大模型 API 等）可能需要您自行承担相关费用。",
+    "thirdParty": "第三方服务除外"
+  },
+  "update": {
+    "title": "更新说明",
+    "content": "本项目由个人独立开发，产品迭代更新可能较慢。更多精彩产品正在开发中，敬请期待！",
+    "stayTuned": "敬请期待"
+  },
   "nav": {
     "products": "产品中心",
     "developers": "开发者",
@@ -47,12 +88,18 @@
     "featureDevDesc": "提供完整的 RESTful API，轻松集成到 Qt 客户端更新流程",
     "heroTitle1": "Qt 应用",
     "heroTitle2": "分发中心",
-    "heroDesc": "便捷分发和管理您的 Qt 应用程序，支持多平台、版本控制与自动更新。",
+    "welcomeTo": "欢迎来到",
+    "heroDesc": "发现并下载免费实用的桌面工具应用，提升您的日常效率。",
     "searchPlaceholder": "搜索应用...",
     "handPicked": "精选优质应用",
-    "ctaTitle": "开始管理您的应用",
-    "ctaDesc": "现代化的平台，方便分发和管理 Qt 应用。",
-    "ctaButton": "立即开始",
+    "whyChooseUs": "为什么选择我们",
+    "whyChooseUsDesc": "我们致力于打造简洁实用的工具类应用，助力您的日常工作",
+    "featureFreeTitle": "完全免费",
+    "featureFreeDesc": "所有应用永久免费使用，无隐藏收费，无广告干扰，专注于为用户提供价值。",
+    "featureCrossTitle": "多平台支持",
+    "featureCrossDesc": "支持 Windows、macOS、Linux 等主流操作系统，随时随地使用。",
+    "featureUpdateTitle": "持续更新",
+    "featureUpdateDesc": "定期发布新版本，修复问题并添加新功能，让应用始终保持最佳状态。",
     "noFeatured": "暂无精选产品",
     "noDescription": "暂无描述",
     "featured": "精选"
@@ -179,8 +226,12 @@
     "products": "产品管理",
     "categories": "分类管理",
     "comments": "评论管理",
+    "feedbacks": "留言管理",
     "theme": "主题设置",
     "system": "系统设置",
+    "hide": "隐藏",
+    "operationFailed": "操作失败",
+    "deleteFailed": "删除失败",
     "backToFront": "返回前台",
     "totalUsers": "用户总数",
     "totalProducts": "产品总数",
@@ -327,6 +378,13 @@
     "byLikes": "按点赞数",
     "byReplies": "按回复数",
     "rateLimitExceeded": "评论发布过于频繁，请稍后再试"
+  },
+  "adminFeedback": {
+    "title": "留言管理",
+    "desc": "管理用户留言和回复",
+    "searchPlaceholder": "搜索留言内容、用户名或邮箱",
+    "isPublic": "公开",
+    "email": "邮箱"
   },
   "productEdit": {
     "title": "编辑产品",
@@ -475,6 +533,9 @@
     "emailChanged": "邮箱已修改，请使用新邮箱重新登录"
   },
   "theme": {
+    "light": "浅色",
+    "dark": "深色",
+    "system": "跟随系统",
     "title": "主题管理",
     "subtitle": "配置全局默认主题，影响所有未自定义主题的用户",
     "background": "背景设置",
@@ -506,6 +567,18 @@
     "dark": "深色",
     "system": "跟随系统"
   },
+  "logo": {
+    "upload": "上传Logo",
+    "hint": "支持 JPG/PNG/WebP/GIF，最大 5MB",
+    "cropTitle": "裁剪Logo",
+    "confirmCrop": "确认裁剪并上传",
+    "scrollToZoom": "滚动缩放，拖动移动",
+    "uploadSuccess": "Logo上传成功",
+    "uploadFailed": "Logo上传失败",
+    "editLogo": "编辑站点Logo",
+    "currentLogo": "当前Logo",
+    "noLogo": "未设置Logo"
+  },
   "avatar": {
     "change": "更换头像",
     "hint": "支持 JPG/PNG/WebP/GIF/BMP，最大 5MB",
@@ -522,8 +595,8 @@
     "subtitle": "此功能暂未开放，敬请期待后续上线。"
   },
   "footer": {
-    "copyright": "© 2026 Qt 产品发布平台",
-    "siteDesc": "现代化平台，方便分发和管理 Qt 应用。",
+    "copyright": "© 2026 桐人创研",
+    "siteDesc": "免费提供实用的桌面工具应用，满足您的日常需求。",
     "product": "产品",
     "resources": "资源",
     "company": "公司",

@@ -4,14 +4,19 @@ import { message } from '@/utils/antdUtils';
 import { adminApi } from '@/utils/api';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
-import { Save, X, Edit } from 'lucide-react';
+import { Save, X, Edit, Image } from 'lucide-react';
+import { LogoCropUploader } from '@/components/LogoCropUploader';
+import { useAppDispatch } from '@/store/hooks';
+import { fetchSiteConfig } from '@/store/slices/siteConfigSlice';
 
 export default function AdminSystem() {
   const { t } = useTranslation();
+  const dispatch = useAppDispatch();
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState('');
+  const [logoUrl, setLogoUrl] = useState('');
 
   useEffect(() => { loadData(); }, []);
 
@@ -20,15 +25,32 @@ export default function AdminSystem() {
     try {
       const res: any = await adminApi.getSystemConfigs();
       setData(res.data);
+      // 获取当前 Logo URL
+      const logoConfig = res.data?.find((c: any) => c.configKey === 'site.logo');
+      if (logoConfig) {
+        setLogoUrl(logoConfig.configValue || '');
+      }
     } catch { /* handled */ } finally { setLoading(false); }
+  };
+
+  const handleLogoSave = async (url: string) => {
+    await adminApi.updateSystemConfig('site.logo', url);
+    message.success(t('admin.saveSuccess'));
+    loadData();
+    // 刷新全局站点配置
+    dispatch(fetchSiteConfig());
   };
 
   const handleSave = async (key: string) => {
     try {
       await adminApi.updateSystemConfig(key, editingValue);
-      message.success('Saved successfully');
+      message.success(t('admin.saveSuccess'));
       setEditingKey(null);
       loadData();
+      // 如果是站点配置，刷新全局站点配置
+      if (key.startsWith('site.')) {
+        dispatch(fetchSiteConfig());
+      }
     } catch { /* handled */ }
   };
 
@@ -49,7 +71,7 @@ export default function AdminSystem() {
         return <span className="break-all">{v}</span>;
       },
     },
-    { title: t('admin.description'), dataIndex: 'description', ellipsis: true, width: 250 },
+    { title: t('admin.description'), dataIndex: 'description', width: 200 },
     {
       title: t('admin.action'), width: 140, fixed: 'right',
       render: (_: any, record: any) => {
@@ -79,10 +101,28 @@ export default function AdminSystem() {
         </div>
       </div>
 
+      {/* Logo 编辑卡片 */}
+      <Card 
+        title={
+          <div className="flex items-center gap-2">
+            <Image size={18} className="text-blue-600" />
+            <span>{t('logo.editLogo')}</span>
+          </div>
+        }
+        className="border-slate-200 dark:border-slate-800 dark:bg-slate-900 shadow-sm"
+      >
+        <LogoCropUploader
+          value={logoUrl}
+          onChange={setLogoUrl}
+          onSave={handleLogoSave}
+        />
+      </Card>
+
+      {/* 系统配置表格 */}
       <Card className="border-slate-200 dark:border-slate-800 dark:bg-slate-900 shadow-sm" styles={{ body: { padding: 0 } }}>
         <Table 
           columns={columns} 
-          dataSource={data} 
+          dataSource={data.filter(d => d.configKey !== 'site.logo')} 
           rowKey="configKey" 
           loading={loading} 
           pagination={false}

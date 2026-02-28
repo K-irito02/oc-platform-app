@@ -5,6 +5,7 @@ import {
   Users, 
   Package, 
   MessageSquare, 
+  MessageCircle,
   FolderTree, 
   Palette, 
   Server, 
@@ -14,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Tooltip } from 'antd';
 import { cn } from '@/lib/utils';
+import { SiteLogo } from '@/components/SiteLogo';
 
 interface AdminSidebarProps {
   collapsed: boolean;
@@ -30,6 +32,7 @@ export const AdminSidebar = ({ collapsed, setCollapsed }: AdminSidebarProps) => 
     { to: '/admin/products', icon: Package, label: t('admin.products') || 'Products' },
     { to: '/admin/categories', icon: FolderTree, label: t('admin.categories') || 'Categories' },
     { to: '/admin/comments', icon: MessageSquare, label: t('admin.comments') || 'Comments' },
+    { to: '/admin/feedbacks', icon: MessageCircle, label: t('admin.feedbacks') || 'Feedbacks' },
     { to: '/admin/theme', icon: Palette, label: t('admin.theme') || 'Theme' },
     { to: '/admin/system', icon: Server, label: t('admin.system') || 'System' },
   ];
@@ -41,10 +44,7 @@ export const AdminSidebar = ({ collapsed, setCollapsed }: AdminSidebarProps) => 
     )}>
       {/* Logo Section - 与 AdminHeader 高度对齐 */}
       <div className={cn("flex items-center gap-3 h-14 border-b border-slate-200 dark:border-slate-800", collapsed ? "justify-center px-0" : "px-6")}>
-        <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
-          Q
-        </div>
-        {!collapsed && <span className="font-bold text-lg text-slate-900 dark:text-white">Qt Admin</span>}
+        <SiteLogo size="md" showText={!collapsed} textClassName="text-lg" />
       </div>
 
       {/* Navigation */}
