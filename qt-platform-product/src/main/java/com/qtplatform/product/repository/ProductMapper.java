@@ -22,6 +22,12 @@ public interface ProductMapper extends BaseMapper<Product> {
     @Select("SELECT EXISTS(SELECT 1 FROM products WHERE slug = #{slug})")
     boolean existsBySlug(@Param("slug") String slug);
 
+    @Select("SELECT EXISTS(SELECT 1 FROM products WHERE name = #{name})")
+    boolean existsByName(@Param("name") String name);
+
+    @Select("SELECT EXISTS(SELECT 1 FROM products WHERE name_en = #{nameEn})")
+    boolean existsByNameEn(@Param("nameEn") String nameEn);
+
     @Update("UPDATE products SET download_count = download_count + #{count} WHERE id = #{productId}")
     void incrementDownloadCount(@Param("productId") Long productId, @Param("count") long count);
 

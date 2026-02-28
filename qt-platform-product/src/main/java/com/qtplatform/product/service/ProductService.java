@@ -44,10 +44,16 @@ public class ProductService {
             wrapper.eq(Product::getCategoryId, categoryId);
         }
         if (StringUtils.hasText(keyword)) {
-            wrapper.and(w -> w
-                    .like(Product::getName, keyword)
-                    .or().like(Product::getNameEn, keyword)
-                    .or().like(Product::getDescription, keyword));
+            // 支持ID搜索（纯数字）和产品名称/描述搜索
+            if (keyword.matches("\\d+")) {
+                wrapper.eq(Product::getId, Long.valueOf(keyword));
+            } else {
+                wrapper.and(w -> w
+                        .like(Product::getName, keyword)
+                        .or().like(Product::getNameEn, keyword)
+                        .or().like(Product::getDescription, keyword)
+                        .or().like(Product::getDescriptionEn, keyword));
+            }
         }
 
         // Sort
@@ -82,12 +88,17 @@ public class ProductService {
     public PageResponse<ProductVO> searchProducts(String keyword, int page, int size) {
         Page<Product> pageParam = new Page<>(page, size);
         LambdaQueryWrapper<Product> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(Product::getStatus, "PUBLISHED")
-                .and(w -> w
-                        .like(Product::getName, keyword)
-                        .or().like(Product::getNameEn, keyword)
-                        .or().like(Product::getDescription, keyword)
-                        .or().like(Product::getDescriptionEn, keyword));
+        wrapper.eq(Product::getStatus, "PUBLISHED");
+        // 支持ID搜索（纯数字）和产品名称/描述搜索
+        if (keyword.matches("\\d+")) {
+            wrapper.eq(Product::getId, Long.valueOf(keyword));
+        } else {
+            wrapper.and(w -> w
+                    .like(Product::getName, keyword)
+                    .or().like(Product::getNameEn, keyword)
+                    .or().like(Product::getDescription, keyword)
+                    .or().like(Product::getDescriptionEn, keyword));
+        }
         wrapper.orderByDesc(Product::getDownloadCount);
 
         Page<Product> result = productMapper.selectPage(pageParam, wrapper);
@@ -115,6 +126,13 @@ public class ProductService {
 
     @Transactional
     public ProductVO createProduct(CreateProductRequest request, Long developerId) {
+        // 检查产品名称唯一性
+        if (productMapper.existsByName(request.getName())) {
+            throw new BusinessException(ErrorCode.PRODUCT_NAME_EXISTS);
+        }
+        if (StringUtils.hasText(request.getNameEn()) && productMapper.existsByNameEn(request.getNameEn())) {
+            throw new BusinessException(ErrorCode.PRODUCT_NAME_EN_EXISTS);
+        }
         if (productMapper.existsBySlug(request.getSlug())) {
             throw new BusinessException(ErrorCode.PRODUCT_SLUG_EXISTS);
         }
@@ -154,8 +172,19 @@ public class ProductService {
             throw new BusinessException(ErrorCode.PRODUCT_NOT_FOUND);
         }
 
-        if (StringUtils.hasText(request.getName())) product.setName(request.getName());
-        if (request.getNameEn() != null) product.setNameEn(request.getNameEn());
+        // 检查产品名称唯一性（更新时排除自己）
+        if (StringUtils.hasText(request.getName()) && !request.getName().equals(product.getName())) {
+            if (productMapper.existsByName(request.getName())) {
+                throw new BusinessException(ErrorCode.PRODUCT_NAME_EXISTS);
+            }
+            product.setName(request.getName());
+        }
+        if (request.getNameEn() != null && !request.getNameEn().equals(product.getNameEn())) {
+            if (productMapper.existsByNameEn(request.getNameEn())) {
+                throw new BusinessException(ErrorCode.PRODUCT_NAME_EN_EXISTS);
+            }
+            product.setNameEn(request.getNameEn());
+        }
         if (request.getDescription() != null) product.setDescription(request.getDescription());
         if (request.getDescriptionEn() != null) product.setDescriptionEn(request.getDescriptionEn());
         if (request.getCategoryId() != null) product.setCategoryId(request.getCategoryId());

@@ -23,8 +23,9 @@ public class AdminCommentController {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) String status,
-            @RequestParam(required = false) Long productId) {
-        return ApiResponse.success(commentService.listAllComments(page, size, status, productId));
+            @RequestParam(required = false) Long productId,
+            @RequestParam(required = false) String keyword) {
+        return ApiResponse.success(commentService.listAllComments(page, size, status, productId, keyword));
     }
 
     @PutMapping("/{id}/audit")

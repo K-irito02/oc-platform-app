@@ -18,7 +18,6 @@ public class CommentVO {
     private Long productId;
     private Long userId;
     private String username;
-    private String nickname;
     private String avatarUrl;
     private Long parentId;
     private String content;

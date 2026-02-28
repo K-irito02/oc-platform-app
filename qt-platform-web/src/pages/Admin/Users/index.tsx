@@ -44,7 +44,6 @@ export default function AdminUsers() {
     { title: t('admin.id'), dataIndex: 'id', width: 80 },
     { title: t('admin.username'), dataIndex: 'username', width: 150 },
     { title: t('admin.email'), dataIndex: 'email', width: 200 },
-    { title: t('admin.nickname'), dataIndex: 'nickname', width: 150 },
     {
       title: t('admin.status'), dataIndex: 'status', width: 100,
       render: (s: string) => (
@@ -84,8 +83,15 @@ export default function AdminUsers() {
             prefix={<Search size={14} className="text-slate-400 shrink-0" />}
             placeholder={t('admin.searchUserIdEmail')} 
             allowClear 
-            className="w-96 md:w-[28rem] h-11"
-            onPressEnter={(e) => { setKeyword(e.currentTarget.value); setPage(1); loadData(); }} 
+            className="w-96 md:w-[28rem] h-10"
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            onPressEnter={(e) => { 
+              const value = e.currentTarget.value;
+              setKeyword(value);
+              setPage(1); 
+              loadData(); 
+            }} 
           />
           <Select 
             placeholder={t('admin.status')} 

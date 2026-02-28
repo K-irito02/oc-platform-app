@@ -38,9 +38,11 @@ public enum ErrorCode {
     // 产品错误 4xxxx
     PRODUCT_NOT_FOUND(40001, "产品不存在"),
     PRODUCT_SLUG_EXISTS(40002, "产品标识已存在"),
-    VERSION_NOT_FOUND(40003, "版本不存在"),
-    VERSION_EXISTS(40004, "版本号已存在"),
-    CATEGORY_NOT_FOUND(40005, "分类不存在"),
+    PRODUCT_NAME_EXISTS(40003, "产品名称已存在"),
+    PRODUCT_NAME_EN_EXISTS(40004, "产品英文名称已存在"),
+    VERSION_NOT_FOUND(40005, "版本不存在"),
+    VERSION_EXISTS(40006, "版本号已存在"),
+    CATEGORY_NOT_FOUND(40007, "分类不存在"),
 
     // 文件错误 5xxxx
     FILE_NOT_FOUND(50001, "文件不存在"),

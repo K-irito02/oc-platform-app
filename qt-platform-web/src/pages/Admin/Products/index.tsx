@@ -195,10 +195,15 @@ export default function AdminProducts() {
             prefix={<Search size={14} className="text-slate-400 shrink-0" />}
             placeholder={t('admin.searchProduct')}
             allowClear 
-            className="w-64 md:w-80 h-11"
+            className="w-64 md:w-80 h-10"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
-            onPressEnter={() => { setPage(1); loadData(); }} 
+            onPressEnter={(e) => { 
+              const value = e.currentTarget.value;
+              setKeyword(value);
+              setPage(1); 
+              loadData(); 
+            }} 
           />
         </div>
       </div>

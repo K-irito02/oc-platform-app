@@ -29,7 +29,7 @@ export default function Profile() {
     try {
       const res: any = await userApi.getProfile();
       const u = res.data;
-      profileForm.setFieldsValue({ nickname: u.nickname, bio: u.bio });
+      profileForm.setFieldsValue({ username: u.username, bio: u.bio });
       dispatch(setUser(u));
     } catch { /* handled */ }
   };
@@ -136,12 +136,19 @@ export default function Profile() {
                 />
               </Upload>
             </div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white">{user?.nickname || user?.username}</h2>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">{user?.username}</h2>
             <p className="text-slate-500 dark:text-slate-400">{user?.email}</p>
           </div>
 
-          <Form.Item label={t('profile.nickname')} name="nickname">
-            <Input size="large" placeholder={t('profile.nicknamePlaceholder')} />
+          <Form.Item 
+            label={t('profile.username')} 
+            name="username"
+            rules={[
+              { min: 3, max: 50, message: t('profile.usernameLength') },
+              { pattern: /^[a-zA-Z0-9_-]*$/, message: t('profile.usernamePattern') }
+            ]}
+          >
+            <Input size="large" placeholder={t('profile.usernamePlaceholder')} />
           </Form.Item>
           
           <Form.Item label={t('profile.bio')} name="bio">

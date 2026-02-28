@@ -54,7 +54,6 @@ public class UserService {
         return UserProfileVO.builder()
                 .id(user.getId())
                 .username(user.getUsername())
-                .nickname(user.getNickname())
                 .avatarUrl(user.getAvatarUrl())
                 .bio(user.getBio())
                 .roles(roles)
@@ -68,8 +67,12 @@ public class UserService {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
 
-        if (StringUtils.hasText(request.getNickname())) {
-            user.setNickname(request.getNickname());
+        // 更新用户名（需要检查唯一性）
+        if (StringUtils.hasText(request.getUsername()) && !request.getUsername().equals(user.getUsername())) {
+            if (userMapper.existsByUsername(request.getUsername())) {
+                throw new BusinessException(ErrorCode.USERNAME_EXISTS);
+            }
+            user.setUsername(request.getUsername());
         }
         if (request.getBio() != null) {
             user.setBio(request.getBio());
@@ -117,10 +120,14 @@ public class UserService {
         LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
 
         if (StringUtils.hasText(keyword)) {
-            wrapper.and(w -> w
-                    .like(User::getUsername, keyword)
-                    .or().like(User::getEmail, keyword)
-                    .or().like(User::getNickname, keyword));
+            // 支持ID搜索（纯数字）和用户名/邮箱搜索
+            if (keyword.matches("\\d+")) {
+                wrapper.eq(User::getId, Long.valueOf(keyword));
+            } else {
+                wrapper.and(w -> w
+                        .like(User::getUsername, keyword)
+                        .or().like(User::getEmail, keyword));
+            }
         }
         if (StringUtils.hasText(status)) {
             wrapper.eq(User::getStatus, status);
@@ -198,7 +205,6 @@ public class UserService {
                 .id(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
-                .nickname(user.getNickname())
                 .avatarUrl(user.getAvatarUrl())
                 .bio(user.getBio())
                 .status(user.getStatus())

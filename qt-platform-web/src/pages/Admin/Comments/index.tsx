@@ -36,6 +36,7 @@ export default function AdminComments() {
   const [commentSortBy, setCommentSortBy] = useState<string>('time');
   const [commentSortOrder, setCommentSortOrder] = useState<string>('desc');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchType, setSearchType] = useState<'all' | 'commentId' | 'productId' | 'userId' | 'username' | 'email' | 'content'>('all');
 
   useEffect(() => {
     loadCategories();
@@ -50,7 +51,7 @@ export default function AdminComments() {
     }
   }, [categoryFilter]);
 
-  useEffect(() => { loadData(); }, [page, statusFilter, productFilter, commentSortBy, commentSortOrder, searchQuery]);
+  useEffect(() => { loadData(); }, [page, statusFilter, productFilter, commentSortBy, commentSortOrder]);
 
   const loadCategories = async () => {
     try {
@@ -101,7 +102,15 @@ export default function AdminComments() {
       const params: any = { page, size: 20 };
       if (statusFilter) params.status = statusFilter;
       if (productFilter) params.productId = productFilter;
-      if (searchQuery) params.search = searchQuery;
+      if (searchQuery) {
+        // 根据搜索类型构建搜索参数
+        if (searchType === 'all') {
+          params.keyword = searchQuery;
+        } else {
+          // 精确搜索：添加类型前缀
+          params.keyword = `${searchType}:${searchQuery}`;
+        }
+      }
       
       const res: any = await adminApi.listComments(params);
       let records = res.data.records || [];
@@ -275,15 +284,50 @@ export default function AdminComments() {
           />
           
           {/* 搜索框 */}
-          <Input
-            placeholder={t('admin.searchUserIdEmail')}
-            allowClear
-            className="w-80 md:w-96 h-11"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onPressEnter={() => { setPage(1); loadData(); }}
-            prefix={<Search size={14} className="text-slate-400 shrink-0" />}
-          />
+          <div className="flex items-center gap-2">
+            <Select
+              value={searchType}
+              onChange={setSearchType}
+              className="w-32 h-10"
+              options={[
+                { value: 'all', label: t('admin.searchAll') || '全部' },
+                { value: 'commentId', label: t('admin.commentId') || '评论ID' },
+                { value: 'productId', label: t('admin.productId') || '产品ID' },
+                { value: 'userId', label: t('admin.userId') || '用户ID' },
+                { value: 'username', label: t('admin.username') || '用户名' },
+                { value: 'email', label: t('admin.email') || '邮箱' },
+                { value: 'content', label: t('admin.content') || '内容' },
+              ]}
+            />
+            <Input
+              placeholder={
+                searchType === 'all' 
+                  ? (t('admin.searchUserIdEmail') || '搜索用户名/邮箱/ID/内容')
+                  : searchType === 'commentId' 
+                    ? (t('admin.searchCommentId') || '输入评论ID')
+                    : searchType === 'productId'
+                      ? (t('admin.searchProductId') || '输入产品ID')
+                      : searchType === 'userId'
+                        ? (t('admin.searchUserId') || '输入用户ID')
+                        : searchType === 'username'
+                          ? (t('admin.searchUsername') || '输入用户名')
+                          : searchType === 'email'
+                            ? (t('admin.searchEmail') || '输入邮箱')
+                            : (t('admin.searchContent') || '输入评论内容')
+              }
+              allowClear
+              className="w-64 md:w-80 h-10"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onPressEnter={(e) => { 
+                const value = e.currentTarget.value;
+                setSearchQuery(value);
+                setPage(1); 
+                loadData(); 
+              }}
+              prefix={<Search size={14} className="text-slate-400 shrink-0" />}
+            />
+          </div>
           
           {/* 状态筛选 */}
           <Select 

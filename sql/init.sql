@@ -150,7 +150,9 @@ CREATE TABLE products (
     tags            TEXT[] DEFAULT '{}',
     created_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    published_at    TIMESTAMPTZ
+    published_at    TIMESTAMPTZ,
+    CONSTRAINT uk_product_name UNIQUE (name),
+    CONSTRAINT uk_product_name_en UNIQUE (name_en)
 );
 
 CREATE INDEX idx_products_status ON products(status);

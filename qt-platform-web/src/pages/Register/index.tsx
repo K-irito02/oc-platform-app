@@ -46,7 +46,6 @@ export default function Register() {
         email: values.email,
         password: values.password,
         verificationCode: values.code,
-        nickname: values.username,
       });
       message.success(t('auth.registerSuccess') || 'Registration successful');
       navigate('/login');

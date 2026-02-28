@@ -163,17 +163,17 @@ const MOCK_VERSIONS = [
 
 
 // 扁平化所有回复（最多两级台阶：楼主一级，所有回复都在二级）
-const flattenReplies = (replies: any[], parentNickname: string): any[] => {
+const flattenReplies = (replies: any[], parentUsername: string): any[] => {
   const result: any[] = [];
   const processReply = (reply: any, replyTo: string) => {
     result.push({ ...reply, replyToName: replyTo });
     if (reply.replies && reply.replies.length > 0) {
       reply.replies.forEach((nested: any) => {
-        processReply(nested, reply.nickname || reply.username || 'User');
+        processReply(nested, reply.username || 'User');
       });
     }
   };
-  replies.forEach((reply: any) => processReply(reply, parentNickname));
+  replies.forEach((reply: any) => processReply(reply, parentUsername));
   return result;
 };
 
@@ -186,14 +186,14 @@ const ReplyItem = ({ reply, isAuthenticated, handleLikeComment, handleReplyComme
         size={28}
         className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white shrink-0"
       >
-        {reply.nickname?.[0] || reply.username?.[0] || 'U'}
+        {reply.username?.[0] || 'U'}
       </Avatar>
       <div className="flex-1 min-w-0">
         <div className="space-y-1">
-          {/* 昵称 > 回复对象 */}
+          {/* 用户名 > 回复对象 */}
           <div className="flex items-center gap-1 flex-wrap text-sm">
             <span className="font-semibold text-slate-900 dark:text-white">
-              {reply.nickname || reply.username || 'User'}
+              {reply.username || 'User'}
             </span>
             {reply.replyToName && (
               <>
@@ -220,7 +220,7 @@ const ReplyItem = ({ reply, isAuthenticated, handleLikeComment, handleReplyComme
             </button>
             {isAuthenticated && (
               <button 
-                onClick={() => handleReplyComment(reply.id, reply.nickname || reply.username)}
+                onClick={() => handleReplyComment(reply.id, reply.username)}
                 className="text-xs text-slate-400 hover:text-blue-500 transition-colors"
               >
                 {t('productDetail.reply')}
@@ -239,7 +239,7 @@ const CommentItem = ({ comment, isAuthenticated, handleLikeComment, handleReplyC
   const [visibleCount, setVisibleCount] = useState(0);
   const replies = comment.replies || [];
   // 扁平化所有嵌套回复
-  const allReplies = flattenReplies(replies, comment.nickname || comment.username || 'User');
+  const allReplies = flattenReplies(replies, comment.username || 'User');
   const visibleReplies = allReplies.slice(0, visibleCount);
   const hasMoreReplies = visibleCount < allReplies.length;
   const remainingCount = allReplies.length - visibleCount;
@@ -261,14 +261,14 @@ const CommentItem = ({ comment, isAuthenticated, handleLikeComment, handleReplyC
         size={36}
         className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white shrink-0"
       >
-        {comment.nickname?.[0] || comment.username?.[0] || 'U'}
+        {comment.username?.[0] || 'U'}
       </Avatar>
       <div className="flex-1 min-w-0">
         {/* 评论内容区 */}
         <div className="space-y-1">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-semibold text-slate-900 dark:text-white">
-              {comment.nickname || comment.username || 'User'}
+              {comment.username || 'User'}
             </span>
             {comment.rating && (
               <Rate disabled defaultValue={comment.rating} className="text-xs" style={{ fontSize: 10 }} />
@@ -292,7 +292,7 @@ const CommentItem = ({ comment, isAuthenticated, handleLikeComment, handleReplyC
             </button>
             {isAuthenticated && (
               <button 
-                onClick={() => handleReplyComment(comment.id, comment.nickname || comment.username)}
+                onClick={() => handleReplyComment(comment.id, comment.username)}
                 className="text-xs text-slate-400 hover:text-blue-500 transition-colors"
               >
                 {t('productDetail.reply')}

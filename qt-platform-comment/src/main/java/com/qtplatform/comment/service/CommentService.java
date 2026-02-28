@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.Collections;
 import java.util.List;
@@ -194,11 +195,44 @@ public class CommentService {
         log.info("Product {} rating updated: avg={}, count={}", productId, avg, count);
     }
 
-    public PageResponse<CommentVO> listAllComments(int page, int size, String status, Long productId) {
+    public PageResponse<CommentVO> listAllComments(int page, int size, String status, Long productId, String keyword) {
         Page<ProductComment> pageParam = new Page<>(page, size);
         LambdaQueryWrapper<ProductComment> wrapper = new LambdaQueryWrapper<>();
         if (status != null) wrapper.eq(ProductComment::getStatus, status);
         if (productId != null) wrapper.eq(ProductComment::getProductId, productId);
+        
+        // 支持关键词搜索（用户名/邮箱/ID）
+        if (StringUtils.hasText(keyword)) {
+            // 解析精确搜索类型
+            String searchType = "all";
+            String searchValue = keyword;
+            
+            if (keyword.contains(":")) {
+                String[] parts = keyword.split(":", 2);
+                if (parts.length == 2) {
+                    searchType = parts[0];
+                    searchValue = parts[1];
+                }
+            }
+            
+            log.info("Search parameters - type: {}, value: '{}', status: '{}', productId: {}", 
+                    searchType, searchValue, status, productId);
+            
+            // 使用自定义JOIN查询方法
+            List<ProductComment> searchResults = commentMapper.searchCommentsWithUser(status, productId, searchType, searchValue);
+            Page<ProductComment> result = new Page<>(page, size);
+            result.setRecords(searchResults.stream()
+                    .skip((long) (page - 1) * size)
+                    .limit(size)
+                    .collect(Collectors.toList()));
+            result.setTotal(searchResults.size());
+            
+            List<CommentVO> vos = result.getRecords().stream()
+                    .map(c -> toVO(c, false))
+                    .collect(Collectors.toList());
+            return PageResponse.of(vos, result.getTotal(), page, size);
+        }
+        
         wrapper.orderByDesc(ProductComment::getCreatedAt);
 
         Page<ProductComment> result = commentMapper.selectPage(pageParam, wrapper);
@@ -229,7 +263,6 @@ public class CommentService {
 
     private CommentVO toVO(ProductComment c, boolean liked) {
         String username = commentMapper.getUsernameById(c.getUserId());
-        String nickname = commentMapper.getNicknameById(c.getUserId());
         String avatarUrl = commentMapper.getAvatarUrlById(c.getUserId());
         
         // 获取回复目标用户信息
@@ -248,7 +281,6 @@ public class CommentService {
                 .productId(c.getProductId())
                 .userId(c.getUserId())
                 .username(username)
-                .nickname(nickname)
                 .avatarUrl(avatarUrl)
                 .parentId(c.getParentId())
                 .content(c.getContent())
