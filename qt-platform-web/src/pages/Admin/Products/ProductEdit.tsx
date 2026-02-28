@@ -60,6 +60,43 @@ interface Category {
   nameEn?: string;
 }
 
+interface ApiResponse<T> {
+  data: T;
+}
+
+interface VersionFormValues {
+  versionNumber: string;
+  platform: string;
+  architecture?: string;
+  releaseNotes?: string;
+  releaseNotesEn?: string;
+}
+
+interface ProductFormValues {
+  name: string;
+  nameEn?: string;
+  slug: string;
+  description: string;
+  descriptionEn?: string;
+  categoryId: number;
+  status?: string;
+  homepageUrl?: string;
+  sourceUrl?: string;
+  license?: string;
+  tags?: string;
+  isFeatured?: boolean;
+}
+
+interface UploadedFileData {
+  id: number;
+  originalName: string;
+  fileSize: number;
+  checksumSha256: string;
+  filePath: string;
+  url?: string;
+  fileUrl?: string;
+}
+
 export default function ProductEdit() {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
@@ -88,30 +125,30 @@ export default function ProductEdit() {
       loadProduct(parseInt(id));
       loadVersions(parseInt(id));
     }
-  }, [id]);
+  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadVersions = async (productId: number) => {
     try {
-      const res: any = await adminApi.getVersions(productId);
+      const res = await adminApi.getVersions(productId) as ApiResponse<ProductVersion[]>;
       setVersions(res.data || []);
-    } catch (e) {
-      console.error('Failed to load versions', e);
+    } catch (error) {
+      console.error('Failed to load versions', error);
     }
   };
 
   const loadCategories = async () => {
     try {
-      const res: any = await categoryApi.getAll();
+      const res = await categoryApi.getAll() as ApiResponse<Category[]>;
       setCategories(res.data || []);
-    } catch (e) {
-      console.error(t('productEdit.loadCategoriesFailed'), e);
+    } catch (error) {
+      console.error(t('productEdit.loadCategoriesFailed'), error);
     }
   };
 
   const loadProduct = async (productId: number) => {
     setLoading(true);
     try {
-      const res: any = await adminApi.getProduct(productId);
+      const res = await adminApi.getProduct(productId) as ApiResponse<ProductData>;
       const data = res.data;
       setProduct(data);
       form.setFieldsValue({
@@ -132,7 +169,7 @@ export default function ProductEdit() {
       setBannerUrl(data.bannerUrl || '');
       setScreenshots(data.screenshots || []);
       setDemoVideoUrl(data.demoVideoUrl || '');
-          } catch (e) {
+          } catch {
       message.error(t('productEdit.loadFailed'));
     } finally {
       setLoading(false);
@@ -143,7 +180,7 @@ export default function ProductEdit() {
   const handleVersionFileUpload = async (file: File) => {
     setUploadingVersion(true);
     try {
-      const res: any = await fileApi.uploadApplication(file);
+      const res = await fileApi.uploadApplication(file) as ApiResponse<UploadedFileData>;
       setUploadedFile({
         id: res.data.id,
         name: res.data.originalName,
@@ -153,7 +190,7 @@ export default function ProductEdit() {
       });
       versionForm.setFieldsValue({ fileName: res.data.originalName });
       message.success(t('productEdit.fileUploaded'));
-    } catch (e) {
+    } catch {
       message.error(t('productEdit.uploadFailed'));
     } finally {
       setUploadingVersion(false);
@@ -161,7 +198,7 @@ export default function ProductEdit() {
   };
 
   // 创建新版本
-  const handleCreateVersion = async (values: any) => {
+  const handleCreateVersion = async (values: VersionFormValues) => {
     if (!uploadedFile) {
       message.error(t('productEdit.pleaseUploadFile'));
       return;
@@ -186,7 +223,7 @@ export default function ProductEdit() {
       versionForm.resetFields();
       setUploadedFile(null);
       loadVersions(product.id);
-    } catch (e) {
+    } catch {
       message.error(t('productEdit.versionCreateFailed'));
     }
   };
@@ -197,7 +234,7 @@ export default function ProductEdit() {
       await adminApi.publishVersion(versionId);
       message.success(t('productEdit.versionPublished'));
       if (product?.id) loadVersions(product.id);
-    } catch (e) {
+    } catch {
       message.error(t('productEdit.publishFailed'));
     }
   };
@@ -208,7 +245,7 @@ export default function ProductEdit() {
       await adminApi.deleteVersion(versionId);
       message.success(t('productEdit.versionDeleted'));
       if (product?.id) loadVersions(product.id);
-    } catch (e) {
+    } catch {
       message.error(t('productEdit.deleteFailed'));
     }
   };
@@ -222,7 +259,7 @@ export default function ProductEdit() {
     return bytes + ' B';
   };
 
-  const handleSave = async (values: any) => {
+  const handleSave = async (values: ProductFormValues) => {
     setSaving(true);
     try {
       const payload = {
@@ -231,7 +268,7 @@ export default function ProductEdit() {
         bannerUrl,
         screenshots,
         demoVideoUrl,
-        tags: values.tags ? values.tags.split(',').map((t: string) => t.trim()).filter(Boolean) : [],
+        tags: values.tags ? values.tags.split(',').map((tag: string) => tag.trim()).filter(Boolean) : [],
       };
       
       if (id) {
@@ -242,7 +279,7 @@ export default function ProductEdit() {
         message.success(t('productEdit.createSuccess'));
         navigate('/admin/products');
       }
-    } catch (e) {
+    } catch {
       message.error(t('productEdit.saveFailed'));
     } finally {
       setSaving(false);
@@ -252,26 +289,23 @@ export default function ProductEdit() {
   const handleUpload = async (file: File, type: 'icon' | 'banner' | 'screenshot' | 'video') => {
     setUploading(true);
     try {
-      let res: any;
+      let res: ApiResponse<UploadedFileData>;
       const productId = product?.id || 0;
       
       if (type === 'video') {
         if (productId > 0) {
-          res = await fileApi.uploadProductVideo(file, productId);
+          res = await fileApi.uploadProductVideo(file, productId) as ApiResponse<UploadedFileData>;
         } else {
-          // 新建产品时使用通用视频上传
-          res = await fileApi.uploadVideo(file);
+          res = await fileApi.uploadVideo(file) as ApiResponse<UploadedFileData>;
         }
       } else {
         if (productId > 0) {
-          res = await fileApi.uploadProductImage(file, productId);
+          res = await fileApi.uploadProductImage(file, productId) as ApiResponse<UploadedFileData>;
         } else {
-          // 新建产品时使用通用图片上传
-          res = await fileApi.uploadImage(file);
+          res = await fileApi.uploadImage(file) as ApiResponse<UploadedFileData>;
         }
       }
       
-      // 兼容不同的响应格式
       const url = res.data?.url || res.data?.fileUrl;
       
       if (!url) {
@@ -297,9 +331,10 @@ export default function ProductEdit() {
           message.success(t('productEdit.videoUploaded') || 'Video uploaded');
           break;
       }
-    } catch (e: any) {
-      console.error('Upload failed:', e);
-      message.error(e?.response?.data?.message || t('productEdit.uploadFailed') || 'Upload failed');
+    } catch (error: unknown) {
+      console.error('Upload failed:', error);
+      const err = error as { response?: { data?: { message?: string } } };
+      message.error(err?.response?.data?.message || t('productEdit.uploadFailed') || 'Upload failed');
     } finally {
       setUploading(false);
     }

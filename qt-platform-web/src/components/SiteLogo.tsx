@@ -49,11 +49,3 @@ export const SiteLogo = ({
     </div>
   );
 };
-
-export const useSiteName = () => {
-  const { i18n } = useTranslation();
-  const { config } = useAppSelector((state) => state.siteConfig);
-  
-  const siteName = i18n.language === 'zh-CN' ? config.siteName : config.siteNameEn;
-  return siteName || 'KiritoLab';
-};

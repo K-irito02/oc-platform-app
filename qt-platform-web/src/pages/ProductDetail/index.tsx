@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAppSelector } from '@/store/hooks';
 import { productApi, commentApi } from '@/utils/api';
@@ -8,6 +8,90 @@ const { TextArea } = Input;
 import { Github, ExternalLink, Star, Clock, Eye, Download as DownloadIcon, Terminal, Shield, CheckCircle, Tag as TagIcon, User, Play, Pause, Volume2, VolumeX, Maximize, ThumbsUp } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import ScreenshotGallery from '@/components/ScreenshotGallery';
+import type { TFunction } from 'i18next';
+
+type ApiResponse<T> = {
+  data: T;
+};
+
+type PageResponse<T> = {
+  records: T[];
+  total?: number;
+  totalWithReplies?: number;
+};
+
+type ProductItem = {
+  id: number;
+  name: string;
+  nameEn?: string;
+  description?: string;
+  descriptionEn?: string;
+  iconUrl?: string | null;
+  categoryName?: string;
+  license?: string;
+  isFeatured?: boolean;
+  downloadCount?: number;
+  viewCount?: number;
+  ratingAverage?: number;
+  homepageUrl?: string;
+  sourceUrl?: string;
+  username?: string;
+  updatedAt?: string;
+  demoVideoUrl?: string;
+  bannerUrl?: string;
+  screenshots?: string[];
+};
+
+type VersionItem = {
+  id: number;
+  versionNumber: string;
+  platform: string;
+  fileSize?: number;
+  isLatest?: boolean;
+  createdAt?: string;
+  fileRecordId?: number;
+};
+
+type CommentUser = {
+  username?: string;
+  avatarUrl?: string | null;
+};
+
+type CommentReply = CommentUser & {
+  id: number;
+  content: string;
+  createdAt?: string;
+  likeCount?: number;
+  liked?: boolean;
+  replies?: CommentReply[];
+  replyToName?: string;
+};
+
+type CommentItemType = CommentReply & {
+  rating?: number;
+  replies?: CommentReply[];
+};
+
+type ReplyItemProps = {
+  reply: CommentReply;
+  isAuthenticated: boolean;
+  handleLikeComment: (commentId: number, liked?: boolean) => void;
+  handleReplyComment: (commentId: number, userName: string) => void;
+  t: TFunction;
+};
+
+type CommentItemProps = {
+  comment: CommentItemType;
+  isAuthenticated: boolean;
+  handleLikeComment: (commentId: number, liked?: boolean) => void;
+  handleReplyComment: (commentId: number, userName: string) => void;
+  t: TFunction;
+};
+
+type CommentFormValues = {
+  content: string;
+  rating?: number;
+};
 
 // Video Player Component
 const VideoPlayer = ({ src, poster }: { src: string; poster?: string }) => {
@@ -163,22 +247,22 @@ const MOCK_VERSIONS = [
 
 
 // 扁平化所有回复（最多两级台阶：楼主一级，所有回复都在二级）
-const flattenReplies = (replies: any[], parentUsername: string): any[] => {
-  const result: any[] = [];
-  const processReply = (reply: any, replyTo: string) => {
+const flattenReplies = (replies: CommentReply[], parentUsername: string): CommentReply[] => {
+  const result: CommentReply[] = [];
+  const processReply = (reply: CommentReply, replyTo: string) => {
     result.push({ ...reply, replyToName: replyTo });
     if (reply.replies && reply.replies.length > 0) {
-      reply.replies.forEach((nested: any) => {
+      reply.replies.forEach((nested) => {
         processReply(nested, reply.username || 'User');
       });
     }
   };
-  replies.forEach((reply: any) => processReply(reply, parentUsername));
+  replies.forEach((reply) => processReply(reply, parentUsername));
   return result;
 };
 
 // 回复项组件 - 用于二级评论
-const ReplyItem = ({ reply, isAuthenticated, handleLikeComment, handleReplyComment, t }: any) => {
+const ReplyItem = ({ reply, isAuthenticated, handleLikeComment, handleReplyComment, t }: ReplyItemProps) => {
   return (
     <div className="flex gap-3">
       <Avatar 
@@ -220,7 +304,7 @@ const ReplyItem = ({ reply, isAuthenticated, handleLikeComment, handleReplyComme
             </button>
             {isAuthenticated && (
               <button 
-                onClick={() => handleReplyComment(reply.id, reply.username)}
+                onClick={() => handleReplyComment(reply.id, reply.username || 'User')}
                 className="text-xs text-slate-400 hover:text-blue-500 transition-colors"
               >
                 {t('productDetail.reply')}
@@ -234,7 +318,7 @@ const ReplyItem = ({ reply, isAuthenticated, handleLikeComment, handleReplyComme
 };
 
 // 评论组件 - 楼主一级，所有回复都在二级（最多两级台阶）
-const CommentItem = ({ comment, isAuthenticated, handleLikeComment, handleReplyComment, t }: any) => {
+const CommentItem = ({ comment, isAuthenticated, handleLikeComment, handleReplyComment, t }: CommentItemProps) => {
   // 默认收缩全部回复，visibleCount 表示当前显示的回复数量
   const [visibleCount, setVisibleCount] = useState(0);
   const replies = comment.replies || [];
@@ -309,7 +393,7 @@ const CommentItem = ({ comment, isAuthenticated, handleLikeComment, handleReplyC
         {/* 回复区域 - 统一在二级台阶 */}
         {allReplies.length > 0 && (
           <div className="mt-3 space-y-3 pl-3 border-l-2 border-slate-200 dark:border-slate-700">
-            {visibleReplies.map((reply: any, index: number) => (
+            {visibleReplies.map((reply, index) => (
               <ReplyItem 
                 key={reply.id || index}
                 reply={reply} 
@@ -354,29 +438,48 @@ export default function ProductDetail() {
   const { isAuthenticated } = useAppSelector((s) => s.auth);
   const isEnglish = i18n.language === 'en-US' || i18n.language === 'en';
 
-  const [product, setProduct] = useState<any>(null);
-  const [versions, setVersions] = useState<any[]>([]);
-  const [comments, setComments] = useState<any[]>([]);
+  const [product, setProduct] = useState<ProductItem | null>(null);
+  const [versions, setVersions] = useState<VersionItem[]>([]);
+  const [comments, setComments] = useState<CommentItemType[]>([]);
   const [commentTotal, setCommentTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [_commentLoading, setCommentLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [form] = Form.useForm();
   const [commentSortBy, setCommentSortBy] = useState<string>('time');
   const [commentSortOrder, setCommentSortOrder] = useState<string>('desc');
-  const [replyingTo, setReplyingTo] = useState<{id: number, name: string} | null>(null);
+  const [replyingTo, setReplyingTo] = useState<{ id: number; name: string } | null>(null);
 
-  useEffect(() => { 
-    if (slug) {
-      loadProduct(); 
-    }
-  }, [slug]);
+  const applyMockData = useCallback(() => {
+    setProduct(MOCK_PRODUCT);
+    setVersions(MOCK_VERSIONS);
+    setComments([]);
+    setCommentTotal(0);
+  }, []);
 
-  const loadProduct = async () => {
+  const loadVersions = useCallback(async (productId: number) => {
+    try {
+      const res = await productApi.getVersions(productId) as ApiResponse<VersionItem[]>;
+      setVersions(res.data || []);
+    } catch { /* handled */ }
+  }, []);
+
+  const loadComments = useCallback(async (productId: number, page: number, sortBy?: string, sortOrder?: string) => {
+    try {
+      const res = await commentApi.getProductComments(productId, { 
+        page, 
+        size: 10,
+        sortBy: sortBy || commentSortBy,
+        sortOrder: sortOrder || commentSortOrder
+      }) as ApiResponse<PageResponse<CommentItemType>>;
+      setComments(res.data.records || []);
+      setCommentTotal(res.data.totalWithReplies || res.data.total || 0);
+    } catch { /* handled */ }
+  }, [commentSortBy, commentSortOrder]);
+
+  const loadProduct = useCallback(async () => {
     setLoading(true);
     try {
-      // Try to fetch real data first
-      const res: any = await productApi.getBySlug(slug!);
+      const res = await productApi.getBySlug(slug!) as ApiResponse<ProductItem>;
       if (res.data) {
         setProduct(res.data);
         if (res.data.id) {
@@ -384,48 +487,23 @@ export default function ProductDetail() {
           loadComments(res.data.id, 1);
         }
       } else {
-        // Fallback to Mock data if API returns empty but no error (rare) or specific mock slug
         if (slug === 'mock-product' || slug === 'qt-creator-ultimate') {
-           useMockData();
+           applyMockData();
         }
       }
-    } catch (err) {
-      // Fallback to Mock Data on error (for demonstration)
+    } catch {
       console.log('API failed, using mock data');
-      useMockData();
+      applyMockData();
     } finally { 
       setLoading(false); 
     }
-  };
+  }, [applyMockData, loadVersions, loadComments, slug]);
 
-  const useMockData = () => {
-    setProduct(MOCK_PRODUCT);
-    setVersions(MOCK_VERSIONS);
-    setComments([]);
-    setCommentTotal(0);
-  };
-
-  const loadVersions = async (productId: number) => {
-    try {
-      const res: any = await productApi.getVersions(productId);
-      setVersions(res.data || []);
-    } catch { /* handled */ }
-  };
-
-  const loadComments = async (productId: number, page: number, sortBy?: string, sortOrder?: string) => {
-    setCommentLoading(true);
-    try {
-      const res: any = await commentApi.getProductComments(productId, { 
-        page, 
-        size: 10,
-        sortBy: sortBy || commentSortBy,
-        sortOrder: sortOrder || commentSortOrder
-      });
-      setComments(res.data.records || []);
-      // 使用包含回复的总数（如果后端提供），否则使用顶级评论数
-      setCommentTotal(res.data.totalWithReplies || res.data.total || 0);
-    } catch { /* handled */ } finally { setCommentLoading(false); }
-  };
+  useEffect(() => { 
+    if (slug) {
+      loadProduct(); 
+    }
+  }, [slug, loadProduct]);
 
   const handleSortChange = (sortBy: string, sortOrder: string) => {
     setCommentSortBy(sortBy);
@@ -468,11 +546,11 @@ export default function ProductDetail() {
     form.setFieldsValue({ content: '' });
   };
 
-  const handleComment = async (values: any) => {
+  const handleComment = async (values: CommentFormValues) => {
     if (!product) return;
     setSubmitting(true);
     try {
-      const payload: any = { content: values.content, rating: values.rating };
+      const payload: { content: string; rating?: number; parentId?: number } = { content: values.content, rating: values.rating };
       if (replyingTo) {
         payload.parentId = replyingTo.id;
       }
@@ -481,9 +559,9 @@ export default function ProductDetail() {
       form.resetFields();
       setReplyingTo(null);
       loadComments(product.id, 1);
-    } catch (error: any) {
-      // 检查是否是频率限制错误
-      const errorMsg = error?.response?.data?.message || error?.message || '';
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
+      const errorMsg = err.response?.data?.message || err.message || '';
       if (errorMsg.includes('频繁') || errorMsg.includes('rate') || errorMsg.includes('RATE_LIMIT')) {
         message.error(t('productDetail.rateLimitExceeded'));
       } else {
@@ -523,7 +601,7 @@ export default function ProductDetail() {
   if (loading) return <div className="flex justify-center items-center min-h-[60vh]"><Spin size="large" /></div>;
   if (!product) return <div className="flex justify-center items-center min-h-[60vh]"><Empty description={t('productDetail.productNotFound')} /></div>;
 
-  const latestVersion = versions.find((v: any) => v.isLatest) || versions[0];
+  const latestVersion = versions.find((v) => v.isLatest) || versions[0];
   
   // 根据当前语言选择显示内容
   const displayName = (isEnglish && product.nameEn) ? product.nameEn : product.name;

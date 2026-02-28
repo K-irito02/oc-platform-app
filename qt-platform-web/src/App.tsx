@@ -9,7 +9,26 @@ import { setUser, logout } from '@/store/slices/authSlice'
 import { fetchSiteConfig } from '@/store/slices/siteConfigSlice'
 import { userApi } from '@/utils/api'
 import { ThemeProvider } from '@/components/ThemeProvider'
-import AntdStaticFunctions from '@/utils/antdUtils'
+import { useAntdStaticFunctions } from '@/utils/antdUtils'
+
+type UserProfile = {
+  id: number
+  username: string
+  nickname: string
+  email: string
+  avatarUrl: string | null
+  roles: string[]
+  themeConfig?: string
+}
+
+type ApiResponse<T> = {
+  data: T
+}
+
+function AntdInitializer() {
+  useAntdStaticFunctions()
+  return null
+}
 
 function App() {
   const dispatch = useAppDispatch()
@@ -23,8 +42,9 @@ function App() {
   useEffect(() => {
     if (isAuthenticated && !user) {
       userApi.getProfile()
-        .then((res: any) => {
-          if (res.data) dispatch(setUser(res.data))
+        .then((res) => {
+          const data = (res as ApiResponse<UserProfile>).data
+          if (data) dispatch(setUser(data))
         })
         .catch(() => dispatch(logout()))
     }
@@ -33,7 +53,7 @@ function App() {
   return (
     <ConfigProvider locale={zhCN} theme={theme}>
       <AntdApp>
-        <AntdStaticFunctions />
+        <AntdInitializer />
         <ThemeProvider>
           <RouterProvider router={router} />
         </ThemeProvider>

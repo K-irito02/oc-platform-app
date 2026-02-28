@@ -4,16 +4,30 @@ import { useTranslation } from 'react-i18next';
 import { User, Package, Download, MessageSquare, TrendingUp, Cloud } from 'lucide-react';
 import { adminApi } from '@/utils/api';
 
+interface DashboardStats {
+  totalUsers: number;
+  totalProducts: number;
+  totalDownloads: number;
+  totalComments: number;
+  newUsersToday: number;
+  downloadsToday: number;
+  downloadTrend?: { date: string; count: number }[];
+}
+
+interface ApiResponse<T> {
+  data: T;
+}
+
 export default function AdminDashboard() {
   const { t } = useTranslation();
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => { loadStats(); }, []);
 
   const loadStats = async () => {
     try {
-      const res: any = await adminApi.getDashboardStats();
+      const res = await adminApi.getDashboardStats() as ApiResponse<DashboardStats>;
       setStats(res.data);
     } catch { /* handled */ } finally { setLoading(false); }
   };
@@ -64,8 +78,8 @@ export default function AdminDashboard() {
             {t('admin.downloadTrend') || 'Download Trend'}
           </h3>
           <div className="flex items-end gap-2 h-40">
-            {stats.downloadTrend.map((d: any, i: number) => {
-              const max = Math.max(...stats.downloadTrend.map((t: any) => t.count));
+            {stats.downloadTrend.map((d, i) => {
+              const max = Math.max(...stats.downloadTrend!.map((t) => t.count));
               const h = max > 0 ? (d.count / max) * 100 : 0;
               return (
                 <div key={i} className="flex-1 flex flex-col items-center group">

@@ -4,7 +4,7 @@ import { Spin } from 'antd';
 import MainLayout from '@/layouts/MainLayout';
 import AdminLayout from '@/layouts/AdminLayout';
 
-const LazyLoad = (Component: React.LazyExoticComponent<ComponentType<unknown>>) => (
+const lazyLoad = (Component: React.LazyExoticComponent<ComponentType<unknown>>) => (
   <Suspense fallback={<Spin size="large" className="flex justify-center mt-[30vh]" />}>
     <Component />
   </Suspense>
@@ -37,15 +37,15 @@ const router = createBrowserRouter([
   // Auth Routes (No Sidebar/Header, just Background)
   {
     path: '/login',
-    element: LazyLoad(Login),
+    element: lazyLoad(Login),
   },
   {
     path: '/register',
-    element: LazyLoad(Register),
+    element: lazyLoad(Register),
   },
   {
     path: '/forgot-password',
-    element: LazyLoad(ForgotPassword),
+    element: lazyLoad(ForgotPassword),
   },
   
   // Main App Routes
@@ -53,14 +53,14 @@ const router = createBrowserRouter([
     path: '/',
     element: <MainLayout />,
     children: [
-      { index: true, element: LazyLoad(Home) },
-      { path: 'products', element: LazyLoad(Products) },
-      { path: 'products/:slug', element: LazyLoad(ProductDetail) },
-      { path: 'profile', element: LazyLoad(Profile) },
-      { path: 'developers', element: LazyLoad(ComingSoon) },
-      { path: 'about', element: LazyLoad(ComingSoon) },
-      { path: 'coming-soon', element: LazyLoad(ComingSoon) },
-      { path: 'oauth/github/callback', element: LazyLoad(OAuthCallback) },
+      { index: true, element: lazyLoad(Home) },
+      { path: 'products', element: lazyLoad(Products) },
+      { path: 'products/:slug', element: lazyLoad(ProductDetail) },
+      { path: 'profile', element: lazyLoad(Profile) },
+      { path: 'developers', element: lazyLoad(ComingSoon) },
+      { path: 'about', element: lazyLoad(ComingSoon) },
+      { path: 'coming-soon', element: lazyLoad(ComingSoon) },
+      { path: 'oauth/github/callback', element: lazyLoad(OAuthCallback) },
     ],
   },
 
@@ -69,21 +69,21 @@ const router = createBrowserRouter([
     path: '/admin',
     element: <AdminLayout />,
     children: [
-      { index: true, element: LazyLoad(AdminDashboard) },
-      { path: 'users', element: LazyLoad(AdminUsers) },
-      { path: 'products', element: LazyLoad(AdminProducts) },
-      { path: 'products/new', element: LazyLoad(AdminProductEdit) },
-      { path: 'products/:id/edit', element: LazyLoad(AdminProductEdit) },
-      { path: 'comments', element: LazyLoad(AdminComments) },
-      { path: 'feedbacks', element: LazyLoad(AdminFeedbacks) },
-      { path: 'categories', element: LazyLoad(AdminCategories) },
-      { path: 'theme', element: LazyLoad(AdminTheme) },
-      { path: 'system', element: LazyLoad(AdminSystem) },
+      { index: true, element: lazyLoad(AdminDashboard) },
+      { path: 'users', element: lazyLoad(AdminUsers) },
+      { path: 'products', element: lazyLoad(AdminProducts) },
+      { path: 'products/new', element: lazyLoad(AdminProductEdit) },
+      { path: 'products/:id/edit', element: lazyLoad(AdminProductEdit) },
+      { path: 'comments', element: lazyLoad(AdminComments) },
+      { path: 'feedbacks', element: lazyLoad(AdminFeedbacks) },
+      { path: 'categories', element: lazyLoad(AdminCategories) },
+      { path: 'theme', element: lazyLoad(AdminTheme) },
+      { path: 'system', element: lazyLoad(AdminSystem) },
     ],
   },
 
   // Fallback
-  { path: '404', element: LazyLoad(NotFound) },
+  { path: '404', element: lazyLoad(NotFound) },
   { path: '*', element: <Navigate to="/404" replace /> },
 ]);
 

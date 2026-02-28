@@ -11,6 +11,10 @@ export interface SiteConfig {
   uploadMaxFileSize: number;
 }
 
+type ApiResponse<T> = {
+  data: T;
+};
+
 interface SiteConfigState {
   config: SiteConfig;
   loading: boolean;
@@ -40,10 +44,11 @@ export const fetchSiteConfig = createAsyncThunk(
   'siteConfig/fetch',
   async (_, { rejectWithValue }) => {
     try {
-      const res: any = await request.get('/public/site-config');
+      const res = await request.get('/public/site-config') as ApiResponse<SiteConfig>;
       return res.data;
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to fetch site config');
+    } catch (error: unknown) {
+      const err = error as { message?: string };
+      return rejectWithValue(err.message || 'Failed to fetch site config');
     }
   }
 );

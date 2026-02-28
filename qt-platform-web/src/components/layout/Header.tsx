@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Bell, Search, Globe, Menu } from 'lucide-react';
 import { Dropdown, Avatar, Badge } from 'antd';
+import type { MenuProps } from 'antd';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { logout } from '@/store/slices/authSlice';
 import { GlassButton } from '@/components/ui/GlassButton';
@@ -29,7 +30,7 @@ export const Header: React.FC = () => {
     role === 'ADMIN' || role === 'SUPER_ADMIN'
   );
 
-  const userMenuItems = [
+  const userMenuItems: MenuProps['items'] = [
     { key: 'profile', label: t('common.profile') || '个人中心', onClick: () => navigate('/profile') },
     ...(isAdmin ? [
       { key: 'admin', label: t('common.admin') || '管理后台', onClick: () => navigate('/admin') },
@@ -87,7 +88,7 @@ export const Header: React.FC = () => {
             </GlassButton>
 
             <Dropdown 
-              menu={{ items: userMenuItems as any }} 
+              menu={{ items: userMenuItems }} 
               placement="bottomRight" 
               trigger={['click']}
               overlayClassName="glass-dropdown"

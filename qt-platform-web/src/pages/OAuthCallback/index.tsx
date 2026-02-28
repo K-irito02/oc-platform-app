@@ -4,6 +4,22 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppDispatch } from '@/store/hooks';
 import { setCredentials } from '@/store/slices/authSlice';
 import { authApi } from '@/utils/api';
+import { useCallback } from 'react';
+
+interface AuthResponse {
+  data: {
+    user: {
+      id: number;
+      email: string;
+      username: string;
+      nickname?: string;
+      avatarUrl?: string;
+      roles: string[];
+    };
+    accessToken: string;
+    refreshToken: string;
+  };
+}
 
 export default function OAuthCallback() {
   const [searchParams] = useSearchParams();
@@ -11,15 +27,9 @@ export default function OAuthCallback() {
   const dispatch = useAppDispatch();
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    const code = searchParams.get('code');
-    if (!code) { setError('Missing authorization code'); return; }
-    handleCallback(code);
-  }, []);
-
-  const handleCallback = async (code: string) => {
+  const handleCallback = useCallback(async (code: string) => {
     try {
-      const res: any = await authApi.githubCallback(code);
+      const res = await authApi.githubCallback(code) as AuthResponse;
       dispatch(setCredentials({
         user: res.data.user,
         accessToken: res.data.accessToken,
@@ -29,8 +39,15 @@ export default function OAuthCallback() {
     } catch {
       setError('GitHub login failed, please try again');
     }
-  };
+  }, [dispatch, navigate]);
 
+  useEffect(() => {
+    const code = searchParams.get('code');
+    if (!code) { setError('Missing authorization code'); return; }
+    handleCallback(code);
+  }, [searchParams, handleCallback]);
+
+  
   if (error) {
     return (
       <div className="flex items-center justify-center min-h-screen">

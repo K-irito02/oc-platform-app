@@ -1,17 +1,44 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Input, Select, Pagination, Spin, Empty, Tag, Card } from 'antd';
 import { Search, Download, Star, Eye, Filter } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { productApi, categoryApi } from '@/utils/api';
 
+type ProductItem = {
+  id: number;
+  slug: string;
+  name: string;
+  description?: string;
+  iconUrl?: string | null;
+  categoryName?: string | null;
+  isFeatured?: boolean;
+  downloadCount?: number;
+  ratingAverage?: number;
+  viewCount?: number;
+};
+
+type CategoryItem = {
+  id: number;
+  name: string;
+};
+
+type PageResponse<T> = {
+  records: T[];
+  total: number;
+};
+
+type ApiResponse<T> = {
+  data: T;
+};
+
 export default function Products() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [products, setProducts] = useState<any[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
+  const [products, setProducts] = useState<ProductItem[]>([]);
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -20,24 +47,30 @@ export default function Products() {
   const sort = searchParams.get('sort') || 'latest';
   const keyword = searchParams.get('q') || '';
 
-  useEffect(() => { loadCategories(); }, []);
-  useEffect(() => { loadProducts(); }, [page, categoryId, sort, keyword]);
-
-  const loadCategories = async () => {
+  const loadCategories = useCallback(async () => {
     try {
-      const res: any = await categoryApi.getAll();
+      const res = await categoryApi.getAll() as ApiResponse<CategoryItem[]>;
       setCategories(res.data || []);
     } catch { /* handled */ }
-  };
+  }, []);
 
-  const loadProducts = async () => {
+  const loadProducts = useCallback(async () => {
     setLoading(true);
     try {
-      const res: any = await productApi.list({ page, size: 12, categoryId, sort: sort === 'latest' ? undefined : sort, keyword: keyword || undefined });
-      setProducts(res.data.records || []);
-      setTotal(res.data.total || 0);
+      const res = await productApi.list({
+        page,
+        size: 12,
+        categoryId,
+        sort: sort === 'latest' ? undefined : sort,
+        keyword: keyword || undefined
+      }) as ApiResponse<PageResponse<ProductItem>>;
+      setProducts(res.data?.records || []);
+      setTotal(res.data?.total || 0);
     } catch { /* handled */ } finally { setLoading(false); }
-  };
+  }, [page, categoryId, sort, keyword]);
+
+  useEffect(() => { loadCategories(); }, [loadCategories]);
+  useEffect(() => { loadProducts(); }, [loadProducts]);
 
   const updateParams = (updates: Record<string, string | undefined>) => {
     const params = new URLSearchParams(searchParams);
@@ -50,7 +83,7 @@ export default function Products() {
 
   const categoryOptions = [
     { value: '', label: t('product.allCategories') || 'All Categories' },
-    ...categories.map((c: any) => ({ value: String(c.id), label: c.name })),
+    ...categories.map((c) => ({ value: String(c.id), label: c.name })),
   ];
 
   return (
@@ -109,7 +142,7 @@ export default function Products() {
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            {products.map((p: any) => (
+            {products.map((p) => (
               <Card
                 key={p.id}
                 hoverable
@@ -149,13 +182,13 @@ export default function Products() {
                 
                 <div className="flex items-center justify-between text-xs text-slate-400 pt-4 border-t border-slate-100 dark:border-slate-800">
                   <div className="flex items-center gap-1">
-                    <Download size={14} /> {p.downloadCount}
+                    <Download size={14} /> {p.downloadCount ?? 0}
                   </div>
                   <div className="flex items-center gap-1">
-                    <Star size={14} className="text-amber-400 fill-amber-400" /> {p.ratingAverage.toFixed(1)}
+                    <Star size={14} className="text-amber-400 fill-amber-400" /> {(p.ratingAverage ?? 0).toFixed(1)}
                   </div>
                   <div className="flex items-center gap-1">
-                    <Eye size={14} /> {p.viewCount}
+                    <Eye size={14} /> {p.viewCount ?? 0}
                   </div>
                 </div>
               </Card>

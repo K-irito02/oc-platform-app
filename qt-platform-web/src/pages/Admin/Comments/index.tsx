@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Table, Space, Tag, Button, Modal, Select, Card, Input } from 'antd';
 import { message } from '@/utils/antdUtils';
 import { adminApi, categoryApi, productApi } from '@/utils/api';
@@ -19,9 +19,39 @@ interface ProductOption {
   ratingCount: number;
 }
 
+interface CommentRecord {
+  id: number;
+  content: string;
+  rating?: number;
+  likeCount?: number;
+  replyCount?: number;
+  productId: number;
+  userId: number;
+  parentId?: number;
+  status: string;
+  createdAt: string;
+}
+
+interface ApiResponse<T> {
+  data: T;
+}
+
+interface PaginatedResponse<T> {
+  records: T[];
+  total: number;
+}
+
+interface ProductListItem {
+  id: number;
+  name: string;
+  downloadCount?: number;
+  ratingAverage?: number;
+  ratingCount?: number;
+}
+
 export default function AdminComments() {
   const { t } = useTranslation();
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<CommentRecord[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -51,30 +81,71 @@ export default function AdminComments() {
     }
   }, [categoryFilter]);
 
-  useEffect(() => { loadData(); }, [page, statusFilter, productFilter, commentSortBy, commentSortOrder]);
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params: Record<string, unknown> = { page, size: 20 };
+      if (statusFilter) params.status = statusFilter;
+      if (productFilter) params.productId = productFilter;
+      if (searchQuery) {
+        if (searchType === 'all') {
+          params.keyword = searchQuery;
+        } else {
+          params.keyword = `${searchType}:${searchQuery}`;
+        }
+      }
+      
+      const res = await adminApi.listComments(params) as ApiResponse<PaginatedResponse<CommentRecord>>;
+      const records = res.data.records || [];
+      
+      const isAsc = commentSortOrder === 'asc';
+      switch (commentSortBy) {
+        case 'rating':
+          records.sort((a, b) => isAsc ? (a.rating || 0) - (b.rating || 0) : (b.rating || 0) - (a.rating || 0));
+          break;
+        case 'likes':
+          records.sort((a, b) => isAsc ? (a.likeCount || 0) - (b.likeCount || 0) : (b.likeCount || 0) - (a.likeCount || 0));
+          break;
+        case 'replies':
+          records.sort((a, b) => isAsc ? (a.replyCount || 0) - (b.replyCount || 0) : (b.replyCount || 0) - (a.replyCount || 0));
+          break;
+        case 'time':
+        default:
+          records.sort((a, b) => isAsc 
+            ? new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime() 
+            : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          break;
+      }
+      
+      setData(records);
+      setTotal(res.data.total);
+    } catch { /* handled */ } finally { setLoading(false); }
+  }, [page, statusFilter, productFilter, commentSortBy, commentSortOrder, searchQuery, searchType]);
+
+  useEffect(() => { loadData(); }, [loadData]);
 
   const loadCategories = async () => {
     try {
-      const res: any = await categoryApi.getAll();
+      const res = await categoryApi.getAll() as ApiResponse<Category[]>;
       setCategories(res.data || []);
-    } catch (e) {
-      console.error('Failed to load categories', e);
+    } catch (error) {
+      console.error('Failed to load categories', error);
     }
   };
 
   const loadProductsByCategory = async (catId: number) => {
     try {
-      const res: any = await productApi.list({ categoryId: catId, size: 100 });
+      const res = await productApi.list({ categoryId: catId, size: 100 }) as ApiResponse<PaginatedResponse<ProductListItem>>;
       const items = res.data?.records || [];
-      setProducts(items.map((p: any) => ({
+      setProducts(items.map((p) => ({
         id: p.id,
         name: p.name,
         downloadCount: p.downloadCount || 0,
         ratingAverage: p.ratingAverage || 0,
         ratingCount: p.ratingCount || 0,
       })));
-    } catch (e) {
-      console.error('Failed to load products', e);
+    } catch (error) {
+      console.error('Failed to load products', error);
     }
   };
 
@@ -96,50 +167,7 @@ export default function AdminComments() {
     return sorted;
   }, [products, productSortBy]);
 
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const params: any = { page, size: 20 };
-      if (statusFilter) params.status = statusFilter;
-      if (productFilter) params.productId = productFilter;
-      if (searchQuery) {
-        // 根据搜索类型构建搜索参数
-        if (searchType === 'all') {
-          params.keyword = searchQuery;
-        } else {
-          // 精确搜索：添加类型前缀
-          params.keyword = `${searchType}:${searchQuery}`;
-        }
-      }
-      
-      const res: any = await adminApi.listComments(params);
-      let records = res.data.records || [];
-      
-      // 前端排序评论
-      const isAsc = commentSortOrder === 'asc';
-      switch (commentSortBy) {
-        case 'rating':
-          records.sort((a: any, b: any) => isAsc ? (a.rating || 0) - (b.rating || 0) : (b.rating || 0) - (a.rating || 0));
-          break;
-        case 'likes':
-          records.sort((a: any, b: any) => isAsc ? (a.likeCount || 0) - (b.likeCount || 0) : (b.likeCount || 0) - (a.likeCount || 0));
-          break;
-        case 'replies':
-          records.sort((a: any, b: any) => isAsc ? (a.replyCount || 0) - (b.replyCount || 0) : (b.replyCount || 0) - (a.replyCount || 0));
-          break;
-        case 'time':
-        default:
-          records.sort((a: any, b: any) => isAsc 
-            ? new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime() 
-            : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-          break;
-      }
-      
-      setData(records);
-      setTotal(res.data.total);
-    } catch { /* handled */ } finally { setLoading(false); }
-  };
-
+  
   const handleAudit = (id: number, status: string) => {
     Modal.confirm({
       title: status === 'PUBLISHED' ? t('admin.confirmApprove') : t('admin.confirmReject'),
@@ -167,7 +195,7 @@ export default function AdminComments() {
     });
   };
 
-  const columns: ColumnsType<any> = [
+  const columns: ColumnsType<CommentRecord> = [
     { title: t('admin.id'), dataIndex: 'id', width: 60 },
     { title: t('admin.content'), dataIndex: 'content', ellipsis: true, width: 200 },
     { title: t('admin.rating'), dataIndex: 'rating', width: 70, render: (v: number) => v ? <span className="text-amber-500 font-bold">{v} ★</span> : '-' },
@@ -185,7 +213,7 @@ export default function AdminComments() {
     { title: t('admin.createdAt'), dataIndex: 'createdAt', width: 160, render: (v: string) => v?.substring(0, 19).replace('T', ' ') },
     {
       title: t('admin.action'), width: 140, fixed: 'right',
-      render: (_: any, record: any) => (
+      render: (_, record) => (
         <Space size="small">
           {record.status === 'PENDING' && (
             <>

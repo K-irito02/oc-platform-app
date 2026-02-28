@@ -81,7 +81,7 @@ public class SiteFeedbackController {
     }
 
     @GetMapping("/admin")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ApiResponse<PageResponse<FeedbackVO>> getAdminFeedbacks(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -91,7 +91,7 @@ public class SiteFeedbackController {
     }
 
     @PutMapping("/admin/{id}/status")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ApiResponse<Void> updateFeedbackStatus(
             @PathVariable Long id,
             @RequestParam String status) {
@@ -100,7 +100,7 @@ public class SiteFeedbackController {
     }
 
     @DeleteMapping("/admin/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ApiResponse<Void> deleteFeedback(@PathVariable Long id) {
         feedbackService.deleteFeedback(id);
         return ApiResponse.success(null);

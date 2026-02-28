@@ -7,6 +7,27 @@ import { useTranslation } from 'react-i18next';
 import { useAppDispatch } from '@/store/hooks';
 import { setCredentials } from '@/store/slices/authSlice';
 import { authApi } from '@/utils/api';
+
+interface LoginResponse {
+  data: {
+    user: {
+      id: number;
+      email: string;
+      username: string;
+      nickname?: string;
+      avatarUrl?: string;
+      roles: string[];
+    };
+    accessToken: string;
+    refreshToken: string;
+  };
+}
+
+interface GithubUrlResponse {
+  data: {
+    url: string;
+  };
+}
 import { GlassCard } from '@/components/ui/GlassCard';
 import { GlassButton } from '@/components/ui/GlassButton';
 import { AuthPageToolbar } from '@/components/AuthPageToolbar';
@@ -22,7 +43,7 @@ export default function Login() {
   const onFinish = async (values: { email: string; password: string }) => {
     setLoading(true);
     try {
-      const res: any = await authApi.login(values);
+      const res = await authApi.login(values) as LoginResponse;
       dispatch(setCredentials({
         user: res.data.user,
         accessToken: res.data.accessToken,
@@ -39,7 +60,7 @@ export default function Login() {
 
   const handleGithubLogin = async () => {
     try {
-      const res: any = await authApi.getGithubUrl();
+      const res = await authApi.getGithubUrl() as GithubUrlResponse;
       window.location.href = res.data.url;
     } catch {
       message.error('Failed to get GitHub auth URL');

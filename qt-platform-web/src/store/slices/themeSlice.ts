@@ -46,7 +46,7 @@ const initialState: ThemeState = {
 
 // Helper to merge configs deeply
 const mergeThemes = (base: ThemeConfig, ...overrides: (Partial<ThemeConfig> | null)[]): ThemeConfig => {
-  let result = { ...base };
+  const result = { ...base };
   overrides.forEach(override => {
     if (!override) return;
     if (override.background) {

@@ -25,10 +25,38 @@ interface ProductOption {
   ratingCount: number;
 }
 
+interface ProductRecord {
+  id: number;
+  name: string;
+  slug: string;
+  categoryName?: string;
+  status: string;
+  downloadCount: number;
+  ratingAverage?: number;
+  createdAt: string;
+}
+
+interface ApiResponse<T> {
+  data: T;
+}
+
+interface PaginatedResponse<T> {
+  records: T[];
+  total: number;
+}
+
+interface ProductListItem {
+  id: number;
+  name: string;
+  downloadCount?: number;
+  ratingAverage?: number;
+  ratingCount?: number;
+}
+
 export default function AdminProducts() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<ProductRecord[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -55,30 +83,30 @@ export default function AdminProducts() {
     }
   }, [categoryFilter]);
 
-  useEffect(() => { loadData(); }, [page, statusFilter, categoryFilter, productFilter, sortBy]);
+  useEffect(() => { loadData(); }, [page, statusFilter, categoryFilter, productFilter, sortBy]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadCategories = async () => {
     try {
-      const res: any = await categoryApi.getAll();
+      const res = await categoryApi.getAll() as ApiResponse<Category[]>;
       setCategories(res.data || []);
-    } catch (e) {
-      console.error('Failed to load categories', e);
+    } catch (error) {
+      console.error('Failed to load categories', error);
     }
   };
 
   const loadProductsByCategory = async (catId: number) => {
     try {
-      const res: any = await productApi.list({ categoryId: catId, size: 100 });
+      const res = await productApi.list({ categoryId: catId, size: 100 }) as ApiResponse<PaginatedResponse<ProductListItem>>;
       const items = res.data?.records || [];
-      setProducts(items.map((p: any) => ({
+      setProducts(items.map((p) => ({
         id: p.id,
         name: p.name,
         downloadCount: p.downloadCount || 0,
         ratingAverage: p.ratingAverage || 0,
         ratingCount: p.ratingCount || 0,
       })));
-    } catch (e) {
-      console.error('Failed to load products', e);
+    } catch (error) {
+      console.error('Failed to load products', error);
     }
   };
 
@@ -103,16 +131,16 @@ export default function AdminProducts() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const params: any = { page, size: 20 };
+      const params: Record<string, unknown> = { page, size: 20 };
       if (statusFilter) params.status = statusFilter;
       if (categoryFilter) params.categoryId = categoryFilter;
       if (keyword) params.keyword = keyword;
       // 如果选择了特定产品，只显示该产品
       // 注意：后端目前不支持单个产品筛选，这里通过前端过滤
-      const res: any = await adminApi.listProducts(params);
+      const res = await adminApi.listProducts(params) as ApiResponse<PaginatedResponse<ProductRecord>>;
       let records = res.data.records || [];
       if (productFilter) {
-        records = records.filter((r: any) => r.id === productFilter);
+        records = records.filter((r) => r.id === productFilter);
       }
       setData(records);
       setTotal(productFilter ? records.length : res.data.total);
@@ -148,7 +176,7 @@ export default function AdminProducts() {
     });
   };
 
-  const columns: ColumnsType<any> = [
+  const columns: ColumnsType<ProductRecord> = [
     { title: t('admin.id'), dataIndex: 'id', width: 60 },
     { title: t('admin.name'), dataIndex: 'name', ellipsis: true },
     { title: t('admin.slug'), dataIndex: 'slug', ellipsis: true, width: 140 },
@@ -157,12 +185,12 @@ export default function AdminProducts() {
       title: t('admin.status'), dataIndex: 'status', width: 100,
       render: (s: string) => <Tag color={statusColors[s] || 'default'}>{s}</Tag>,
     },
-    { title: t('admin.downloads'), dataIndex: 'downloadCount', width: 110, sorter: (a: any, b: any) => a.downloadCount - b.downloadCount },
+    { title: t('admin.downloads'), dataIndex: 'downloadCount', width: 110, sorter: (a, b) => a.downloadCount - b.downloadCount },
     { title: t('admin.rating'), dataIndex: 'ratingAverage', width: 80, render: (v: number) => v?.toFixed(1) || '-' },
     { title: t('admin.createdAt'), dataIndex: 'createdAt', width: 170, render: (v: string) => v?.substring(0, 19).replace('T', ' ') },
     {
       title: t('admin.action'), width: 260, fixed: 'right',
-      render: (_: any, record: any) => (
+      render: (_, record) => (
         <Space size="small">
           <Button size="small" icon={<Edit size={14} />} onClick={() => navigate(`/admin/products/${record.id}/edit`)}>{t('admin.edit')}</Button>
           {record.status === 'PENDING' && (

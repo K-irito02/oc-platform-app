@@ -4,6 +4,14 @@ import { setUserConfig, setSystemConfig, ThemeConfig } from '../../store/slices/
 import { selectUser } from '../../store/slices/authSlice';
 import { systemApi } from '../../utils/api';
 
+type ApiResponse<T> = {
+  data?: T;
+};
+
+type GlobalThemeResponse = {
+  themeConfig?: ThemeConfig | string | null;
+};
+
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const theme = useAppSelector((state) => state.theme.currentTheme);
   const user = useAppSelector(selectUser);
@@ -13,9 +21,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     const loadSystemConfig = async () => {
       try {
-        const res: any = await systemApi.getGlobalTheme();
+        const res = await systemApi.getGlobalTheme() as ApiResponse<GlobalThemeResponse>;
         if (res.data && res.data.themeConfig) {
-          let config = res.data.themeConfig;
+          let config: ThemeConfig | string | null = res.data.themeConfig;
           // Parse potentially nested JSON strings
           while (typeof config === 'string') {
             try {
@@ -32,7 +40,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             }
           }
         }
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Failed to load system theme:', error);
       }
     };

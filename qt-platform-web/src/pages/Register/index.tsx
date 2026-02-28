@@ -8,6 +8,14 @@ import { authApi } from '@/utils/api';
 import { AuthPageToolbar } from '@/components/AuthPageToolbar';
 import { SiteLogo } from '@/components/SiteLogo';
 
+type RegisterFormValues = {
+  username: string;
+  email: string;
+  password: string;
+  code: string;
+  confirmPassword?: string;
+};
+
 export default function Register() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -32,14 +40,14 @@ export default function Register() {
           return prev - 1;
         });
       }, 1000);
-    } catch (err) {
-      // Validation or API error
+    } catch {
+      message.error(t('auth.codeSendFailed') || 'Failed to send verification code');
     } finally {
       setCodeSending(false);
     }
   };
 
-  const onFinish = async (values: any) => {
+  const onFinish = async (values: RegisterFormValues) => {
     setLoading(true);
     try {
       await authApi.register({
@@ -51,7 +59,7 @@ export default function Register() {
       message.success(t('auth.registerSuccess') || 'Registration successful');
       navigate('/login');
     } catch {
-      // Error handled by interceptor
+      message.error(t('auth.registerFailed') || 'Registration failed');
     } finally {
       setLoading(false);
     }

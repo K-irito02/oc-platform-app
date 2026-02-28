@@ -1,41 +1,63 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Input, Button, Tag, Skeleton, Empty } from 'antd';
 import { Search, ArrowRight, Star, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { productApi, categoryApi } from '@/utils/api';
-import { useSiteName } from '@/components/SiteLogo';
+import { useAppSelector } from '@/store/hooks';
 import FeedbackSection from '@/components/home/FeedbackSection';
 import InfoCards from '@/components/home/InfoCards';
 
+type ProductItem = {
+  id: number;
+  slug: string;
+  name: string;
+  description?: string;
+  iconUrl?: string | null;
+  isFeatured?: boolean;
+  downloadCount?: number;
+  ratingAverage?: number;
+};
+
+type CategoryItem = {
+  id: number;
+  name: string;
+};
+
+type ApiResponse<T> = {
+  data: T;
+};
+
 export default function Home() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const siteName = useSiteName();
-  const [featured, setFeatured] = useState<any[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
+  const { config } = useAppSelector((state) => state.siteConfig);
+  const siteName = i18n.language === 'zh-CN' ? config.siteName : config.siteNameEn;
+  const displayName = siteName || 'KiritoLab';
+  const [featured, setFeatured] = useState<ProductItem[]>([]);
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [keyword, setKeyword] = useState('');
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const [featRes, catRes] = await Promise.all([
         productApi.getFeatured(),
         categoryApi.getAll()
       ]);
-      setFeatured(featRes.data || []);
-      setCategories(catRes.data || []);
+      setFeatured((featRes as ApiResponse<ProductItem[]>).data || []);
+      setCategories((catRes as ApiResponse<CategoryItem[]>).data || []);
     } catch {
       // ignore
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleSearch = (value: string) => {
     navigate(`/products?q=${encodeURIComponent(value)}`);
@@ -47,7 +69,7 @@ export default function Home() {
       <section className="relative overflow-hidden pt-20 pb-32 lg:pt-32 lg:pb-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-8">
-            {t('home.welcomeTo')} <span className="text-blue-600">{siteName}</span>
+            {t('home.welcomeTo')} <span className="text-blue-600">{displayName}</span>
           </h1>
           <p className="mt-4 max-w-2xl mx-auto text-xl text-slate-500 dark:text-slate-400 mb-12">
             {t('home.heroDesc')}
@@ -74,7 +96,7 @@ export default function Home() {
           </div>
 
           <div className="flex flex-wrap justify-center gap-3">
-            {categories.slice(0, 6).map((cat: any) => (
+            {categories.slice(0, 6).map((cat) => (
               <Tag 
                 key={cat.id} 
                 className="px-4 py-2 text-sm rounded-full cursor-pointer bg-slate-100 dark:bg-slate-900 border-none text-slate-600 dark:text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition-colors"
@@ -123,7 +145,7 @@ export default function Home() {
                         product.name[0]
                       )}
                     </div>
-                    {product.isFeatured && <Tag color="gold" className="rounded-full px-2 border-none">{t('home.featured')}</Tag>}
+                      {product.isFeatured && <Tag color="gold" className="rounded-full px-2 border-none">{t('home.featured')}</Tag>}
                   </div>
                   
                   <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 group-hover:text-blue-600 transition-colors">
@@ -135,10 +157,10 @@ export default function Home() {
                   
                   <div className="flex items-center justify-between text-xs text-slate-400 pt-4 border-t border-slate-100 dark:border-slate-800">
                     <div className="flex items-center gap-1">
-                      <Download size={14} /> {product.downloadCount}
+                      <Download size={14} /> {product.downloadCount ?? 0}
                     </div>
                     <div className="flex items-center gap-1">
-                      <Star size={14} className="text-amber-400 fill-amber-400" /> {product.ratingAverage.toFixed(1)}
+                      <Star size={14} className="text-amber-400 fill-amber-400" /> {(product.ratingAverage ?? 0).toFixed(1)}
                     </div>
                   </div>
                 </div>

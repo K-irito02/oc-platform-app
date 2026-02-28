@@ -9,10 +9,20 @@ import { LogoCropUploader } from '@/components/LogoCropUploader';
 import { useAppDispatch } from '@/store/hooks';
 import { fetchSiteConfig } from '@/store/slices/siteConfigSlice';
 
+interface SystemConfig {
+  configKey: string;
+  configValue: string;
+  description?: string;
+}
+
+interface ApiResponse<T> {
+  data: T;
+}
+
 export default function AdminSystem() {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<SystemConfig[]>([]);
   const [loading, setLoading] = useState(false);
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState('');
@@ -23,10 +33,10 @@ export default function AdminSystem() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const res: any = await adminApi.getSystemConfigs();
+      const res = await adminApi.getSystemConfigs() as ApiResponse<SystemConfig[]>;
       setData(res.data);
       // 获取当前 Logo URL
-      const logoConfig = res.data?.find((c: any) => c.configKey === 'site.logo');
+      const logoConfig = res.data?.find((c) => c.configKey === 'site.logo');
       if (logoConfig) {
         setLogoUrl(logoConfig.configValue || '');
       }
@@ -54,11 +64,11 @@ export default function AdminSystem() {
     } catch { /* handled */ }
   };
 
-  const columns: ColumnsType<any> = [
+  const columns: ColumnsType<SystemConfig> = [
     { title: t('admin.configKey'), dataIndex: 'configKey', width: 220, className: 'font-mono text-sm' },
     {
       title: t('admin.value'), dataIndex: 'configValue',
-      render: (v: string, record: any) => {
+      render: (v: string, record) => {
         if (editingKey === record.configKey) {
           return (
             <Input.TextArea 
@@ -74,7 +84,7 @@ export default function AdminSystem() {
     { title: t('admin.description'), dataIndex: 'description', width: 200 },
     {
       title: t('admin.action'), width: 140, fixed: 'right',
-      render: (_: any, record: any) => {
+      render: (_, record) => {
         if (editingKey === record.configKey) {
           return (
             <Space size="small">

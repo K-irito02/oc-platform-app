@@ -36,7 +36,7 @@ export default function ForgotPassword() {
     } catch { /* handled */ } finally { setCodeSending(false); }
   };
 
-  const onFinish = async (values: any) => {
+  const onFinish = async (values: { code: string; newPassword: string }) => {
     setLoading(true);
     try {
       await authApi.resetPassword({ email, code: values.code, newPassword: values.newPassword });

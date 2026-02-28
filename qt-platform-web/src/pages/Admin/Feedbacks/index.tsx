@@ -7,26 +7,50 @@ import { useTranslation } from 'react-i18next';
 import { Check, X, Trash2, Search, Eye, EyeOff } from 'lucide-react';
 import dayjs from 'dayjs';
 
+interface FeedbackRecord {
+  id: number;
+  username?: string;
+  nickname?: string;
+  email?: string;
+  content: string;
+  parentId?: number;
+  likeCount?: number;
+  replyCount?: number;
+  isPublic?: boolean;
+  status: string;
+  createdAt: string;
+}
+
+interface ApiResponse<T> {
+  data: T;
+}
+
+interface PaginatedResponse<T> {
+  records: T[];
+  total: number;
+}
+
 export default function AdminFeedbacks() {
   const { t } = useTranslation();
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<FeedbackRecord[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string | undefined>();
   const [keyword, setKeyword] = useState('');
 
-  useEffect(() => { loadData(); }, [page, statusFilter]);
+  useEffect(() => { loadData(); }, [page, statusFilter]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const res: any = await adminApi.listFeedbacks({ page, size: 20, status: statusFilter, keyword: keyword || undefined });
+      const res = await adminApi.listFeedbacks({ page, size: 20, status: statusFilter, keyword: keyword || undefined }) as ApiResponse<PaginatedResponse<FeedbackRecord>>;
       setData(res.data?.records || []);
       setTotal(res.data?.total || 0);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to load feedbacks:', error);
-      message.error(error?.response?.data?.message || t('admin.operationFailed'));
+      const err = error as { response?: { data?: { message?: string } } };
+      message.error(err?.response?.data?.message || t('admin.operationFailed'));
     } finally { 
       setLoading(false); 
     }
@@ -74,7 +98,7 @@ export default function AdminFeedbacks() {
     return <Tag color={s.color}>{s.text}</Tag>;
   };
 
-  const columns: ColumnsType<any> = [
+  const columns: ColumnsType<FeedbackRecord> = [
     { title: t('admin.id'), dataIndex: 'id', key: 'id', width: 80 },
     { 
       title: t('admin.username'), 
@@ -246,7 +270,7 @@ export default function AdminFeedbacks() {
             pageSize: 20,
             onChange: setPage,
             showSizeChanger: false,
-            showTotal: (t) => `${t} ${t('admin.items')}`
+            showTotal: (totalCount) => `${totalCount} ${t('admin.items')}`
           }}
         />
       </Card>

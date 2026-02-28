@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Table, Space, Button, Modal, Form, Input, InputNumber, Card } from 'antd';
 import { message } from '@/utils/antdUtils';
 import { Plus, Edit, Trash2 } from 'lucide-react';
@@ -6,26 +6,34 @@ import { categoryApi, adminApi } from '@/utils/api';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
 
+type CategoryItem = {
+  id: number;
+  name: string;
+  nameEn?: string;
+  slug?: string;
+  sortOrder?: number;
+  icon?: string;
+  children?: CategoryItem[];
+};
+
+type FlattenedCategory = CategoryItem & {
+  depth: number;
+};
+
+type ApiResponse<T> = {
+  data: T;
+};
+
 export default function AdminCategories() {
   const { t } = useTranslation();
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<FlattenedCategory[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-  const [editing, setEditing] = useState<any>(null);
+  const [editing, setEditing] = useState<FlattenedCategory | null>(null);
   const [form] = Form.useForm();
 
-  useEffect(() => { loadData(); }, []);
-
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const res: any = await categoryApi.getAll();
-      setData(flattenCategories(res.data));
-    } catch { /* handled */ } finally { setLoading(false); }
-  };
-
-  const flattenCategories = (cats: any[], depth = 0): any[] => {
-    const result: any[] = [];
+  const flattenCategories = useCallback((cats: CategoryItem[], depth = 0): FlattenedCategory[] => {
+    const result: FlattenedCategory[] = [];
     for (const cat of cats) {
       result.push({ ...cat, depth });
       if (cat.children?.length) {
@@ -33,17 +41,27 @@ export default function AdminCategories() {
       }
     }
     return result;
-  };
+  }, []);
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await categoryApi.getAll() as ApiResponse<CategoryItem[]>;
+      setData(flattenCategories(res.data || []));
+    } catch { /* handled */ } finally { setLoading(false); }
+  }, [flattenCategories]);
+
+  useEffect(() => { loadData(); }, [loadData]);
 
   const openCreate = () => { setEditing(null); form.resetFields(); setModalVisible(true); };
-  const openEdit = (record: any) => {
+  const openEdit = (record: FlattenedCategory) => {
     setEditing(record);
     form.setFieldsValue({ name: record.name, nameEn: record.nameEn, slug: record.slug, sortOrder: record.sortOrder, icon: record.icon });
     setModalVisible(true);
   };
 
   const handleSave = async () => {
-    const values = await form.validateFields();
+    const values = await form.validateFields() as Partial<CategoryItem>;
     try {
       if (editing) {
         await adminApi.updateCategory(editing.id, values);
@@ -72,18 +90,18 @@ export default function AdminCategories() {
     });
   };
 
-  const columns: ColumnsType<any> = [
+  const columns: ColumnsType<FlattenedCategory> = [
     { title: t('admin.id'), dataIndex: 'id', width: 60 },
     {
       title: t('admin.name'), dataIndex: 'name',
-      render: (v: string, r: any) => <span style={{ paddingLeft: r.depth * 20 }} className="font-medium">{r.icon ? `${r.icon} ` : ''}{v}</span>,
+      render: (v: string, r) => <span style={{ paddingLeft: r.depth * 20 }} className="font-medium">{r.icon ? `${r.icon} ` : ''}{v}</span>,
     },
     { title: t('admin.englishName'), dataIndex: 'nameEn', ellipsis: true },
     { title: t('admin.slug'), dataIndex: 'slug', width: 140 },
     { title: t('admin.sortOrder'), dataIndex: 'sortOrder', width: 100 },
     {
       title: t('admin.action'), width: 150, fixed: 'right',
-      render: (_: any, record: any) => (
+      render: (_, record) => (
         <Space size="small">
           <Button size="small" icon={<Edit size={14} />} onClick={() => openEdit(record)} />
           <Button size="small" danger icon={<Trash2 size={14} />} onClick={() => handleDelete(record.id)} />

@@ -6,21 +6,39 @@ import { adminApi } from '@/utils/api';
 import type { ColumnsType } from 'antd/es/table';
 import { Search } from 'lucide-react';
 
+interface UserRecord {
+  id: number;
+  username: string;
+  email: string;
+  status: string;
+  roles?: string[];
+  createdAt: string;
+}
+
+interface ApiResponse<T> {
+  data: T;
+}
+
+interface PaginatedResponse<T> {
+  records: T[];
+  total: number;
+}
+
 export default function AdminUsers() {
   const { t } = useTranslation();
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<UserRecord[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [keyword, setKeyword] = useState('');
   const [statusFilter, setStatusFilter] = useState<string | undefined>();
 
-  useEffect(() => { loadData(); }, [page, statusFilter]);
+  useEffect(() => { loadData(); }, [page, statusFilter]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const res: any = await adminApi.listUsers({ page, size: 20, keyword: keyword || undefined, status: statusFilter });
+      const res = await adminApi.listUsers({ page, size: 20, keyword: keyword || undefined, status: statusFilter }) as ApiResponse<PaginatedResponse<UserRecord>>;
       setData(res.data.records);
       setTotal(res.data.total);
     } catch { /* handled */ } finally { setLoading(false); }
@@ -40,7 +58,7 @@ export default function AdminUsers() {
     });
   };
 
-  const columns: ColumnsType<any> = [
+  const columns: ColumnsType<UserRecord> = [
     { title: t('admin.id'), dataIndex: 'id', width: 80 },
     { title: t('admin.username'), dataIndex: 'username', width: 150 },
     { title: t('admin.email'), dataIndex: 'email', width: 200 },
@@ -59,7 +77,7 @@ export default function AdminUsers() {
     { title: t('admin.joinedAt'), dataIndex: 'createdAt', width: 180, render: (v: string) => v?.substring(0, 19).replace('T', ' ') },
     {
       title: t('admin.action'), width: 100, fixed: 'right',
-      render: (_: any, record: any) => (
+      render: (_, record) => (
         <Space>
           {record.status === 'ACTIVE' ? (
             <Button size="small" danger onClick={() => handleStatusChange(record.id, 'BANNED')}>{t('admin.ban')}</Button>

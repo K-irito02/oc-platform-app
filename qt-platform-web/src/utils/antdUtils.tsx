@@ -7,12 +7,11 @@ let message: MessageInstance;
 let notification: NotificationInstance;
 let modal: Omit<ModalStaticFunctions, 'warn'>;
 
-export default function AntdStaticFunctions() {
+export const useAntdStaticFunctions = () => {
   const staticFunctions = App.useApp();
   message = staticFunctions.message;
   notification = staticFunctions.notification;
   modal = staticFunctions.modal;
-  return null;
-}
+};
 
 export { message, notification, modal };

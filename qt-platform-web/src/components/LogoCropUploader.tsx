@@ -1,5 +1,5 @@
-import { useState, useRef, useCallback } from 'react';
-import { Modal, Upload, Slider, Button, Space } from 'antd';
+import { useState, useCallback } from 'react';
+import { Modal, Upload, Slider, Button } from 'antd';
 import { message } from '@/utils/antdUtils';
 import { UploadOutlined, ZoomInOutlined, ZoomOutOutlined, RotateLeftOutlined, RotateRightOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -12,6 +12,15 @@ interface LogoCropUploaderProps {
   onChange?: (url: string) => void;
   onSave?: (url: string) => Promise<void>;
 }
+
+type ApiResponse<T> = {
+  data?: T;
+};
+
+type UploadImageResponse = {
+  url?: string;
+  fileUrl?: string;
+};
 
 // 创建裁剪后的图片
 const createCroppedImage = async (
@@ -109,7 +118,6 @@ export const LogoCropUploader = ({ value, onChange, onSave }: LogoCropUploaderPr
   const [rotation, setRotation] = useState(0);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [uploading, setUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const onCropComplete = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
     setCroppedAreaPixels(croppedAreaPixels);
@@ -153,7 +161,7 @@ export const LogoCropUploader = ({ value, onChange, onSave }: LogoCropUploaderPr
       // 转换 Blob 为 File 对象
       const logoFile = new File([croppedBlob], 'logo.png', { type: 'image/png' });
       
-      const res: any = await fileApi.uploadImage(logoFile);
+      const res = await fileApi.uploadImage(logoFile) as ApiResponse<UploadImageResponse>;
       const logoUrl = res.data?.url || res.data?.fileUrl;
       
       if (logoUrl) {
@@ -162,7 +170,7 @@ export const LogoCropUploader = ({ value, onChange, onSave }: LogoCropUploaderPr
         message.success(t('logo.uploadSuccess') || 'Logo uploaded successfully');
         setModalOpen(false);
       }
-    } catch (error) {
+    } catch {
       message.error(t('logo.uploadFailed') || 'Logo upload failed');
     } finally {
       setUploading(false);

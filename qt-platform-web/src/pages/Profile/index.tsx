@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Form, Input, Button, Tabs, Descriptions, Tag, Upload, Avatar, Card, Divider } from 'antd';
 import { message } from '@/utils/antdUtils';
 import { User, Lock, Edit, Upload as UploadIcon, Mail, ShieldCheck, Info } from 'lucide-react';
@@ -7,6 +7,40 @@ import { useTranslation } from 'react-i18next';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { setUser, logout } from '@/store/slices/authSlice';
 import { userApi, authApi } from '@/utils/api';
+
+type UserProfile = {
+  id: number;
+  username: string;
+  nickname?: string;
+  email: string;
+  avatarUrl?: string | null;
+  roles?: string[];
+  bio?: string | null;
+};
+
+type ProfileFormValues = {
+  username?: string;
+  bio?: string;
+};
+
+type PasswordFormValues = {
+  oldPassword: string;
+  newPassword: string;
+  confirmPassword?: string;
+};
+
+type EmailFormValues = {
+  newEmail: string;
+  code: string;
+};
+
+type ApiResponse<T> = {
+  data: T;
+};
+
+type UploadAvatarResponse = {
+  avatarUrl?: string;
+};
 
 export default function Profile() {
   const { t } = useTranslation();
@@ -20,30 +54,32 @@ export default function Profile() {
   const [emailCodeSending, setEmailCodeSending] = useState(false);
   const [emailCountdown, setEmailCountdown] = useState(0);
 
+  const loadProfile = useCallback(async () => {
+    try {
+      const res = await userApi.getProfile() as ApiResponse<UserProfile>;
+      const u = res.data;
+      if (u) {
+        profileForm.setFieldsValue({ username: u.username, bio: u.bio || '' });
+        dispatch(setUser(u));
+      }
+    } catch { /* handled */ }
+  }, [dispatch, profileForm]);
+
   useEffect(() => {
     if (!isAuthenticated) { navigate('/login'); return; }
     loadProfile();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, navigate, loadProfile]);
 
-  const loadProfile = async () => {
-    try {
-      const res: any = await userApi.getProfile();
-      const u = res.data;
-      profileForm.setFieldsValue({ username: u.username, bio: u.bio });
-      dispatch(setUser(u));
-    } catch { /* handled */ }
-  };
-
-  const onProfileSave = async (values: any) => {
+  const onProfileSave = async (values: ProfileFormValues) => {
     setLoading(true);
     try {
-      const res: any = await userApi.updateProfile(values);
-      dispatch(setUser(res.data));
+      const res = await userApi.updateProfile(values) as ApiResponse<UserProfile>;
+      if (res.data) dispatch(setUser(res.data));
       message.success(t('profile.profileUpdated'));
     } catch { /* handled */ } finally { setLoading(false); }
   };
 
-  const onPasswordChange = async (values: any) => {
+  const onPasswordChange = async (values: PasswordFormValues) => {
     setLoading(true);
     try {
       await authApi.changePassword({ oldPassword: values.oldPassword, newPassword: values.newPassword });
@@ -75,14 +111,15 @@ export default function Profile() {
           return prev - 1;
         });
       }, 1000);
-    } catch (error: any) {
-      message.error(error.response?.data?.message || t('profile.emailCodeSendFailed'));
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      message.error(err.response?.data?.message || t('profile.emailCodeSendFailed'));
     } finally {
       setEmailCodeSending(false);
     }
   };
 
-  const onEmailChange = async (values: any) => {
+  const onEmailChange = async (values: EmailFormValues) => {
     setLoading(true);
     try {
       await authApi.changeEmail({ code: values.code, newEmail: values.newEmail });
@@ -96,7 +133,7 @@ export default function Profile() {
     const formData = new FormData();
     formData.append('file', file);
     try {
-      const res: any = await userApi.uploadAvatar(formData);
+      const res = await userApi.uploadAvatar(formData) as ApiResponse<UploadAvatarResponse>;
       if (res.data?.avatarUrl && user) {
         const avatarUrlWithCacheBuster = `${res.data.avatarUrl}?t=${Date.now()}`;
         dispatch(setUser({ ...user, avatarUrl: avatarUrlWithCacheBuster }));

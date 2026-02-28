@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { Input, Button, Avatar, Checkbox, Spin } from 'antd';
@@ -7,11 +7,60 @@ import { Send, MessageSquare, ThumbsUp, MessageCircle } from 'lucide-react';
 import { feedbackApi } from '@/utils/api';
 import { useAppSelector } from '@/store/hooks';
 import dayjs from 'dayjs';
+import type { TFunction } from 'i18next';
 
 const { TextArea } = Input;
 
+type FeedbackUser = {
+  username?: string;
+  nickname?: string;
+  avatarUrl?: string | null;
+};
+
+type ReplyItemData = FeedbackUser & {
+  id: number;
+  content: string;
+  createdAt: string;
+  likeCount?: number;
+  liked?: boolean;
+  replyToName?: string;
+};
+
+type FeedbackItemData = ReplyItemData & {
+  replies?: ReplyItemData[];
+};
+
+type PageResponse<T> = {
+  records: T[];
+  total?: number;
+  totalWithReplies?: number;
+};
+
+type ApiResponse<T> = {
+  data: T;
+};
+
+type LikeHandler = (feedbackId: number, liked?: boolean) => void;
+type ReplyHandler = (feedbackId: number, userName: string) => void;
+
+type ReplyItemProps = {
+  reply: ReplyItemData;
+  isAuthenticated: boolean;
+  handleLike: LikeHandler;
+  handleReply: ReplyHandler;
+  t: TFunction;
+};
+
+type FeedbackItemProps = {
+  feedback: FeedbackItemData;
+  isAuthenticated: boolean;
+  handleLike: LikeHandler;
+  handleReply: ReplyHandler;
+  t: TFunction;
+};
+
 // 回复项组件
-const ReplyItem = ({ reply, isAuthenticated, handleLike, handleReply, t }: any) => {
+const ReplyItem = ({ reply, isAuthenticated, handleLike, handleReply, t }: ReplyItemProps) => {
   return (
     <div className="flex gap-3">
       <Avatar 
@@ -62,7 +111,7 @@ const ReplyItem = ({ reply, isAuthenticated, handleLike, handleReply, t }: any) 
 };
 
 // 留言项组件
-const FeedbackItem = ({ feedback, isAuthenticated, handleLike, handleReply, t }: any) => {
+const FeedbackItem = ({ feedback, isAuthenticated, handleLike, handleReply, t }: FeedbackItemProps) => {
   const [visibleCount, setVisibleCount] = useState(0);
   const replies = feedback.replies || [];
   const visibleReplies = replies.slice(0, visibleCount);
@@ -126,7 +175,7 @@ const FeedbackItem = ({ feedback, isAuthenticated, handleLike, handleReply, t }:
         
         {replies.length > 0 && (
           <div className="mt-3 space-y-3 pl-3 border-l-2 border-slate-200 dark:border-slate-700">
-            {visibleReplies.map((reply: any, index: number) => (
+            {visibleReplies.map((reply, index) => (
               <ReplyItem 
                 key={reply.id || index}
                 reply={reply} 
@@ -168,11 +217,11 @@ export default function FeedbackSection() {
   const { isAuthenticated } = useAppSelector((s) => s.auth);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [feedbacks, setFeedbacks] = useState<any[]>([]);
+  const [feedbacks, setFeedbacks] = useState<FeedbackItemData[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [sortBy, setSortBy] = useState('time');
   const [sortOrder, setSortOrder] = useState('desc');
-  const [replyingTo, setReplyingTo] = useState<{id: number, name: string} | null>(null);
+  const [replyingTo, setReplyingTo] = useState<{ id: number; name: string } | null>(null);
   const [lastSubmitTime, setLastSubmitTime] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [form, setForm] = useState({
@@ -183,17 +232,19 @@ export default function FeedbackSection() {
   // 1分钟评论限制常量
   const RATE_LIMIT_MS = 60 * 1000;
 
-  useEffect(() => {
-    loadFeedbacks();
-  }, [sortBy, sortOrder]);
-
-  const loadFeedbacks = async (showLoading = true) => {
+  const loadFeedbacks = useCallback(async (showLoading = true) => {
     if (showLoading) setLoading(true);
     try {
-      const res = await feedbackApi.list({ page: 1, size: 20, sortBy, sortOrder });
-      setFeedbacks(res.data?.records || res.data || []);
-      const total = res.data?.totalWithReplies || res.data?.total || 0;
-      setTotalCount(total);
+      const res = await feedbackApi.list({ page: 1, size: 20, sortBy, sortOrder }) as ApiResponse<PageResponse<FeedbackItemData> | FeedbackItemData[]>;
+      const payload = res.data;
+      if (Array.isArray(payload)) {
+        setFeedbacks(payload);
+        setTotalCount(payload.length);
+      } else {
+        setFeedbacks(payload.records || []);
+        const total = payload.totalWithReplies || payload.total || 0;
+        setTotalCount(total);
+      }
     } catch (error) {
       console.error(error);
       setFeedbacks([]);
@@ -201,7 +252,11 @@ export default function FeedbackSection() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [sortBy, sortOrder]);
+
+  useEffect(() => {
+    loadFeedbacks();
+  }, [loadFeedbacks]);
 
   const handleSubmit = async () => {
     if (!form.content.trim()) {
@@ -229,9 +284,10 @@ export default function FeedbackSection() {
       setReplyingTo(null);
       setLastSubmitTime(Date.now());
       loadFeedbacks(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      const errorMsg = error?.response?.data?.message || '';
+      const err = error as { response?: { data?: { message?: string } } };
+      const errorMsg = err.response?.data?.message || '';
       if (errorMsg.includes('登录')) {
         message.error(t('feedback.loginRequired'));
       } else if (errorMsg.includes('频繁') || errorMsg.includes('rate')) {

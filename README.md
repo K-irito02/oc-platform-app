@@ -162,18 +162,48 @@ qt-platform/
 │       └── application-prod.yml   # 生产环境
 ├── qt-platform-web/               # 前端项目（React SPA）
 │   └── src/
-│       ├── components/            # 共享组件（ThemeProvider、DynamicBackground 等）
-│       ├── layouts/               # 布局（MainLayout、AdminLayout）
-│       ├── pages/                 # 页面（前台 9 个 + 后台 6 个）
+│       ├── components/            # 共享组件
+│       │   ├── home/              # 首页专用组件
+│       │   │   ├── FeedbackSection.tsx  # 留言板组件
+│       │   │   └── InfoCards.tsx        # 信息卡片组件
+│       │   ├── layout/            # 布局组件
+│       │   │   ├── Footer.tsx          # 页脚
+│       │   │   ├── Navbar.tsx          # 导航栏
+│       │   │   └── AdminSidebar.tsx    # 管理后台侧栏
+│       │   ├── LogoCropUploader.tsx    # Logo 裁剪上传组件
+│       │   └── SiteLogo.tsx            # 站点 Logo 组件
+│       ├── layouts/               # 页面布局（MainLayout、AdminLayout）
+│       ├── pages/                 # 页面（前台 9 个 + 后台 7 个）
+│       │   ├── Admin/             # 管理后台页面
+│       │   │   ├── Feedbacks/     # 留言管理页面
+│       │   │   ├── Categories.tsx
+│       │   │   ├── Comments.tsx
+│       │   │   ├── Dashboard.tsx
+│       │   │   ├── Products.tsx
+│       │   │   ├── System.tsx
+│       │   │   └── Users.tsx
+│       │   ├── ForgotPassword.tsx
+│       │   ├── Home.tsx           # 首页（包含留言板）
+│       │   ├── Login.tsx
+│       │   ├── NotFound.tsx
+│       │   ├── OAuthCallback.tsx
+│       │   ├── ProductDetail.tsx
+│       │   ├── Products.tsx
+│       │   ├── Profile.tsx
+│       │   └── Register.tsx
 │       ├── router/                # 路由配置（懒加载）
-│       ├── store/                 # Redux（authSlice + themeSlice）
+│       ├── store/                 # Redux（authSlice + themeSlice + siteConfigSlice）
 │       ├── locales/               # 国际化（zh-CN + en-US）
 │       ├── theme/                 # Ant Design 主题
 │       ├── utils/                 # API 封装 + Axios 实例 + Mock
 │       └── styles/                # 特效 CSS
 ├── sql/
 │   ├── init.sql                   # 建表 + 索引 + 触发器 + 初始化角色/权限
-│   └── seed.sql                   # 种子数据
+│   ├── seed.sql                   # 种子数据
+│   └── migrations/                # 数据库迁移脚本
+│       ├── add_site_feedbacks.sql # 留言表初始化
+│       ├── add_site_logo.sql      # 站点 Logo 配置表
+│       └── upgrade_site_feedbacks.sql # 留言表升级
 ├── docker-compose.dev.yml         # 开发环境（PostgreSQL + Redis）
 ├── docker-compose.yml             # 生产环境（全栈部署）
 ├── .env.example                   # 环境变量模板
@@ -251,6 +281,7 @@ Get-Content sql/seed.sql | docker exec -i qt-dev-postgres psql -U qt_user -d qt_
 - [x] **产品模块**: 产品 CRUD、分类管理、产品列表（分页/筛选/排序）、产品详情、语义化版本管理、多平台支持、灰度发布
 - [x] **文件模块**: 文件上传/下载、断点续传、SHA256 校验、MinIO 对象存储
 - [x] **评论模块**: 评论 CRUD、评分（1-5 星）、评论点赞、树形回复、回复计数、限流
+- [x] **留言模块**: 留言 CRUD、点赞、回复、排序（时间/点赞/回复数）、频率限制、管理后台
 - [x] **通知/审计**: 站内通知、审计日志
 - [x] **管理后台**: 仪表盘统计、用户管理（封禁/角色）、产品审核、评论管理、分类管理、系统配置
 - [x] **安全体系**: Spring Security + JWT + RBAC（5 角色 17 权限）、登录限流、CORS
@@ -260,7 +291,7 @@ Get-Content sql/seed.sql | docker exec -i qt-dev-postgres psql -U qt_user -d qt_
 - [x] **基础架构**: Vite + React + TypeScript + Redux Toolkit + React Router (懒加载) + i18n
 - [x] **玻璃拟态主题**: Tailwind CSS + CSS 变量实现的高级玻璃拟态效果（背景模糊、半透明、光影）、动态背景支持（图片/视频）
 - [x] **前台页面（9 个）**: Home、Products、ProductDetail、Login、Register、ForgotPassword、Profile、OAuthCallback、NotFound
-- [x] **后台页面（6 个）**: Dashboard、Users、Products、Comments、Categories、System
+- [x] **后台页面（7 个）**: Dashboard、Users、Products、Comments、Categories、System、Feedbacks
 - [x] **API 层**: Axios 封装（token 注入 + 401 刷新）、9 个 API 模块、Mock 数据拦截器
 - [x] **国际化**: 中文 / 英文完整翻译
 
@@ -272,7 +303,7 @@ Get-Content sql/seed.sql | docker exec -i qt-dev-postgres psql -U qt_user -d qt_
 
 ### 数据库
 
-- [x] **28 张表**: 用户、角色、权限、OAuth 绑定、邮箱验证、产品、版本、增量更新、分类、评论、点赞、订单（占位）、订阅（占位）、通知、下载记录（分区）、访问日志（分区）、系统配置、文件记录、审计日志、多语言
+- [x] **28 张表**: 用户、角色、权限、OAuth 绑定、邮箱验证、产品、版本、增量更新、分类、评论、点赞、留言、留言点赞、订单（占位）、订阅（占位）、通知、下载记录（分区）、访问日志（分区）、系统配置、文件记录、审计日志、多语言
 - [x] **索引**: GIN (tags)、部分索引 (is_latest)、复合索引
 - [x] **触发器**: updated_at 自动更新
 - [x] **种子数据**: 5 用户 + 6 分类 + 8 产品 + 版本 + 评论
@@ -291,6 +322,9 @@ Get-Content sql/seed.sql | docker exec -i qt-dev-postgres psql -U qt_user -d qt_
 - [x] 评论排序功能（时间/点赞数/回复数）
 - [x] 评论限流功能（60秒内只能发布一条）
 - [x] 管理后台UI统一（搜索框高度、国际化）
+- [x] 留言板功能（首页留言、回复、点赞、排序、频率限制）
+- [x] 留言管理后台（分页、状态管理、搜索、删除）
+- [x] 站点Logo配置功能（上传、裁剪、显示）
 - [ ] 文件上传/下载端到端测试
 - [ ] 单元测试编写（前端 Jest + 后端 JUnit 5）
 - [ ] 响应式设计优化（移动端适配）

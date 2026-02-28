@@ -63,9 +63,9 @@ const ScreenshotGallery: React.FC<ScreenshotGalleryProps> = ({ screenshots }) =>
           nextEl: nextRef.current,
         }}
         onBeforeInit={(swiper) => {
-          // @ts-ignore
+          // @ts-expect-error Swiper types allow nav elements assignment at runtime
           swiper.params.navigation.prevEl = prevRef.current;
-          // @ts-ignore
+          // @ts-expect-error Swiper types allow nav elements assignment at runtime
           swiper.params.navigation.nextEl = nextRef.current;
         }}
         loop={screenshots.length > 2} // Only loop if enough slides
