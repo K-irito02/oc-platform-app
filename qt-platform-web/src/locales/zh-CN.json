@@ -167,8 +167,11 @@
     "rateLimitExceeded": "评论发布过于频繁，请稍后再试",
     "reply": "回复",
     "replies": "条回复",
-    "viewMoreReplies": "展开更多回复",
-    "collapseReplies": "收起回复"
+    "viewMoreReplies": "展开 {{count}} 条回复",
+    "collapseReplies": "收起全部回复",
+    "remaining": "条剩余",
+    "commentSubmitted": "评论已提交，等待审核",
+    "commentFailed": "评论提交失败，请重试"
   },
   "admin": {
     "dashboard": "仪表盘",

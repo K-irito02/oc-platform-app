@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Form, Input, message } from 'antd';
+import { Form, Input } from 'antd';
+import { message } from '@/utils/antdUtils';
 import { GithubOutlined, MailOutlined, LockOutlined } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';

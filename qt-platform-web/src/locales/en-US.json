@@ -167,8 +167,11 @@
     "rateLimitExceeded": "Comment rate limit exceeded, please try again later",
     "reply": "Reply",
     "replies": "replies",
-    "viewMoreReplies": "View more replies",
-    "collapseReplies": "Collapse replies"
+    "viewMoreReplies": "Expand {{count}} replies",
+    "collapseReplies": "Collapse all replies",
+    "remaining": "remaining",
+    "commentSubmitted": "Comment submitted, pending review",
+    "commentFailed": "Comment submission failed, please try again"
   },
   "admin": {
     "dashboard": "Dashboard",

@@ -8,6 +8,7 @@ import { useAppSelector, useAppDispatch } from '@/store/hooks'
 import { setUser, logout } from '@/store/slices/authSlice'
 import { userApi } from '@/utils/api'
 import { ThemeProvider } from '@/components/ThemeProvider'
+import AntdStaticFunctions from '@/utils/antdUtils'
 
 function App() {
   const dispatch = useAppDispatch()
@@ -26,6 +27,7 @@ function App() {
   return (
     <ConfigProvider locale={zhCN} theme={theme}>
       <AntdApp>
+        <AntdStaticFunctions />
         <ThemeProvider>
           <RouterProvider router={router} />
         </ThemeProvider>

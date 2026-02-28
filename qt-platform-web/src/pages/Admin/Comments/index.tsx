@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Table, Space, Tag, Button, message, Modal, Select, Card, Input } from 'antd';
+import { Table, Space, Tag, Button, Modal, Select, Card, Input } from 'antd';
+import { message } from '@/utils/antdUtils';
 import { adminApi, categoryApi, productApi } from '@/utils/api';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
@@ -132,11 +133,11 @@ export default function AdminComments() {
 
   const handleAudit = (id: number, status: string) => {
     Modal.confirm({
-      title: `Confirm ${status === 'PUBLISHED' ? 'Approve' : 'Reject'}?`,
+      title: status === 'PUBLISHED' ? t('admin.confirmApprove') : t('admin.confirmReject'),
       onOk: async () => {
         try {
           await adminApi.auditComment(id, status);
-          message.success('Operation successful');
+          message.success(t('admin.operationSuccess'));
           loadData();
         } catch { /* handled */ }
       },
@@ -150,7 +151,7 @@ export default function AdminComments() {
       onOk: async () => {
         try {
           await adminApi.deleteComment(id);
-          message.success('Deleted successfully');
+          message.success(t('admin.deleteSuccess'));
           loadData();
         } catch { /* handled */ }
       },
@@ -277,7 +278,7 @@ export default function AdminComments() {
           <Input
             placeholder={t('admin.searchUserIdEmail')}
             allowClear
-            className="w-80 md:w-96 h-9"
+            className="w-80 md:w-96 h-11"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onPressEnter={() => { setPage(1); loadData(); }}

@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
-import { Modal, Upload, Slider, Button, message, Space } from 'antd';
+import { Modal, Upload, Slider, Button, Space } from 'antd';
+import { message } from '@/utils/antdUtils';
 import { UploadOutlined, ScissorOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import Cropper from 'react-easy-crop';

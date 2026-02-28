@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Table, Button, message, Input, Card, Space } from 'antd';
+import { Table, Button, Input, Card, Space } from 'antd';
+import { message } from '@/utils/antdUtils';
 import { adminApi } from '@/utils/api';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';

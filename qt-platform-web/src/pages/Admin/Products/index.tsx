@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Table, Space, Tag, Button, message, Modal, Select, Input, Card } from 'antd';
+import { Table, Space, Tag, Button, Modal, Select, Input, Card } from 'antd';
+import { message } from '@/utils/antdUtils';
 import { useTranslation } from 'react-i18next';
 import { adminApi, categoryApi, productApi } from '@/utils/api';
 import type { ColumnsType } from 'antd/es/table';
@@ -194,7 +195,7 @@ export default function AdminProducts() {
             prefix={<Search size={14} className="text-slate-400 shrink-0" />}
             placeholder={t('admin.searchProduct')}
             allowClear 
-            className="w-80 md:w-96 h-9"
+            className="w-64 md:w-80 h-11"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             onPressEnter={() => { setPage(1); loadData(); }} 

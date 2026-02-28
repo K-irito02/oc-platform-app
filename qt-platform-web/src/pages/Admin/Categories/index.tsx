@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Table, Space, Button, message, Modal, Form, Input, InputNumber, Card } from 'antd';
+import { Table, Space, Button, Modal, Form, Input, InputNumber, Card } from 'antd';
+import { message } from '@/utils/antdUtils';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { categoryApi, adminApi } from '@/utils/api';
 import type { ColumnsType } from 'antd/es/table';

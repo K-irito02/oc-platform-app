@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Form, Input, Button, message, Card } from 'antd';
+import { Form, Input, Button, Card } from 'antd';
+import { message } from '@/utils/antdUtils';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { User, Mail, Lock, ShieldCheck, ArrowRight } from 'lucide-react';

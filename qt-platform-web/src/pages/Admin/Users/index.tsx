@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Table, Input, Select, Space, Tag, Button, message, Modal, Card } from 'antd';
+import { Table, Input, Select, Space, Tag, Button, Modal, Card } from 'antd';
+import { message } from '@/utils/antdUtils';
 import { useTranslation } from 'react-i18next';
 import { adminApi } from '@/utils/api';
 import type { ColumnsType } from 'antd/es/table';
@@ -83,7 +84,7 @@ export default function AdminUsers() {
             prefix={<Search size={14} className="text-slate-400 shrink-0" />}
             placeholder={t('admin.searchUserIdEmail')} 
             allowClear 
-            className="w-80 md:w-96 h-9"
+            className="w-96 md:w-[28rem] h-11"
             onPressEnter={(e) => { setKeyword(e.currentTarget.value); setPage(1); loadData(); }} 
           />
           <Select 

@@ -63,7 +63,15 @@ public class CommentService {
                 .map(c -> toVOWithReplies(c, currentUserId))
                 .collect(Collectors.toList());
 
-        return PageResponse.of(vos, result.getTotal(), page, size);
+        // 计算总评论数（包含回复）
+        LambdaQueryWrapper<ProductComment> totalWrapper = new LambdaQueryWrapper<>();
+        totalWrapper.eq(ProductComment::getProductId, productId)
+                .eq(ProductComment::getStatus, "PUBLISHED");
+        long totalWithReplies = commentMapper.selectCount(totalWrapper);
+
+        PageResponse<CommentVO> response = PageResponse.of(vos, result.getTotal(), page, size);
+        response.setTotalWithReplies(totalWithReplies);
+        return response;
     }
 
     @Transactional

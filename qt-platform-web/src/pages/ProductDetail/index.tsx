@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAppSelector } from '@/store/hooks';
 import { productApi, commentApi } from '@/utils/api';
-import { Button, Tag, Tabs, Rate, Avatar, Form, Input, message, Spin, Empty, Card, Progress } from 'antd';
+import { Button, Tag, Tabs, Rate, Avatar, Form, Input, Spin, Empty, Card, Progress } from 'antd';
+import { message } from '@/utils/antdUtils';
 const { TextArea } = Input;
 import { Github, ExternalLink, Star, Clock, Eye, Download as DownloadIcon, Terminal, Shield, CheckCircle, Tag as TagIcon, User, Play, Pause, Volume2, VolumeX, Maximize, ThumbsUp } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -161,18 +162,103 @@ const MOCK_VERSIONS = [
 ];
 
 
-// 仿抖音风格的评论组件
-const CommentItem = ({ comment, isAuthenticated, handleLikeComment, handleReplyComment, t, isReply = false, replyToName }: any) => {
-  const [showAllReplies, setShowAllReplies] = useState(false);
+// 扁平化所有回复（最多两级台阶：楼主一级，所有回复都在二级）
+const flattenReplies = (replies: any[], parentNickname: string): any[] => {
+  const result: any[] = [];
+  const processReply = (reply: any, replyTo: string) => {
+    result.push({ ...reply, replyToName: replyTo });
+    if (reply.replies && reply.replies.length > 0) {
+      reply.replies.forEach((nested: any) => {
+        processReply(nested, reply.nickname || reply.username || 'User');
+      });
+    }
+  };
+  replies.forEach((reply: any) => processReply(reply, parentNickname));
+  return result;
+};
+
+// 回复项组件 - 用于二级评论
+const ReplyItem = ({ reply, isAuthenticated, handleLikeComment, handleReplyComment, t }: any) => {
+  return (
+    <div className="flex gap-3">
+      <Avatar 
+        src={reply.avatarUrl} 
+        size={28}
+        className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white shrink-0"
+      >
+        {reply.nickname?.[0] || reply.username?.[0] || 'U'}
+      </Avatar>
+      <div className="flex-1 min-w-0">
+        <div className="space-y-1">
+          {/* 昵称 > 回复对象 */}
+          <div className="flex items-center gap-1 flex-wrap text-sm">
+            <span className="font-semibold text-slate-900 dark:text-white">
+              {reply.nickname || reply.username || 'User'}
+            </span>
+            {reply.replyToName && (
+              <>
+                <span className="text-slate-400">›</span>
+                <span className="text-blue-500 font-medium">{reply.replyToName}</span>
+              </>
+            )}
+          </div>
+          
+          {/* 评论内容 */}
+          <p className="text-slate-700 dark:text-slate-300 leading-relaxed text-sm">
+            {reply.content}
+          </p>
+          
+          {/* 操作按钮 */}
+          <div className="flex items-center gap-4 pt-1">
+            <span className="text-xs text-slate-400">{reply.createdAt?.substring(0, 10)}</span>
+            <button 
+              onClick={() => handleLikeComment(reply.id, reply.liked)}
+              className={`flex items-center gap-1 text-xs transition-colors ${reply.liked ? 'text-rose-500' : 'text-slate-400 hover:text-rose-500'}`}
+            >
+              <ThumbsUp size={12} className={reply.liked ? 'fill-current' : ''} />
+              <span>{reply.likeCount || 0}</span>
+            </button>
+            {isAuthenticated && (
+              <button 
+                onClick={() => handleReplyComment(reply.id, reply.nickname || reply.username)}
+                className="text-xs text-slate-400 hover:text-blue-500 transition-colors"
+              >
+                {t('productDetail.reply')}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// 评论组件 - 楼主一级，所有回复都在二级（最多两级台阶）
+const CommentItem = ({ comment, isAuthenticated, handleLikeComment, handleReplyComment, t }: any) => {
+  // 默认收缩全部回复，visibleCount 表示当前显示的回复数量
+  const [visibleCount, setVisibleCount] = useState(0);
   const replies = comment.replies || [];
-  const visibleReplies = showAllReplies ? replies : replies.slice(0, 2);
-  const hasMoreReplies = replies.length > 2;
+  // 扁平化所有嵌套回复
+  const allReplies = flattenReplies(replies, comment.nickname || comment.username || 'User');
+  const visibleReplies = allReplies.slice(0, visibleCount);
+  const hasMoreReplies = visibleCount < allReplies.length;
+  const remainingCount = allReplies.length - visibleCount;
+  
+  // 展开更多：每次最多展开5条
+  const handleExpand = () => {
+    setVisibleCount(Math.min(visibleCount + 5, allReplies.length));
+  };
+  
+  // 收缩：一次收缩全部
+  const handleCollapse = () => {
+    setVisibleCount(0);
+  };
 
   return (
-    <div className={`flex gap-3 ${isReply ? '' : ''}`}>
+    <div className="flex gap-3">
       <Avatar 
         src={comment.avatarUrl} 
-        size={isReply ? 28 : 36}
+        size={36}
         className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white shrink-0"
       >
         {comment.nickname?.[0] || comment.username?.[0] || 'U'}
@@ -181,19 +267,16 @@ const CommentItem = ({ comment, isAuthenticated, handleLikeComment, handleReplyC
         {/* 评论内容区 */}
         <div className="space-y-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className={`font-semibold text-slate-900 dark:text-white ${isReply ? 'text-sm' : ''}`}>
+            <span className="font-semibold text-slate-900 dark:text-white">
               {comment.nickname || comment.username || 'User'}
             </span>
-            {comment.rating && !isReply && (
+            {comment.rating && (
               <Rate disabled defaultValue={comment.rating} className="text-xs" style={{ fontSize: 10 }} />
             )}
           </div>
           
-          {/* 评论文字 - 显示 @被回复人 */}
-          <p className={`text-slate-700 dark:text-slate-300 leading-relaxed ${isReply ? 'text-sm' : ''}`}>
-            {replyToName && (
-              <span className="text-blue-500 font-medium mr-1">@{replyToName}</span>
-            )}
+          {/* 评论内容 */}
+          <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
             {comment.content}
           </p>
           
@@ -215,46 +298,49 @@ const CommentItem = ({ comment, isAuthenticated, handleLikeComment, handleReplyC
                 {t('productDetail.reply')}
               </button>
             )}
-            {!isReply && comment.replyCount > 0 && (
+            {allReplies.length > 0 && (
               <span className="text-xs text-slate-400">
-                {comment.replyCount} {t('productDetail.replies') || '条回复'}
+                {allReplies.length} {t('productDetail.replies')}
               </span>
             )}
           </div>
         </div>
         
-        {/* 嵌套回复区域 - 仿抖音风格 */}
-        {replies.length > 0 && (
-          <div className="mt-3 space-y-3 pl-0 border-l-2 border-slate-100 dark:border-slate-800 ml-0">
-            {visibleReplies.map((reply: any) => (
-              <div key={reply.id} className="pl-3">
-                <CommentItem 
-                  comment={reply} 
-                  isAuthenticated={isAuthenticated} 
-                  handleLikeComment={handleLikeComment} 
-                  handleReplyComment={handleReplyComment} 
-                  t={t}
-                  isReply={true}
-                  replyToName={reply.replyToUsername || comment.nickname || comment.username}
-                />
-              </div>
+        {/* 回复区域 - 统一在二级台阶 */}
+        {allReplies.length > 0 && (
+          <div className="mt-3 space-y-3 pl-3 border-l-2 border-slate-200 dark:border-slate-700">
+            {visibleReplies.map((reply: any, index: number) => (
+              <ReplyItem 
+                key={reply.id || index}
+                reply={reply} 
+                isAuthenticated={isAuthenticated} 
+                handleLikeComment={handleLikeComment} 
+                handleReplyComment={handleReplyComment} 
+                t={t}
+              />
             ))}
-            {hasMoreReplies && !showAllReplies && (
-              <button 
-                onClick={() => setShowAllReplies(true)}
-                className="pl-3 text-sm text-blue-500 hover:text-blue-600 font-medium"
-              >
-                {t('productDetail.viewMoreReplies') || `展开更多 ${replies.length - 2} 条回复`}
-              </button>
-            )}
-            {showAllReplies && hasMoreReplies && (
-              <button 
-                onClick={() => setShowAllReplies(false)}
-                className="pl-3 text-sm text-slate-400 hover:text-slate-500"
-              >
-                {t('productDetail.collapseReplies') || '收起回复'}
-              </button>
-            )}
+            {/* 展开/收起按钮 */}
+            <div className="flex items-center gap-3 pt-1">
+              {hasMoreReplies && (
+                <button 
+                  onClick={handleExpand}
+                  className="text-sm text-blue-500 hover:text-blue-600 font-medium flex items-center gap-1"
+                >
+                  <span>↓</span>
+                  {t('productDetail.viewMoreReplies', { count: Math.min(remainingCount, 5) }) || `展开更多 ${Math.min(remainingCount, 5)} 条回复`}
+                  {remainingCount > 5 && <span className="text-slate-400">({remainingCount} {t('productDetail.remaining')})</span>}
+                </button>
+              )}
+              {visibleCount > 0 && (
+                <button 
+                  onClick={handleCollapse}
+                  className="text-sm text-slate-500 hover:text-slate-600 font-medium flex items-center gap-1"
+                >
+                  <span>↑</span>
+                  {t('productDetail.collapseReplies') || '收起全部回复'}
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -336,7 +422,8 @@ export default function ProductDetail() {
         sortOrder: sortOrder || commentSortOrder
       });
       setComments(res.data.records || []);
-      setCommentTotal(res.data.total || 0);
+      // 使用包含回复的总数（如果后端提供），否则使用顶级评论数
+      setCommentTotal(res.data.totalWithReplies || res.data.total || 0);
     } catch { /* handled */ } finally { setCommentLoading(false); }
   };
 
@@ -390,15 +477,19 @@ export default function ProductDetail() {
         payload.parentId = replyingTo.id;
       }
       await commentApi.create(product.id, payload);
-      message.success('Comment submitted, pending review');
+      message.success(t('productDetail.commentSubmitted'));
       form.resetFields();
       setReplyingTo(null);
       loadComments(product.id, 1);
-    } catch { 
-       message.success('(Mock) Comment submitted successfully!');
-       setComments([{ id: Date.now(), nickname: 'You', content: values.content, rating: values.rating, createdAt: new Date().toISOString() }, ...comments]);
-       form.resetFields();
-       setReplyingTo(null);
+    } catch (error: any) {
+      // 检查是否是频率限制错误
+      const errorMsg = error?.response?.data?.message || error?.message || '';
+      if (errorMsg.includes('频繁') || errorMsg.includes('rate') || errorMsg.includes('RATE_LIMIT')) {
+        message.error(t('productDetail.rateLimitExceeded'));
+      } else {
+        message.error(t('productDetail.commentFailed'));
+      }
+      // 不要在失败时添加评论到列表
     } finally { setSubmitting(false); }
   };
 
@@ -648,8 +739,18 @@ export default function ProductDetail() {
                         </div>
                       )}
 
-                      {/* 评论列表区域 - 支持滚动查看 */}
-                      <div className="max-h-[600px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent">
+                      {/* 评论列表区域 - 支持滚动查看，有明显边界，滚动隔离 */}
+                      <div 
+                        className="max-h-[600px] overflow-y-auto pr-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50/50 dark:bg-slate-900/50 p-4 overscroll-contain"
+                        onWheel={(e) => {
+                          const el = e.currentTarget;
+                          const hasScroll = el.scrollHeight > el.clientHeight;
+                          // 只有当评论区域有滚动条时才阻止穿透
+                          if (hasScroll) {
+                            e.stopPropagation();
+                          }
+                        }}
+                      >
                         <div className="space-y-6">
                           {comments.map((c) => (
                             <CommentItem 

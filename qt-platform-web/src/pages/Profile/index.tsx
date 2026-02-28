@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Form, Input, Button, Tabs, message, Descriptions, Tag, Upload, Avatar, Card, Divider } from 'antd';
+import { Form, Input, Button, Tabs, Descriptions, Tag, Upload, Avatar, Card, Divider } from 'antd';
+import { message } from '@/utils/antdUtils';
 import { User, Lock, Edit, Upload as UploadIcon, Mail, ShieldCheck, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';

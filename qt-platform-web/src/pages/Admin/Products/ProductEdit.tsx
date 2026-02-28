@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Form, Input, Select, Button, Card, Upload, message, Spin, Tabs, Image, Modal, Table, Tag, Popconfirm } from 'antd';
+import { Form, Input, Select, Button, Card, Upload, Spin, Tabs, Image, Modal, Table, Tag, Popconfirm } from 'antd';
+import { message } from '@/utils/antdUtils';
 import { useTranslation } from 'react-i18next';
 import { adminApi, categoryApi, fileApi } from '@/utils/api';
 import { ArrowLeft, Upload as UploadIcon, Plus, Trash2, Play, Image as ImageIcon, Film, Package, HardDrive, Monitor } from 'lucide-react';
