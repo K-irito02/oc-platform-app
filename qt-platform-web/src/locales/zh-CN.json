@@ -489,6 +489,12 @@
     "versionNumber": "版本号",
     "platform": "平台",
     "architecture": "架构",
+    "architectures": {
+      "x86": "x86 (32位)",
+      "x64": "x64 (64位)",
+      "arm64": "ARM64",
+      "universal": "通用"
+    },
     "fileSize": "文件大小",
     "applicationFile": "应用程序文件",
     "uploadApplication": "上传应用程序",

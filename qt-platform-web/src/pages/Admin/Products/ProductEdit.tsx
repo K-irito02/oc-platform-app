@@ -1097,10 +1097,10 @@ export default function ProductEdit() {
             initialValue="x64"
           >
             <Select>
-              <Select.Option value="x86">x86 (32-bit)</Select.Option>
-              <Select.Option value="x64">x64 (64-bit)</Select.Option>
-              <Select.Option value="arm64">ARM64</Select.Option>
-              <Select.Option value="universal">Universal</Select.Option>
+              <Select.Option value="x86">{t('productEdit.architectures.x86')}</Select.Option>
+              <Select.Option value="x64">{t('productEdit.architectures.x64')}</Select.Option>
+              <Select.Option value="arm64">{t('productEdit.architectures.arm64')}</Select.Option>
+              <Select.Option value="universal">{t('productEdit.architectures.universal')}</Select.Option>
             </Select>
           </Form.Item>
 

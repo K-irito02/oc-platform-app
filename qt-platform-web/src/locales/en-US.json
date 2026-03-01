@@ -488,6 +488,12 @@
     "versionNumber": "Version Number",
     "platform": "Platform",
     "architecture": "Architecture",
+    "architectures": {
+      "x86": "x86 (32-bit)",
+      "x64": "x64 (64-bit)",
+      "arm64": "ARM64",
+      "universal": "Universal"
+    },
     "fileSize": "File Size",
     "applicationFile": "Application File",
     "uploadApplication": "Upload Application",
