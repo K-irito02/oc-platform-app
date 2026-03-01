@@ -530,6 +530,7 @@
     "versionHint": "Added versions will be saved when the product is created. Please add at least one version. If the product status is \"Published\", at least one version must be published.",
     "publishedVersionRequired": "When product status is \"Published\", at least one version must be published",
     "atLeastOneVersionRequired": "Please add at least one version",
+    "publishNeedsVersion": "Before publishing, please add and publish at least one version",
     "pending": "Pending",
     "noVersionsYet": "No versions added yet. Click \"Add Version\" above to add one.",
     "fileName": "File Name",

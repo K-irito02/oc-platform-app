@@ -400,11 +400,18 @@ export default function ProductEdit() {
       errors.push(t('productEdit.atLeastOneVersionRequired'));
     }
 
-    // 4. 如果产品状态为"发布"，则需要至少有一个已发布的版本
-    if (status === 'PUBLISHED' && pendingVersions.length > 0) {
-      const hasPublishedVersion = pendingVersions.some(v => v.status === 'PUBLISHED');
-      if (!hasPublishedVersion) {
-        errors.push(t('productEdit.publishedVersionRequired'));
+    // 4. 如果产品状态为"发布"，验证是否有已发布的版本
+    if (status === 'PUBLISHED') {
+      if (pendingVersions.length === 0) {
+        // 已经在上面添加了版本必填错误，这里添加更具体的提示
+        if (!errors.includes(t('productEdit.publishNeedsVersion'))) {
+          errors.push(t('productEdit.publishNeedsVersion'));
+        }
+      } else {
+        const hasPublishedVersion = pendingVersions.some(v => v.status === 'PUBLISHED');
+        if (!hasPublishedVersion) {
+          errors.push(t('productEdit.publishedVersionRequired'));
+        }
       }
     }
 
@@ -480,8 +487,33 @@ export default function ProductEdit() {
     }
   };
 
+  // 验证发布状态是否满足条件（公共函数）
+  const validatePublishStatus = (targetStatus: string, versionList: Array<{ status?: string }>): string | null => {
+    // 如果目标状态是"发布"，需要至少有一个已发布的版本
+    if (targetStatus === 'PUBLISHED') {
+      if (versionList.length === 0) {
+        return t('productEdit.publishNeedsVersion');
+      }
+      const hasPublishedVersion = versionList.some(v => v.status === 'PUBLISHED');
+      if (!hasPublishedVersion) {
+        return t('productEdit.publishedVersionRequired');
+      }
+    }
+    return null;
+  };
+
   // 保存产品（编辑模式）
   const handleSave = async (values: ProductFormValues) => {
+    // 验证发布状态
+    const publishError = validatePublishStatus(values.status, versions);
+    if (publishError) {
+      Modal.warning({
+        title: t('productEdit.validation.title'),
+        content: publishError,
+      });
+      return;
+    }
+
     setSaving(true);
     try {
       const payload = {

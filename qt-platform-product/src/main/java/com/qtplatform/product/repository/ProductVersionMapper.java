@@ -33,4 +33,7 @@ public interface ProductVersionMapper extends BaseMapper<ProductVersion> {
 
     @Select("SELECT COALESCE(SUM(download_count), 0) FROM product_versions")
     Long getTotalDownloadCount();
+
+    @Select("SELECT COUNT(*) FROM product_versions WHERE product_id = #{productId} AND status = 'PUBLISHED'")
+    long countPublishedVersions(@Param("productId") Long productId);
 }

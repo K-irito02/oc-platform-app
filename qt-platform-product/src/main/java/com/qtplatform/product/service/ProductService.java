@@ -171,6 +171,11 @@ public class ProductService {
             throw new BusinessException(ErrorCode.PRODUCT_NOT_FOUND);
         }
 
+        // 如果要将状态改为PUBLISHED，检查是否有已发布的版本
+        if ("PUBLISHED".equals(request.getStatus())) {
+            validatePublishStatus(id);
+        }
+
         // 检查产品名称唯一性（更新时排除自己）
         if (StringUtils.hasText(request.getName()) && !request.getName().equals(product.getName())) {
             if (productMapper.existsByName(request.getName())) {
@@ -226,6 +231,16 @@ public class ProductService {
 
     public void incrementDownloadCount(Long productId) {
         productMapper.incrementDownloadCount(productId, 1L);
+    }
+
+    /**
+     * 验证产品是否可以发布：必须有至少一个已发布的版本
+     */
+    private void validatePublishStatus(Long productId) {
+        long publishedVersionCount = versionMapper.countPublishedVersions(productId);
+        if (publishedVersionCount == 0) {
+            throw new BusinessException(ErrorCode.PARAM_INVALID, "发布产品前，请先发布至少一个版本");
+        }
     }
 
     private ProductVO toProductVO(Product product) {
