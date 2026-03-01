@@ -146,7 +146,9 @@
     "resetSuccess": "Password reset successfully, please login",
     "stepVerifyEmail": "Verify Email",
     "stepSetPassword": "Set New Password",
-    "backToLogin": "Back to Login"
+    "backToLogin": "Back to Login",
+    "registerSuccess": "Registration successful, please login",
+    "registerFailed": "Registration failed, please try again"
   },
   "product": {
     "allProducts": "All Products",
@@ -685,6 +687,14 @@
     "quoteAuthor": "Quote Author (Chinese)",
     "quoteAuthorEn": "Quote Author (English)",
     "quoteAuthorPlaceholder": "e.g. Programmer Wisdom",
-    "quoteAuthorEnPlaceholder": "e.g. Programmer Wisdom"
+    "quoteAuthorEnPlaceholder": "e.g. Programmer Wisdom",
+    "socialConfig": "Website & Social Links Configuration",
+    "siteUrl": "Website URL",
+    "siteUrlPlaceholder": "https://example.com",
+    "siteUrlHint": "This URL will be used for the 'Visit Website' button in verification emails",
+    "weibo": "Weibo",
+    "wechat": "WeChat Official Account",
+    "wechatPlaceholder": "WeChat account name or link",
+    "contactEmail": "Contact Email"
   }
 }

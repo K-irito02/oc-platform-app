@@ -4,7 +4,7 @@ import { message } from '@/utils/antdUtils';
 import { adminApi } from '@/utils/api';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
-import { Save, X, Edit, Image, FileText, Quote, Calendar, Shield } from 'lucide-react';
+import { Save, X, Edit, Image, FileText, Quote, Calendar, Shield, Globe, Link, Mail, Github, Twitter } from 'lucide-react';
 import { LogoCropUploader } from '@/components/LogoCropUploader';
 import { useAppDispatch } from '@/store/hooks';
 import { fetchSiteConfig } from '@/store/slices/siteConfigSlice';
@@ -40,6 +40,20 @@ export default function AdminSystem() {
     quoteAuthorEn: '',
   });
   const [footerSaving, setFooterSaving] = useState(false);
+  
+  // 官网URL和社交链接配置
+  const [siteUrlConfig, setSiteUrlConfig] = useState({
+    siteUrl: '',
+  });
+  const [socialConfig, setSocialConfig] = useState({
+    github: '',
+    twitter: '',
+    linkedin: '',
+    weibo: '',
+    wechat: '',
+    email: '',
+  });
+  const [socialSaving, setSocialSaving] = useState(false);
 
   useEffect(() => { loadData(); }, []);
 
@@ -72,6 +86,27 @@ export default function AdminSystem() {
           }
         });
         setFooterConfig(newFooterConfig);
+      }
+      // 获取官网URL配置
+      const siteUrlConfigData = res.data?.find((c: SystemConfig) => c.configKey === 'site.url');
+      if (siteUrlConfigData) {
+        setSiteUrlConfig({ siteUrl: siteUrlConfigData.configValue || '' });
+      }
+      // 获取社交链接配置
+      const socialConfigs = res.data?.filter((c: SystemConfig) => c.configKey.startsWith('social.'));
+      if (socialConfigs) {
+        const newSocialConfig = { ...socialConfig };
+        socialConfigs.forEach((c: SystemConfig) => {
+          switch (c.configKey) {
+            case 'social.github': newSocialConfig.github = c.configValue || ''; break;
+            case 'social.twitter': newSocialConfig.twitter = c.configValue || ''; break;
+            case 'social.linkedin': newSocialConfig.linkedin = c.configValue || ''; break;
+            case 'social.weibo': newSocialConfig.weibo = c.configValue || ''; break;
+            case 'social.wechat': newSocialConfig.wechat = c.configValue || ''; break;
+            case 'social.email': newSocialConfig.email = c.configValue || ''; break;
+          }
+        });
+        setSocialConfig(newSocialConfig);
       }
     } catch { /* handled */ } finally { setLoading(false); }
   };
@@ -117,6 +152,26 @@ export default function AdminSystem() {
       loadData();
     } catch { /* handled */ } finally {
       setFooterSaving(false);
+    }
+  };
+
+  const handleSocialSave = async () => {
+    setSocialSaving(true);
+    try {
+      await Promise.all([
+        adminApi.updateSystemConfig('site.url', siteUrlConfig.siteUrl),
+        adminApi.updateSystemConfig('social.github', socialConfig.github),
+        adminApi.updateSystemConfig('social.twitter', socialConfig.twitter),
+        adminApi.updateSystemConfig('social.linkedin', socialConfig.linkedin),
+        adminApi.updateSystemConfig('social.weibo', socialConfig.weibo),
+        adminApi.updateSystemConfig('social.wechat', socialConfig.wechat),
+        adminApi.updateSystemConfig('social.email', socialConfig.email),
+      ]);
+      message.success(t('admin.saveSuccess'));
+      dispatch(fetchSiteConfig());
+      loadData();
+    } catch { /* handled */ } finally {
+      setSocialSaving(false);
     }
   };
 
@@ -350,11 +405,134 @@ export default function AdminSystem() {
         </div>
       </Card>
 
+      {/* 官网URL和社交链接配置卡片 */}
+      <Card
+        title={
+          <div className="flex items-center gap-2">
+            <Globe size={18} className="text-blue-600" />
+            <span>{t('adminSystem.socialConfig')}</span>
+          </div>
+        }
+        className="border-slate-200 dark:border-slate-800 dark:bg-slate-900 shadow-sm"
+      >
+        <div className="space-y-6">
+          {/* 官网URL */}
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+              <Link size={14} className="text-blue-500" />
+              {t('adminSystem.siteUrl')}
+            </label>
+            <Input
+              value={siteUrlConfig.siteUrl}
+              onChange={(e) => setSiteUrlConfig({ ...siteUrlConfig, siteUrl: e.target.value })}
+              placeholder={t('adminSystem.siteUrlPlaceholder')}
+              className="h-10"
+            />
+            <p className="text-xs text-slate-400">{t('adminSystem.siteUrlHint')}</p>
+          </div>
+
+          {/* 社交链接 */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                <Github size={14} className="text-slate-800 dark:text-slate-200" />
+                GitHub
+              </label>
+              <Input
+                value={socialConfig.github}
+                onChange={(e) => setSocialConfig({ ...socialConfig, github: e.target.value })}
+                placeholder="https://github.com/..."
+                className="h-10"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                <Twitter size={14} className="text-sky-500" />
+                Twitter / X
+              </label>
+              <Input
+                value={socialConfig.twitter}
+                onChange={(e) => setSocialConfig({ ...socialConfig, twitter: e.target.value })}
+                placeholder="https://twitter.com/..."
+                className="h-10"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                <Link size={14} className="text-blue-700" />
+                LinkedIn
+              </label>
+              <Input
+                value={socialConfig.linkedin}
+                onChange={(e) => setSocialConfig({ ...socialConfig, linkedin: e.target.value })}
+                placeholder="https://linkedin.com/in/..."
+                className="h-10"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                <Globe size={14} className="text-red-500" />
+                {t('adminSystem.weibo')}
+              </label>
+              <Input
+                value={socialConfig.weibo}
+                onChange={(e) => setSocialConfig({ ...socialConfig, weibo: e.target.value })}
+                placeholder="https://weibo.com/..."
+                className="h-10"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                <Globe size={14} className="text-green-500" />
+                {t('adminSystem.wechat')}
+              </label>
+              <Input
+                value={socialConfig.wechat}
+                onChange={(e) => setSocialConfig({ ...socialConfig, wechat: e.target.value })}
+                placeholder={t('adminSystem.wechatPlaceholder')}
+                className="h-10"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                <Mail size={14} className="text-amber-500" />
+                {t('adminSystem.contactEmail')}
+              </label>
+              <Input
+                value={socialConfig.email}
+                onChange={(e) => setSocialConfig({ ...socialConfig, email: e.target.value })}
+                placeholder="contact@example.com"
+                className="h-10"
+              />
+            </div>
+          </div>
+
+          {/* 保存按钮 */}
+          <div className="flex justify-end pt-4 border-t border-slate-200 dark:border-slate-700">
+            <Button
+              type="primary"
+              icon={<Save size={14} />}
+              loading={socialSaving}
+              onClick={handleSocialSave}
+              className="flex items-center gap-2"
+            >
+              {t('common.save')}
+            </Button>
+          </div>
+        </div>
+      </Card>
+
       {/* 系统配置表格 */}
       <Card className="border-slate-200 dark:border-slate-800 dark:bg-slate-900 shadow-sm" styles={{ body: { padding: 0 } }}>
         <Table 
           columns={columns} 
-          dataSource={data.filter(d => d.configKey !== 'site.logo' && !d.configKey.startsWith('footer.'))} 
+          dataSource={data.filter(d => d.configKey !== 'site.logo' && !d.configKey.startsWith('footer.') && !d.configKey.startsWith('social.') && d.configKey !== 'site.url')} 
           rowKey="configKey" 
           loading={loading} 
           pagination={false}

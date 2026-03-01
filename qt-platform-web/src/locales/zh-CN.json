@@ -146,7 +146,9 @@
     "resetSuccess": "密码重置成功，请登录",
     "stepVerifyEmail": "验证邮箱",
     "stepSetPassword": "设置新密码",
-    "backToLogin": "返回登录"
+    "backToLogin": "返回登录",
+    "registerSuccess": "注册成功，请登录",
+    "registerFailed": "注册失败，请重试"
   },
   "product": {
     "allProducts": "全部产品",
@@ -696,6 +698,14 @@
     "quoteAuthor": "名言作者（中文）",
     "quoteAuthorEn": "名言作者（英文）",
     "quoteAuthorPlaceholder": "例如：程序员智慧",
-    "quoteAuthorEnPlaceholder": "e.g. Programmer Wisdom"
+    "quoteAuthorEnPlaceholder": "e.g. Programmer Wisdom",
+    "socialConfig": "官网与社交链接配置",
+    "siteUrl": "官网地址",
+    "siteUrlPlaceholder": "https://example.com",
+    "siteUrlHint": "官网地址将用于验证码邮件中的\"访问官网\"按钮链接",
+    "weibo": "微博",
+    "wechat": "微信公众号",
+    "wechatPlaceholder": "微信公众号名称或链接",
+    "contactEmail": "联系邮箱"
   }
 }

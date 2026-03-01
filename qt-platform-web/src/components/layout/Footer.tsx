@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Github, Twitter, Linkedin, Quote, Calendar, Shield } from 'lucide-react';
+import { Github, Twitter, Linkedin, Quote, Calendar, Shield, Mail } from 'lucide-react';
 import { SiteLogo } from '@/components/SiteLogo';
 import { useAppSelector } from '@/store/hooks';
 
@@ -14,6 +14,14 @@ export const Footer = () => {
   const holiday = isEn ? siteConfig.footerHolidayEn : siteConfig.footerHoliday;
   const quote = isEn ? siteConfig.footerQuoteEn : siteConfig.footerQuote;
   const quoteAuthor = isEn ? siteConfig.footerQuoteAuthorEn : siteConfig.footerQuoteAuthor;
+
+  // 社交链接配置
+  const socialLinks = {
+    github: siteConfig.socialGithub,
+    twitter: siteConfig.socialTwitter,
+    linkedin: siteConfig.socialLinkedin,
+    email: siteConfig.socialEmail,
+  };
 
   const footerLinks = {
     site: [
@@ -51,15 +59,33 @@ export const Footer = () => {
               {t('footer.siteNote')}
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
-                <Github size={20} />
-              </a>
-              <a href="#" className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
-                <Twitter size={20} />
-              </a>
-              <a href="#" className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
-                <Linkedin size={20} />
-              </a>
+              {socialLinks.github && (
+                <a href={socialLinks.github} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                  <Github size={20} />
+                </a>
+              )}
+              {socialLinks.twitter && (
+                <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                  <Twitter size={20} />
+                </a>
+              )}
+              {socialLinks.linkedin && (
+                <a href={socialLinks.linkedin} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                  <Linkedin size={20} />
+                </a>
+              )}
+              {socialLinks.email && (
+                <a href={`mailto:${socialLinks.email}`} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                  <Mail size={20} />
+                </a>
+              )}
+              {!socialLinks.github && !socialLinks.twitter && !socialLinks.linkedin && !socialLinks.email && (
+                <>
+                  <span className="text-slate-400"><Github size={20} /></span>
+                  <span className="text-slate-400"><Twitter size={20} /></span>
+                  <span className="text-slate-400"><Linkedin size={20} /></span>
+                </>
+              )}
             </div>
           </div>
 

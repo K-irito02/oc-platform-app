@@ -25,11 +25,13 @@ public class PublicSiteController {
         List<SystemConfig> configs = systemConfigMapper.selectList(
             new LambdaQueryWrapper<SystemConfig>()
                 .in(SystemConfig::getConfigKey, 
-                    "site.name", "site.name_en", "site.description", "site.logo",
+                    "site.name", "site.name_en", "site.description", "site.logo", "site.url",
                     "register.enabled", "comment.auto_approve", "upload.max_file_size",
                     "footer.beian", "footer.beian_en", "footer.icp", "footer.icp_en",
                     "footer.holiday", "footer.holiday_en", "footer.quote", "footer.quote_en",
-                    "footer.quote_author", "footer.quote_author_en")
+                    "footer.quote_author", "footer.quote_author_en",
+                    "social.github", "social.twitter", "social.linkedin", 
+                    "social.weibo", "social.wechat", "social.email")
         );
 
         Map<String, Object> result = new HashMap<>();
@@ -93,6 +95,27 @@ public class PublicSiteController {
                 case "footer.quote_author_en":
                     result.put("footerQuoteAuthorEn", value);
                     break;
+                case "site.url":
+                    result.put("siteUrl", value);
+                    break;
+                case "social.github":
+                    result.put("socialGithub", value);
+                    break;
+                case "social.twitter":
+                    result.put("socialTwitter", value);
+                    break;
+                case "social.linkedin":
+                    result.put("socialLinkedin", value);
+                    break;
+                case "social.weibo":
+                    result.put("socialWeibo", value);
+                    break;
+                case "social.wechat":
+                    result.put("socialWechat", value);
+                    break;
+                case "social.email":
+                    result.put("socialEmail", value);
+                    break;
             }
         }
 
@@ -114,6 +137,13 @@ public class PublicSiteController {
         result.putIfAbsent("footerQuoteEn", "");
         result.putIfAbsent("footerQuoteAuthor", "");
         result.putIfAbsent("footerQuoteAuthorEn", "");
+        result.putIfAbsent("siteUrl", "");
+        result.putIfAbsent("socialGithub", "");
+        result.putIfAbsent("socialTwitter", "");
+        result.putIfAbsent("socialLinkedin", "");
+        result.putIfAbsent("socialWeibo", "");
+        result.putIfAbsent("socialWechat", "");
+        result.putIfAbsent("socialEmail", "");
 
         return ApiResponse.success(result);
     }

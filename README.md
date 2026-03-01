@@ -149,11 +149,11 @@ VITE_ENABLE_MOCK=false
 ```
 qt-platform/
 ├── qt-platform-common/            # 公共模块（异常、响应格式、工具类、通用配置）
-├── qt-platform-user/              # 用户模块（认证、OAuth、用户管理、Spring Security）
+├── qt-platform-user/              # 用户模块（认证、OAuth、用户管理、Spring Security、邮件服务）
 ├── qt-platform-product/           # 产品模块（产品、版本、分类、下载、更新检查）
 ├── qt-platform-comment/           # 评论与留言模块（评论 CRUD、评分、点赞）
 ├── qt-platform-file/              # 文件模块（本地/MinIO 存储、上传、校验）
-├── qt-platform-admin/             # 后台管理模块（仪表盘、审核、系统配置）
+├── qt-platform-admin/             # 后台管理模块（仪表盘、审核、系统配置、社交链接管理）
 ├── qt-platform-app/               # 主应用启动模块
 │   ├── Dockerfile                 # 后端多阶段构建
 │   └── src/main/resources/
@@ -193,7 +193,7 @@ qt-platform/
 │       │   └── Register/
 │       ├── router/                # 路由配置
 │       ├── store/                 # Redux（authSlice + themeSlice + siteConfigSlice）
-│       ├── locales/               # 国际化（zh-CN + en-US）
+│       ├── locales/               # 国际化（zh-CN + en-US，支持邮件模板和系统配置）
 │       ├── theme/                 # Ant Design 主题
 │       └── utils/                 # API 封装 + Axios 实例 + Mock
 ├── scripts/
@@ -203,6 +203,8 @@ qt-platform/
 │   │   ├── V2__add_minio_fields.sql
 │   │   ├── add_site_feedbacks.sql
 │   │   ├── add_site_logo.sql
+│   │   ├── add_footer_configs.sql
+│   │   ├── add_email_and_social_configs.sql
 │   │   └── upgrade_site_feedbacks.sql
 │   ├── V1.0.3__remove_nickname_column.sql
 │   ├── init.sql
@@ -283,13 +285,13 @@ Get-Content sql/seed.sql | docker exec -i qt-dev-postgres psql -U qt_user -d qt_
 ### 后端（Step 1-7）
 
 - [x] **公共模块**: 统一响应 `ApiResponse<T>` / `PageResponse<T>`、全局异常处理、JWT 工具、Redis/Jackson/MyBatis-Plus 配置
-- [x] **用户模块**: 邮箱注册/登录、GitHub OAuth、JWT 认证、邮箱验证码、密码找回/重置、个人信息管理、语言偏好
+- [x] **用户模块**: 邮箱注册/登录、GitHub OAuth、JWT 认证、邮箱验证码、密码找回/重置、个人信息管理、语言偏好、极简工业风邮件模板
 - [x] **产品模块**: 产品 CRUD、分类管理、产品列表（分页/筛选/排序）、产品详情、语义化版本管理、多平台支持、灰度发布
 - [x] **文件模块**: 文件上传/下载、断点续传、SHA256 校验、MinIO 对象存储
 - [x] **评论模块**: 评论 CRUD、评分（1-5 星）、评论点赞、树形回复、回复计数、限流
 - [x] **留言模块**: 留言 CRUD、点赞、回复、排序（时间/点赞/回复数）、频率限制、管理后台
 - [x] **通知/审计**: 站内通知、审计日志
-- [x] **管理后台**: 仪表盘统计、用户管理（封禁/角色）、产品审核、评论管理、分类管理、系统配置
+- [x] **管理后台**: 仪表盘统计、用户管理（封禁/角色）、产品审核、评论管理、分类管理、系统配置、社交链接管理、邮件配置管理
 - [x] **安全体系**: Spring Security + JWT + RBAC（5 角色 17 权限）、登录限流、CORS
 
 ### 前端（Step 8-9）
@@ -299,7 +301,7 @@ Get-Content sql/seed.sql | docker exec -i qt-dev-postgres psql -U qt_user -d qt_
 - [x] **前台页面（11 个）**: Home、Products、ProductDetail、Login、Register、ForgotPassword、Profile、OAuthCallback、NotFound、ComingSoon、InfoPage
 - [x] **后台页面（8 个）**: Dashboard、Users、Products、Comments、Categories、System、Feedbacks、Theme
 - [x] **API 层**: Axios 封装（token 注入 + 401 刷新）、9 个 API 模块、Mock 数据拦截器
-- [x] **国际化**: 中文 / 英文完整翻译
+- [x] **国际化**: 中文 / 英文完整翻译（支持邮件模板和系统配置）
 
 ### 部署（Step 10）
 
@@ -309,7 +311,7 @@ Get-Content sql/seed.sql | docker exec -i qt-dev-postgres psql -U qt_user -d qt_
 
 ### 数据库
 
-- [x] **28 张表**: 用户、角色、权限、OAuth 绑定、邮箱验证、产品、版本、增量更新、分类、评论、点赞、留言、留言点赞、订单（占位）、订阅（占位）、通知、下载记录（分区）、访问日志（分区）、系统配置、文件记录、审计日志、多语言
+- [x] **28 张表**: 用户、角色、权限、OAuth 绑定、邮箱验证、产品、版本、增量更新、分类、评论、点赞、留言、留言点赞、订单（占位）、订阅（占位）、通知、下载记录（分区）、访问日志（分区）、系统配置、文件记录、审计日志、多语言、邮件配置、社交链接配置
 - [x] **索引**: GIN (tags)、部分索引 (is_latest)、复合索引
 - [x] **触发器**: updated_at 自动更新
 - [x] **种子数据**: 5 用户 + 6 分类 + 8 产品 + 版本 + 评论
@@ -319,7 +321,7 @@ Get-Content sql/seed.sql | docker exec -i qt-dev-postgres psql -U qt_user -d qt_
 ## 阶段一待完成内容
 
 - [x] 前后端联调（Mock → 真实 API 对接，可通过 VITE_ENABLE_MOCK=false 切换）
-- [x] 邮件服务配置（QQ邮箱SMTP真实发送）
+- [x] 邮件服务配置（QQ邮箱SMTP真实发送、专业HTML邮件模板、系统配置集成）
 - [x] 文件上传功能（支持多格式、圆形裁剪）
 - [x] 修改邮箱功能（验证码发送到新邮箱）
 - [x] 产品截图上传和显示功能
@@ -331,6 +333,9 @@ Get-Content sql/seed.sql | docker exec -i qt-dev-postgres psql -U qt_user -d qt_
 - [x] 留言板功能（首页留言、回复、点赞、排序、频率限制）
 - [x] 留言管理后台（分页、状态管理、搜索、删除）
 - [x] 站点Logo配置功能（上传、裁剪、显示）
+- [x] 验证码邮件模板升级（专业HTML设计、双语支持、系统配置同步）
+- [x] 社交链接配置管理（GitHub、Twitter、LinkedIn、微博、微信、邮箱）
+- [x] 系统配置扩展（官网URL、邮件发件人、版权信息、备案信息）
 - [ ] 文件上传/下载端到端测试
 - [ ] 单元测试编写（前端 Jest + 后端 JUnit 5）
 - [ ] 响应式设计优化（移动端适配）

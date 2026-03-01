@@ -6,6 +6,7 @@ export interface SiteConfig {
   siteNameEn: string;
   siteDescription: string;
   siteLogo: string;
+  siteUrl: string;
   registerEnabled: boolean;
   commentAutoApprove: boolean;
   uploadMaxFileSize: number;
@@ -19,6 +20,12 @@ export interface SiteConfig {
   footerQuoteEn: string;
   footerQuoteAuthor: string;
   footerQuoteAuthorEn: string;
+  socialGithub: string;
+  socialTwitter: string;
+  socialLinkedin: string;
+  socialWeibo: string;
+  socialWechat: string;
+  socialEmail: string;
 }
 
 type ApiResponse<T> = {
@@ -37,6 +44,7 @@ const defaultConfig: SiteConfig = {
   siteNameEn: 'KiritoLab',
   siteDescription: '',
   siteLogo: '',
+  siteUrl: '',
   registerEnabled: true,
   commentAutoApprove: false,
   uploadMaxFileSize: 1073741824,
@@ -50,6 +58,12 @@ const defaultConfig: SiteConfig = {
   footerQuoteEn: '',
   footerQuoteAuthor: '',
   footerQuoteAuthorEn: '',
+  socialGithub: '',
+  socialTwitter: '',
+  socialLinkedin: '',
+  socialWeibo: '',
+  socialWechat: '',
+  socialEmail: '',
 };
 
 const initialState: SiteConfigState = {

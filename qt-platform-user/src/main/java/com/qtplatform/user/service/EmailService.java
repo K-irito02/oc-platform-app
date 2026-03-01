@@ -31,6 +31,7 @@ public class EmailService {
     private final EmailVerificationMapper emailVerificationMapper;
     private final StringRedisTemplate stringRedisTemplate;
     private final Executor asyncExecutor;
+    private final EmailTemplateService emailTemplateService;
 
     @Value("${spring.mail.username}")
     private String mailFrom;
@@ -116,8 +117,9 @@ public class EmailService {
             
             helper.setFrom(mailFrom);
             helper.setTo(email);
-            helper.setSubject(getSubject(type));
-            helper.setText(getHtmlBody(code, type), true);
+            // 使用新的邮件模板服务生成主题和内容
+            helper.setSubject(emailTemplateService.getSubject(type, "zh"));
+            helper.setText(emailTemplateService.generateVerificationEmail(code, type), true);
             
             mailSender.send(mimeMessage);
             log.info("Verification email sent to {}", email.replaceAll("(?<=.{2}).(?=.*@)", "*"));
