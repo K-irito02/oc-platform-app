@@ -172,9 +172,70 @@ public class SiteFeedbackService {
             wrapper.eq(SiteFeedback::getStatus, status);
         }
         if (keyword != null && !keyword.isEmpty()) {
-            wrapper.and(w -> w.like(SiteFeedback::getContent, keyword)
-                    .or().like(SiteFeedback::getNickname, keyword)
-                    .or().like(SiteFeedback::getEmail, keyword));
+            // 支持按字段类型搜索：格式为 "searchType:value"
+            if (keyword.contains(":")) {
+                String[] parts = keyword.split(":", 2);
+                String searchType = parts[0];
+                String searchValue = parts.length > 1 ? parts[1] : "";
+                
+                if (!searchValue.isEmpty()) {
+                    switch (searchType) {
+                        case "feedbackId":
+                            try {
+                                Long feedbackId = Long.parseLong(searchValue);
+                                wrapper.eq(SiteFeedback::getId, feedbackId);
+                            } catch (NumberFormatException e) {
+                                // 无效的ID格式，返回空结果
+                                wrapper.eq(SiteFeedback::getId, -1);
+                            }
+                            break;
+                        case "userId":
+                            try {
+                                Long userId = Long.parseLong(searchValue);
+                                wrapper.eq(SiteFeedback::getUserId, userId);
+                            } catch (NumberFormatException e) {
+                                wrapper.eq(SiteFeedback::getUserId, -1);
+                            }
+                            break;
+                        case "username":
+                            // 通过用户名搜索需要先查询用户ID
+                            List<Long> userIdsByUsername = userMapper.selectList(
+                                new LambdaQueryWrapper<User>().like(User::getUsername, searchValue)
+                            ).stream().map(User::getId).collect(Collectors.toList());
+                            if (userIdsByUsername.isEmpty()) {
+                                wrapper.eq(SiteFeedback::getUserId, -1);
+                            } else {
+                                wrapper.in(SiteFeedback::getUserId, userIdsByUsername);
+                            }
+                            break;
+                        case "email":
+                            wrapper.like(SiteFeedback::getEmail, searchValue);
+                            break;
+                        case "content":
+                            wrapper.like(SiteFeedback::getContent, searchValue);
+                            break;
+                        case "parentId":
+                            try {
+                                Long parentId = Long.parseLong(searchValue);
+                                wrapper.eq(SiteFeedback::getParentId, parentId);
+                            } catch (NumberFormatException e) {
+                                wrapper.eq(SiteFeedback::getParentId, -1);
+                            }
+                            break;
+                        default:
+                            // 未知类型，使用全局搜索
+                            wrapper.and(w -> w.like(SiteFeedback::getContent, searchValue)
+                                    .or().like(SiteFeedback::getNickname, searchValue)
+                                    .or().like(SiteFeedback::getEmail, searchValue));
+                            break;
+                    }
+                }
+            } else {
+                // 全局搜索（兼容旧逻辑）
+                wrapper.and(w -> w.like(SiteFeedback::getContent, keyword)
+                        .or().like(SiteFeedback::getNickname, keyword)
+                        .or().like(SiteFeedback::getEmail, keyword));
+            }
         }
         wrapper.orderByDesc(SiteFeedback::getCreatedAt);
         

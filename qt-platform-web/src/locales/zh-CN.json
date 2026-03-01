@@ -23,7 +23,7 @@
   },
   "feedback": {
     "title": "留言",
-    "subtitle": "说出你的想法，提出反馈和修改建议",
+    "subtitle": "说出你的想法，提出反馈或建议",
     "email": "邮箱（选填）",
     "contact": "联系方式（选填）",
     "content": "内容",
@@ -59,7 +59,7 @@
   },
   "update": {
     "title": "更新说明",
-    "content": "本项目由个人独立开发，产品迭代更新可能较慢。更多精彩产品正在开发中，敬请期待！",
+    "content": "本项目由个人独立开发，产品迭代更新较慢。更多精彩产品敬请期待！",
     "stayTuned": "敬请期待"
   },
   "nav": {
@@ -151,7 +151,8 @@
   "product": {
     "allProducts": "全部产品",
     "allCategories": "全部分类",
-    "browseDesc": "浏览和发现各类优质 Qt 应用程序",
+    "browseDesc": "发现优质的应用程序",
+    "totalFound": "共找到 {{total}} 个产品",
     "sortLatest": "最新发布",
     "sortDownloads": "下载最多",
     "sortRating": "评分最高",
@@ -382,9 +383,13 @@
   "adminFeedback": {
     "title": "留言管理",
     "desc": "管理用户留言和回复",
-    "searchPlaceholder": "搜索留言内容、用户名或邮箱",
+    "searchPlaceholder": "搜索用户名/邮箱/ID/内容",
     "isPublic": "公开",
-    "email": "邮箱"
+    "email": "邮箱",
+    "feedbackId": "留言ID",
+    "searchFeedbackId": "输入留言ID",
+    "searchContent": "输入留言内容",
+    "searchParentId": "输入父留言ID"
   },
   "productEdit": {
     "title": "编辑产品",
@@ -596,23 +601,101 @@
   },
   "footer": {
     "copyright": "© 2026 桐人创研",
-    "siteDesc": "免费提供实用的桌面工具应用，满足您的日常需求。",
-    "product": "产品",
+    "siteDesc": "个人独立维护的免费软件发布平台。",
+    "siteNote": "用于管理与迭代自制软件，并免费分享与交流。",
+    "site": "站点",
     "resources": "资源",
-    "company": "公司",
-    "features": "特色",
-    "integrations": "集成",
-    "pricing": "定价",
-    "changelog": "更新日志",
-    "documentation": "文献资料",
+    "statement": "说明",
+    "products": "产品列表",
+    "featured": "精选推荐",
+    "feedback": "留言反馈",
+    "changelog": "更新说明",
+    "documentation": "使用指南",
     "apiReference": "API 参考",
-    "community": "社区",
     "helpCenter": "帮助中心",
-    "about": "关于",
-    "blog": "博客",
-    "careers": "招聘",
-    "legal": "法律",
+    "openSource": "开源仓库",
+    "about": "关于本站",
+    "freeStatement": "免费与非盈利",
     "privacyPolicy": "隐私政策",
     "termsOfService": "服务条款"
+  },
+  "footerPages": {
+    "about": {
+      "title": "关于本站",
+      "lead": "这是一个由个人独立开发与维护的软件产品管理与发布平台。",
+      "sections": [
+        {
+          "id": "purpose",
+          "title": "项目初衷",
+          "body": "方便我管理和迭代自制软件，同时免费分享给大家使用。"
+        },
+        {
+          "id": "free",
+          "title": "免费与非盈利",
+          "body": "平台所有产品永久免费，不提供任何额外收费服务或付费权益。"
+        },
+        {
+          "id": "feedback",
+          "title": "交流与反馈",
+          "body": "欢迎通过留言板提出建议、反馈问题或交流想法。"
+        },
+        {
+          "id": "maintenance",
+          "title": "维护节奏",
+          "body": "个人维护更新节奏可能较慢，但会持续优化体验。"
+        }
+      ]
+    },
+    "privacy": {
+      "title": "隐私政策",
+      "lead": "本站尊重并保护用户隐私，仅在必要范围内收集与使用信息。",
+      "items": [
+        "仅用于登录、评论与留言等基础功能。",
+        "不会出售或共享用户数据给第三方。",
+        "可在个人中心修改或更新部分信息。",
+        "如有隐私相关问题，可通过留言联系。"
+      ]
+    },
+    "terms": {
+      "title": "服务条款",
+      "lead": "使用本网站即表示你同意以下条款：",
+      "items": [
+        "站内内容为个人项目分享，按现状提供。",
+        "禁止发布违法、侵权或恶意内容。",
+        "若发现侵权内容，请联系我处理。",
+        "网站功能可能调整、更新或下线。"
+      ]
+    },
+    "changelog": {
+      "title": "更新说明",
+      "lead": "更新记录将不定期整理发布，重要变更会在此同步。",
+      "items": [
+        "近期重点：优化使用体验与完善国际化。",
+        "后续计划：逐步补充文档与使用指南。"
+      ]
+    }
+  },
+  "adminSystem": {
+    "footerConfig": "网站底部配置",
+    "beian": "备案号（中文）",
+    "beianEn": "备案号（英文）",
+    "beianPlaceholder": "例如：京公网安备 12345678901234号",
+    "beianEnPlaceholder": "e.g. Beijing ICP No. 12345678",
+    "icp": "ICP备案号（中文）",
+    "icpEn": "ICP备案号（英文）",
+    "icpPlaceholder": "例如：京ICP备12345678号",
+    "icpEnPlaceholder": "e.g. Beijing ICP License No. 12345678",
+    "holiday": "节假日信息（中文）",
+    "holidayEn": "节假日信息（英文）",
+    "holidayPlaceholder": "例如：🎉 新年快乐！祝大家万事如意！",
+    "holidayEnPlaceholder": "e.g. 🎉 Happy New Year! Best wishes to all!",
+    "quote": "名人名言（中文）",
+    "quoteEn": "名人名言（英文）",
+    "quotePlaceholder": "例如：代码写得好，下班下得早",
+    "quoteEnPlaceholder": "e.g. Good code means early clock-out",
+    "quoteAuthor": "名言作者（中文）",
+    "quoteAuthorEn": "名言作者（英文）",
+    "quoteAuthorPlaceholder": "例如：程序员智慧",
+    "quoteAuthorEnPlaceholder": "e.g. Programmer Wisdom"
   }
 }

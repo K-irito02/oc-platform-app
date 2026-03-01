@@ -113,7 +113,7 @@ export default function Home() {
       </section>
 
       {/* Featured Products */}
-      <section className="py-24 bg-slate-50 dark:bg-slate-900/50">
+      <section id="featured" className="py-24 bg-slate-50 dark:bg-slate-900/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-end mb-12">
             <div>
@@ -173,7 +173,7 @@ export default function Home() {
       </section>
 
       {/* Feedback & Info Section */}
-      <section className="py-24">
+      <section id="feedback" className="py-24">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <FeedbackSection />
           <InfoCards />

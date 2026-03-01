@@ -224,7 +224,7 @@ export const LogoCropUploader = ({ value, onChange, onSave }: LogoCropUploaderPr
         footer={null}
         width={500}
         centered
-        destroyOnClose
+        destroyOnHidden
       >
         {imageSrc && (
           <div className="space-y-4">

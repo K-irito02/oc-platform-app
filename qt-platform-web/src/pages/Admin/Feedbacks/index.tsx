@@ -38,13 +38,22 @@ export default function AdminFeedbacks() {
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string | undefined>();
   const [keyword, setKeyword] = useState('');
+  const [searchType, setSearchType] = useState<'all' | 'feedbackId' | 'userId' | 'username' | 'email' | 'content' | 'parentId'>('all');
 
   useEffect(() => { loadData(); }, [page, statusFilter]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const res = await adminApi.listFeedbacks({ page, size: 20, status: statusFilter, keyword: keyword || undefined }) as ApiResponse<PaginatedResponse<FeedbackRecord>>;
+      let searchKeyword: string | undefined;
+      if (keyword) {
+        if (searchType === 'all') {
+          searchKeyword = keyword;
+        } else {
+          searchKeyword = `${searchType}:${keyword}`;
+        }
+      }
+      const res = await adminApi.listFeedbacks({ page, size: 20, status: statusFilter, keyword: searchKeyword }) as ApiResponse<PaginatedResponse<FeedbackRecord>>;
       setData(res.data?.records || []);
       setTotal(res.data?.total || 0);
     } catch (error: unknown) {
@@ -229,13 +238,42 @@ export default function AdminFeedbacks() {
       <Card className="border-slate-200 dark:border-slate-800 dark:bg-slate-900 shadow-sm">
         <div className="flex flex-wrap gap-4 items-center">
           <div className="flex items-center gap-2">
-            <Search size={16} className="text-slate-400" />
+            <Select
+              value={searchType}
+              onChange={setSearchType}
+              className="w-32 h-10"
+              options={[
+                { value: 'all', label: t('admin.searchAll') },
+                { value: 'feedbackId', label: t('adminFeedback.feedbackId') },
+                { value: 'userId', label: t('admin.userId') },
+                { value: 'username', label: t('admin.username') },
+                { value: 'email', label: t('admin.email') },
+                { value: 'content', label: t('admin.content') },
+                { value: 'parentId', label: t('admin.parentId') },
+              ]}
+            />
             <Input
-              placeholder={t('adminFeedback.searchPlaceholder')}
+              placeholder={
+                searchType === 'all'
+                  ? t('adminFeedback.searchPlaceholder')
+                  : searchType === 'feedbackId'
+                    ? t('adminFeedback.searchFeedbackId')
+                    : searchType === 'userId'
+                      ? t('admin.searchUserId')
+                      : searchType === 'username'
+                        ? t('admin.searchUsername')
+                        : searchType === 'email'
+                          ? t('admin.searchEmail')
+                          : searchType === 'content'
+                            ? t('adminFeedback.searchContent')
+                            : t('adminFeedback.searchParentId')
+              }
+              allowClear
+              className="w-64 md:w-80 h-10"
               value={keyword}
               onChange={e => setKeyword(e.target.value)}
               onPressEnter={handleSearch}
-              style={{ width: 200 }}
+              prefix={<Search size={14} className="text-slate-400 shrink-0" />}
             />
             <Button onClick={handleSearch}>{t('common.search')}</Button>
           </div>
@@ -244,7 +282,7 @@ export default function AdminFeedbacks() {
             allowClear
             value={statusFilter}
             onChange={setStatusFilter}
-            style={{ width: 150 }}
+            className="w-36 h-9"
             options={[
               { value: 'PENDING', label: t('admin.pending') },
               { value: 'PUBLISHED', label: t('admin.published') },

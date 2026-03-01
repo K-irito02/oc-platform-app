@@ -91,10 +91,10 @@ export default function Products() {
       <div className="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">{t('product.allProducts') || 'All Products'}</h1>
-          <p className="text-slate-500 dark:text-slate-400">Explore our collection of high-quality Qt applications.</p>
+          <p className="text-slate-500 dark:text-slate-400">{t('product.browseDesc') || 'Explore our collection of high-quality applications.'}</p>
         </div>
         <div className="flex items-center text-sm text-slate-500 dark:text-slate-400">
-          Total <span className="font-semibold mx-1 text-slate-900 dark:text-white">{total}</span> products found
+          {t('product.totalFound', { total }) || `Total ${total} products found`}
         </div>
       </div>
 

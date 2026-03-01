@@ -21,6 +21,7 @@ const Profile = lazy(() => import('@/pages/Profile'));
 const OAuthCallback = lazy(() => import('@/pages/OAuthCallback'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 const ComingSoon = lazy(() => import('@/pages/ComingSoon'));
+const InfoPage = lazy(() => import('@/pages/InfoPage'));
 
 // Admin pages
 const AdminDashboard = lazy(() => import('@/pages/Admin/Dashboard'));
@@ -58,7 +59,10 @@ const router = createBrowserRouter([
       { path: 'products/:slug', element: lazyLoad(ProductDetail) },
       { path: 'profile', element: lazyLoad(Profile) },
       { path: 'developers', element: lazyLoad(ComingSoon) },
-      { path: 'about', element: lazyLoad(ComingSoon) },
+      { path: 'about', element: lazyLoad(InfoPage) },
+      { path: 'privacy', element: lazyLoad(InfoPage) },
+      { path: 'terms', element: lazyLoad(InfoPage) },
+      { path: 'changelog', element: lazyLoad(InfoPage) },
       { path: 'coming-soon', element: lazyLoad(ComingSoon) },
       { path: 'oauth/github/callback', element: lazyLoad(OAuthCallback) },
     ],

@@ -26,7 +26,10 @@ public class PublicSiteController {
             new LambdaQueryWrapper<SystemConfig>()
                 .in(SystemConfig::getConfigKey, 
                     "site.name", "site.name_en", "site.description", "site.logo",
-                    "register.enabled", "comment.auto_approve", "upload.max_file_size")
+                    "register.enabled", "comment.auto_approve", "upload.max_file_size",
+                    "footer.beian", "footer.beian_en", "footer.icp", "footer.icp_en",
+                    "footer.holiday", "footer.holiday_en", "footer.quote", "footer.quote_en",
+                    "footer.quote_author", "footer.quote_author_en")
         );
 
         Map<String, Object> result = new HashMap<>();
@@ -60,6 +63,36 @@ public class PublicSiteController {
                         result.put("uploadMaxFileSize", 1073741824L);
                     }
                     break;
+                case "footer.beian":
+                    result.put("footerBeian", value);
+                    break;
+                case "footer.beian_en":
+                    result.put("footerBeianEn", value);
+                    break;
+                case "footer.icp":
+                    result.put("footerIcp", value);
+                    break;
+                case "footer.icp_en":
+                    result.put("footerIcpEn", value);
+                    break;
+                case "footer.holiday":
+                    result.put("footerHoliday", value);
+                    break;
+                case "footer.holiday_en":
+                    result.put("footerHolidayEn", value);
+                    break;
+                case "footer.quote":
+                    result.put("footerQuote", value);
+                    break;
+                case "footer.quote_en":
+                    result.put("footerQuoteEn", value);
+                    break;
+                case "footer.quote_author":
+                    result.put("footerQuoteAuthor", value);
+                    break;
+                case "footer.quote_author_en":
+                    result.put("footerQuoteAuthorEn", value);
+                    break;
             }
         }
 
@@ -71,6 +104,16 @@ public class PublicSiteController {
         result.putIfAbsent("registerEnabled", true);
         result.putIfAbsent("commentAutoApprove", false);
         result.putIfAbsent("uploadMaxFileSize", 1073741824L);
+        result.putIfAbsent("footerBeian", "");
+        result.putIfAbsent("footerBeianEn", "");
+        result.putIfAbsent("footerIcp", "");
+        result.putIfAbsent("footerIcpEn", "");
+        result.putIfAbsent("footerHoliday", "");
+        result.putIfAbsent("footerHolidayEn", "");
+        result.putIfAbsent("footerQuote", "");
+        result.putIfAbsent("footerQuoteEn", "");
+        result.putIfAbsent("footerQuoteAuthor", "");
+        result.putIfAbsent("footerQuoteAuthorEn", "");
 
         return ApiResponse.success(result);
     }

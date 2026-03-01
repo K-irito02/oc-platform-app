@@ -9,6 +9,16 @@ export interface SiteConfig {
   registerEnabled: boolean;
   commentAutoApprove: boolean;
   uploadMaxFileSize: number;
+  footerBeian: string;
+  footerBeianEn: string;
+  footerIcp: string;
+  footerIcpEn: string;
+  footerHoliday: string;
+  footerHolidayEn: string;
+  footerQuote: string;
+  footerQuoteEn: string;
+  footerQuoteAuthor: string;
+  footerQuoteAuthorEn: string;
 }
 
 type ApiResponse<T> = {
@@ -30,6 +40,16 @@ const defaultConfig: SiteConfig = {
   registerEnabled: true,
   commentAutoApprove: false,
   uploadMaxFileSize: 1073741824,
+  footerBeian: '',
+  footerBeianEn: '',
+  footerIcp: '',
+  footerIcpEn: '',
+  footerHoliday: '',
+  footerHolidayEn: '',
+  footerQuote: '',
+  footerQuoteEn: '',
+  footerQuoteAuthor: '',
+  footerQuoteAuthorEn: '',
 };
 
 const initialState: SiteConfigState = {

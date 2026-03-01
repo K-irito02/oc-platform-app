@@ -1,7 +1,8 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { RouterProvider } from 'react-router-dom'
 import { ConfigProvider, App as AntdApp } from 'antd'
 import zhCN from 'antd/locale/zh_CN'
+import enUS from 'antd/locale/en_US'
 import router from '@/router'
 import theme from '@/theme/antdTheme'
 import { useAppSelector, useAppDispatch } from '@/store/hooks'
@@ -10,6 +11,7 @@ import { fetchSiteConfig } from '@/store/slices/siteConfigSlice'
 import { userApi } from '@/utils/api'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { useAntdStaticFunctions } from '@/utils/antdUtils'
+import { useTranslation } from 'react-i18next'
 
 type UserProfile = {
   id: number
@@ -33,6 +35,17 @@ function AntdInitializer() {
 function App() {
   const dispatch = useAppDispatch()
   const { isAuthenticated, user } = useAppSelector((s) => s.auth)
+  const { i18n } = useTranslation()
+
+  const antdLocale = useMemo(() => {
+    switch (i18n.language) {
+      case 'en-US':
+        return enUS
+      case 'zh-CN':
+      default:
+        return zhCN
+    }
+  }, [i18n.language])
 
   // 加载站点配置
   useEffect(() => {
@@ -51,7 +64,7 @@ function App() {
   }, [isAuthenticated, user, dispatch])
 
   return (
-    <ConfigProvider locale={zhCN} theme={theme}>
+    <ConfigProvider locale={antdLocale} theme={theme}>
       <AntdApp>
         <AntdInitializer />
         <ThemeProvider>

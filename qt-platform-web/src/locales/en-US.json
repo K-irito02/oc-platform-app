@@ -23,7 +23,7 @@
   },
   "feedback": {
     "title": "Message",
-    "subtitle": "Share your thoughts, feedback and suggestions",
+    "subtitle": "Share your thoughts, feedback or suggestions",
     "email": "Email (Optional)",
     "contact": "Contact (Optional)",
     "content": "Content",
@@ -59,7 +59,7 @@
   },
   "update": {
     "title": "Update Notice",
-    "content": "This project is independently developed, so updates may be slow. More exciting products are under development, stay tuned!",
+    "content": "This project is independently developed, so updates may be slow. More exciting products are coming soon!",
     "stayTuned": "Stay Tuned"
   },
   "nav": {
@@ -151,7 +151,8 @@
   "product": {
     "allProducts": "All Products",
     "allCategories": "All Categories",
-    "browseDesc": "Browse and discover quality Qt applications",
+    "browseDesc": "Explore our collection of high-quality applications.",
+    "totalFound": "Total {{total}} products found",
     "sortLatest": "Latest",
     "sortDownloads": "Most Downloads",
     "sortRating": "Highest Rated",
@@ -381,9 +382,13 @@
   "adminFeedback": {
     "title": "Feedback Management",
     "desc": "Manage user feedbacks and replies",
-    "searchPlaceholder": "Search content, username or email",
+    "searchPlaceholder": "Search Username/Email/ID/Content",
     "isPublic": "Public",
-    "email": "Email"
+    "email": "Email",
+    "feedbackId": "Feedback ID",
+    "searchFeedbackId": "Enter Feedback ID",
+    "searchContent": "Enter Feedback Content",
+    "searchParentId": "Enter Parent Feedback ID"
   },
   "productEdit": {
     "title": "Edit Product",
@@ -585,23 +590,101 @@
   },
   "footer": {
     "copyright": "© 2026 KiritoLab",
-    "siteDesc": "Free utility applications to meet your everyday needs.",
-    "product": "Product",
+    "siteDesc": "A solo-maintained, free software hub.",
+    "siteNote": "Built to manage and iterate my own apps, shared for everyone.",
+    "site": "Site",
     "resources": "Resources",
-    "company": "Company",
-    "features": "Features",
-    "integrations": "Integrations",
-    "pricing": "Pricing",
+    "statement": "Info",
+    "products": "Products",
+    "featured": "Featured",
+    "feedback": "Feedback",
     "changelog": "Changelog",
-    "documentation": "Documentation",
+    "documentation": "Guides",
     "apiReference": "API Reference",
-    "community": "Community",
     "helpCenter": "Help Center",
+    "openSource": "Open Source",
     "about": "About",
-    "blog": "Blog",
-    "careers": "Careers",
-    "legal": "Legal",
+    "freeStatement": "Free & Non-profit",
     "privacyPolicy": "Privacy Policy",
     "termsOfService": "Terms of Service"
+  },
+  "footerPages": {
+    "about": {
+      "title": "About",
+      "lead": "A solo-maintained platform for managing and sharing my own software.",
+      "sections": [
+        {
+          "id": "purpose",
+          "title": "Purpose",
+          "body": "Built to manage and iterate my own apps, and share them for free."
+        },
+        {
+          "id": "free",
+          "title": "Free & Non-profit",
+          "body": "All products are free to use. No paid features or hidden fees."
+        },
+        {
+          "id": "feedback",
+          "title": "Feedback",
+          "body": "Suggestions and bug reports are welcome via the message board."
+        },
+        {
+          "id": "maintenance",
+          "title": "Maintenance",
+          "body": "Updates are maintained by one person and may be slower, but ongoing."
+        }
+      ]
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "lead": "We respect your privacy and only collect information when necessary.",
+      "items": [
+        "Used only for login, comments, and messages.",
+        "We do not sell or share data with third parties.",
+        "You can update some information in your profile.",
+        "Contact via the message board for privacy requests."
+      ]
+    },
+    "terms": {
+      "title": "Terms of Service",
+      "lead": "By using this website, you agree to the following:",
+      "items": [
+        "Content is provided as-is for a personal project.",
+        "No abuse, spam, or illegal content.",
+        "Report infringement and it will be handled.",
+        "Features may change or be discontinued."
+      ]
+    },
+    "changelog": {
+      "title": "Changelog",
+      "lead": "Updates will be published periodically with key changes summarized here.",
+      "items": [
+        "Current focus: usability improvements and full internationalization.",
+        "Next up: gradual documentation and usage guides."
+      ]
+    }
+  },
+  "adminSystem": {
+    "footerConfig": "Footer Configuration",
+    "beian": "Filing Number (Chinese)",
+    "beianEn": "Filing Number (English)",
+    "beianPlaceholder": "e.g. Beijing Public Security No. 12345678901234",
+    "beianEnPlaceholder": "e.g. Beijing ICP No. 12345678",
+    "icp": "ICP Filing Number (Chinese)",
+    "icpEn": "ICP Filing Number (English)",
+    "icpPlaceholder": "e.g. 京ICP备12345678号",
+    "icpEnPlaceholder": "e.g. Beijing ICP License No. 12345678",
+    "holiday": "Holiday Message (Chinese)",
+    "holidayEn": "Holiday Message (English)",
+    "holidayPlaceholder": "e.g. 🎉 Happy New Year! Best wishes!",
+    "holidayEnPlaceholder": "e.g. 🎉 Happy New Year! Best wishes to all!",
+    "quote": "Famous Quote (Chinese)",
+    "quoteEn": "Famous Quote (English)",
+    "quotePlaceholder": "e.g. Good code, early clock-out",
+    "quoteEnPlaceholder": "e.g. Good code means early clock-out",
+    "quoteAuthor": "Quote Author (Chinese)",
+    "quoteAuthorEn": "Quote Author (English)",
+    "quoteAuthorPlaceholder": "e.g. Programmer Wisdom",
+    "quoteAuthorEnPlaceholder": "e.g. Programmer Wisdom"
   }
 }

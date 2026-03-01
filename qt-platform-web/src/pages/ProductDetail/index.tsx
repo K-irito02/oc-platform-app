@@ -376,7 +376,7 @@ const CommentItem = ({ comment, isAuthenticated, handleLikeComment, handleReplyC
             </button>
             {isAuthenticated && (
               <button 
-                onClick={() => handleReplyComment(comment.id, comment.username)}
+                onClick={() => handleReplyComment(comment.id, comment.username || 'User')}
                 className="text-xs text-slate-400 hover:text-blue-500 transition-colors"
               >
                 {t('productDetail.reply')}
@@ -468,13 +468,13 @@ export default function ProductDetail() {
       const res = await commentApi.getProductComments(productId, { 
         page, 
         size: 10,
-        sortBy: sortBy || commentSortBy,
-        sortOrder: sortOrder || commentSortOrder
+        sortBy: sortBy || 'time',
+        sortOrder: sortOrder || 'desc'
       }) as ApiResponse<PageResponse<CommentItemType>>;
       setComments(res.data.records || []);
       setCommentTotal(res.data.totalWithReplies || res.data.total || 0);
     } catch { /* handled */ }
-  }, [commentSortBy, commentSortOrder]);
+  }, []);
 
   const loadProduct = useCallback(async () => {
     setLoading(true);
@@ -513,7 +513,7 @@ export default function ProductDetail() {
     }
   };
 
-  const handleLikeComment = async (commentId: number, liked: boolean) => {
+  const handleLikeComment = async (commentId: number, liked?: boolean) => {
     if (!isAuthenticated) {
       message.warning(t('productDetail.loginToLike'));
       return;
@@ -590,7 +590,7 @@ export default function ProductDetail() {
     window.open(`${baseUrl}${downloadPath}`, '_blank');
   };
 
-  const formatSize = (bytes: number) => {
+  const formatSize = (bytes?: number) => {
     if (!bytes) return '-';
     if (bytes >= 1073741824) return (bytes / 1073741824).toFixed(1) + ' GB';
     if (bytes >= 1048576) return (bytes / 1048576).toFixed(1) + ' MB';
@@ -714,7 +714,7 @@ export default function ProductDetail() {
                         </div>
                       )}
                       {/* Description */}
-                      <MarkdownRenderer content={displayDescription} />
+                      <MarkdownRenderer content={displayDescription || ''} />
                     </div>
                   )
                 },

@@ -10,15 +10,15 @@
 
 | 技术 | 版本 | 说明 |
 |------|------|------|
-| React | 18.3 | UI 框架 |
-| TypeScript | ~5.6 | 类型安全 |
-| Vite | 5.4 | 构建工具 + HMR |
-| Tailwind CSS | 3.x | 实用优先 CSS 框架 |
-| Ant Design | 6.x | UI 组件库（配合 Glassmorphism） |
-| Redux Toolkit | 2.x | 状态管理 |
-| React Router | 7.x | 路由（懒加载） |
-| react-i18next | 16.x | 国际化（中/英） |
-| Axios | 1.x | HTTP 请求 |
+| React | 18.3.1 | UI 框架 |
+| TypeScript | ~5.6.2 | 类型安全 |
+| Vite | 5.4.x | 构建工具 + HMR |
+| Tailwind CSS | 3.4.1 | 实用优先 CSS 框架 |
+| Ant Design | 6.3.x | UI 组件库（配合 Glassmorphism） |
+| Redux Toolkit | 2.11.x | 状态管理 |
+| React Router DOM | 7.13.x | 路由（懒加载） |
+| react-i18next | 16.5.x | 国际化（中/英） |
+| Axios | 1.13.x | HTTP 请求 |
 
 ### 后端
 
@@ -151,60 +151,66 @@ qt-platform/
 ├── qt-platform-common/            # 公共模块（异常、响应格式、工具类、通用配置）
 ├── qt-platform-user/              # 用户模块（认证、OAuth、用户管理、Spring Security）
 ├── qt-platform-product/           # 产品模块（产品、版本、分类、下载、更新检查）
-├── qt-platform-comment/           # 评论模块（评论 CRUD、评分、点赞）
-├── qt-platform-file/              # 文件模块（MinIO 存储、上传、校验）
+├── qt-platform-comment/           # 评论与留言模块（评论 CRUD、评分、点赞）
+├── qt-platform-file/              # 文件模块（本地/MinIO 存储、上传、校验）
 ├── qt-platform-admin/             # 后台管理模块（仪表盘、审核、系统配置）
-├── qt-platform-app/               # 主应用启动模块（聚合所有模块 + 配置文件）
+├── qt-platform-app/               # 主应用启动模块
 │   ├── Dockerfile                 # 后端多阶段构建
 │   └── src/main/resources/
 │       ├── application.yml        # 主配置
-│       ├── application-dev.yml    # 开发环境
-│       └── application-prod.yml   # 生产环境
+│       └── logback-spring.xml     # 日志配置
 ├── qt-platform-web/               # 前端项目（React SPA）
+│   ├── Dockerfile
+│   ├── nginx.conf
 │   └── src/
 │       ├── components/            # 共享组件
-│       │   ├── home/              # 首页专用组件
-│       │   │   ├── FeedbackSection.tsx  # 留言板组件
-│       │   │   └── InfoCards.tsx        # 信息卡片组件
-│       │   ├── layout/            # 布局组件
-│       │   │   ├── Footer.tsx          # 页脚
-│       │   │   ├── Navbar.tsx          # 导航栏
-│       │   │   └── AdminSidebar.tsx    # 管理后台侧栏
-│       │   ├── LogoCropUploader.tsx    # Logo 裁剪上传组件
-│       │   └── SiteLogo.tsx            # 站点 Logo 组件
+│       │   ├── home/              # 首页组件（留言板、信息卡片）
+│       │   ├── layout/            # 导航与页脚（含管理后台侧栏）
+│       │   ├── AvatarUpload/      # 头像上传
+│       │   ├── ThemeProvider/     # 主题上下文
+│       │   └── ui/                # Glass 组件
 │       ├── layouts/               # 页面布局（MainLayout、AdminLayout）
-│       ├── pages/                 # 页面（前台 9 个 + 后台 7 个）
-│       │   ├── Admin/             # 管理后台页面
-│       │   │   ├── Feedbacks/     # 留言管理页面
-│       │   │   ├── Categories.tsx
-│       │   │   ├── Comments.tsx
-│       │   │   ├── Dashboard.tsx
-│       │   │   ├── Products.tsx
-│       │   │   ├── System.tsx
-│       │   │   └── Users.tsx
-│       │   ├── ForgotPassword.tsx
-│       │   ├── Home.tsx           # 首页（包含留言板）
-│       │   ├── Login.tsx
-│       │   ├── NotFound.tsx
-│       │   ├── OAuthCallback.tsx
-│       │   ├── ProductDetail.tsx
-│       │   ├── Products.tsx
-│       │   ├── Profile.tsx
-│       │   └── Register.tsx
-│       ├── router/                # 路由配置（懒加载）
+│       ├── pages/                 # 页面（前台 11 个 + 后台 8 个）
+│       │   ├── Admin/             # 后台页面
+│       │   │   ├── Categories/
+│       │   │   ├── Comments/
+│       │   │   ├── Dashboard/
+│       │   │   ├── Feedbacks/
+│       │   │   ├── Products/
+│       │   │   ├── System/
+│       │   │   ├── Theme/
+│       │   │   └── Users/
+│       │   ├── ComingSoon/
+│       │   ├── ForgotPassword/
+│       │   ├── Home/
+│       │   ├── InfoPage/
+│       │   ├── Login/
+│       │   ├── NotFound/
+│       │   ├── OAuthCallback/
+│       │   ├── ProductDetail/
+│       │   ├── Products/
+│       │   ├── Profile/
+│       │   └── Register/
+│       ├── router/                # 路由配置
 │       ├── store/                 # Redux（authSlice + themeSlice + siteConfigSlice）
 │       ├── locales/               # 国际化（zh-CN + en-US）
 │       ├── theme/                 # Ant Design 主题
-│       ├── utils/                 # API 封装 + Axios 实例 + Mock
-│       └── styles/                # 特效 CSS
+│       └── utils/                 # API 封装 + Axios 实例 + Mock
+├── scripts/
+│   └── init-minio.ps1             # MinIO 初始化脚本
 ├── sql/
-│   ├── init.sql                   # 建表 + 索引 + 触发器 + 初始化角色/权限
-│   ├── seed.sql                   # 种子数据
-│   └── migrations/                # 数据库迁移脚本
-│       ├── add_site_feedbacks.sql # 留言表初始化
-│       ├── add_site_logo.sql      # 站点 Logo 配置表
-│       └── upgrade_site_feedbacks.sql # 留言表升级
-├── docker-compose.dev.yml         # 开发环境（PostgreSQL + Redis）
+│   ├── migrations/                # 数据库迁移脚本
+│   │   ├── V2__add_minio_fields.sql
+│   │   ├── add_site_feedbacks.sql
+│   │   ├── add_site_logo.sql
+│   │   └── upgrade_site_feedbacks.sql
+│   ├── V1.0.3__remove_nickname_column.sql
+│   ├── init.sql
+│   ├── pg_hba.conf
+│   ├── reset-products.sql
+│   ├── seed-products.sql
+│   └── seed.sql
+├── docker-compose.dev.yml         # 开发环境依赖（PostgreSQL + Redis + MinIO）
 ├── docker-compose.yml             # 生产环境（全栈部署）
 ├── .env.example                   # 环境变量模板
 ├── .github/workflows/ci.yml       # CI/CD 流水线
@@ -290,8 +296,8 @@ Get-Content sql/seed.sql | docker exec -i qt-dev-postgres psql -U qt_user -d qt_
 
 - [x] **基础架构**: Vite + React + TypeScript + Redux Toolkit + React Router (懒加载) + i18n
 - [x] **玻璃拟态主题**: Tailwind CSS + CSS 变量实现的高级玻璃拟态效果（背景模糊、半透明、光影）、动态背景支持（图片/视频）
-- [x] **前台页面（9 个）**: Home、Products、ProductDetail、Login、Register、ForgotPassword、Profile、OAuthCallback、NotFound
-- [x] **后台页面（7 个）**: Dashboard、Users、Products、Comments、Categories、System、Feedbacks
+- [x] **前台页面（11 个）**: Home、Products、ProductDetail、Login、Register、ForgotPassword、Profile、OAuthCallback、NotFound、ComingSoon、InfoPage
+- [x] **后台页面（8 个）**: Dashboard、Users、Products、Comments、Categories、System、Feedbacks、Theme
 - [x] **API 层**: Axios 封装（token 注入 + 401 刷新）、9 个 API 模块、Mock 数据拦截器
 - [x] **国际化**: 中文 / 英文完整翻译
 

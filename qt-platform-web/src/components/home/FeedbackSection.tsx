@@ -97,7 +97,7 @@ const ReplyItem = ({ reply, isAuthenticated, handleLike, handleReply, t }: Reply
             </button>
             {isAuthenticated && (
               <button 
-                onClick={() => handleReply(reply.id, reply.username || reply.nickname)}
+                onClick={() => handleReply(reply.id, reply.username || reply.nickname || t('feedback.anonymous'))}
                 className="text-xs text-slate-400 hover:text-blue-500 transition-colors"
               >
                 {t('feedback.reply')}
@@ -156,7 +156,7 @@ const FeedbackItem = ({ feedback, isAuthenticated, handleLike, handleReply, t }:
             </button>
             {isAuthenticated && (
               <button 
-                onClick={() => handleReply(feedback.id, feedback.username || feedback.nickname)}
+                onClick={() => handleReply(feedback.id, feedback.username || feedback.nickname || t('feedback.anonymous'))}
                 className="text-xs text-slate-400 hover:text-blue-500 transition-colors"
               >
                 {t('feedback.reply')}
@@ -300,7 +300,7 @@ export default function FeedbackSection() {
     }
   };
 
-  const handleLike = async (feedbackId: number, liked: boolean) => {
+  const handleLike = async (feedbackId: number, liked?: boolean) => {
     if (!isAuthenticated) {
       message.warning(t('feedback.loginToLike'));
       return;

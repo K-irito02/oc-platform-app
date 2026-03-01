@@ -3,10 +3,10 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 interface UserInfo {
   id: number;
   username: string;
-  nickname: string;
+  nickname?: string;
   email: string;
-  avatarUrl: string | null;
-  roles: string[];
+  avatarUrl?: string | null;
+  roles?: string[];
   themeConfig?: string;
 }
 
