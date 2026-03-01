@@ -174,7 +174,7 @@ CREATE TABLE product_versions (
     version_type    VARCHAR(20) DEFAULT 'RELEASE'
                     CHECK (version_type IN ('ALPHA', 'BETA', 'RC', 'RELEASE')),
     platform        VARCHAR(50) NOT NULL
-                    CHECK (platform IN ('WINDOWS', 'LINUX', 'MACOS')),
+                    CHECK (platform IN ('WINDOWS', 'LINUX', 'MACOS', 'ANDROID', 'IOS', 'WEB', 'CROSS_PLATFORM')),
     architecture    VARCHAR(20) DEFAULT 'x64'
                     CHECK (architecture IN ('x86', 'x64', 'arm64')),
     min_os_version  VARCHAR(50),

@@ -138,6 +138,7 @@ export default function ProductEdit() {
   const [versionModalOpen, setVersionModalOpen] = useState(false);
   const [versionForm] = Form.useForm();
   const [uploadingVersion, setUploadingVersion] = useState(false);
+  const [creatingVersion, setCreatingVersion] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<{ id: number; name: string; size: number; checksum: string; path: string } | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [activeTab, setActiveTab] = useState('basic');
@@ -263,6 +264,10 @@ export default function ProductEdit() {
       return;
     }
 
+    if (creatingVersion) {
+      return; // 防止重复提交
+    }
+
     if (isNewProduct) {
       // 新建产品模式：添加到临时版本列表
       const newPendingVersion: PendingVersion = {
@@ -288,7 +293,11 @@ export default function ProductEdit() {
       setHasUnsavedChanges(true);
     } else {
       // 编辑产品模式：直接保存到服务器
-      if (!product?.id) return;
+      if (!product?.id) {
+        message.error(t('productEdit.productNotLoaded'));
+        return;
+      }
+      setCreatingVersion(true);
       try {
         await adminApi.createVersion(product.id, {
           versionNumber: values.versionNumber,
@@ -301,6 +310,7 @@ export default function ProductEdit() {
           fileRecordId: uploadedFile.id,
           releaseNotes: values.releaseNotes,
           releaseNotesEn: values.releaseNotesEn,
+          status: 'DRAFT',
         });
         message.success(t('productEdit.versionCreated'));
         setVersionModalOpen(false);
@@ -308,7 +318,9 @@ export default function ProductEdit() {
         setUploadedFile(null);
         loadVersions(product.id);
       } catch {
-        message.error(t('productEdit.versionCreateFailed'));
+        // 错误已由请求拦截器统一处理并显示
+      } finally {
+        setCreatingVersion(false);
       }
     }
   };
@@ -385,7 +397,15 @@ export default function ProductEdit() {
 
     // 3. 验证版本 - 至少需要一个版本
     if (pendingVersions.length === 0) {
-      errors.push(t('productEdit.validation.versionRequired'));
+      errors.push(t('productEdit.atLeastOneVersionRequired'));
+    }
+
+    // 4. 如果产品状态为"发布"，则需要至少有一个已发布的版本
+    if (status === 'PUBLISHED' && pendingVersions.length > 0) {
+      const hasPublishedVersion = pendingVersions.some(v => v.status === 'PUBLISHED');
+      if (!hasPublishedVersion) {
+        errors.push(t('productEdit.publishedVersionRequired'));
+      }
     }
 
     return { valid: errors.length === 0, errors };
@@ -1147,7 +1167,7 @@ export default function ProductEdit() {
             }}>
               {t('common.cancel')}
             </Button>
-            <Button type="primary" htmlType="submit" disabled={!uploadedFile}>
+            <Button type="primary" htmlType="submit" disabled={!uploadedFile} loading={creatingVersion}>
               {t('productEdit.createVersion')}
             </Button>
           </div>
