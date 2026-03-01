@@ -74,9 +74,10 @@ export default function AdminUsers() {
           await adminApi.updateUserStatus(userId, status);
           message.success(t('admin.operationSuccess'));
           loadData();
-        } catch (error: any) {
+        } catch (error: unknown) {
           // 显示具体的错误信息
-          const errorMessage = error?.response?.data?.message || error?.message || '操作失败';
+          const err = error as { response?: { data?: { message?: string } }; message?: string };
+          const errorMessage = err?.response?.data?.message || err?.message || '操作失败';
           message.error(errorMessage);
         }
       },

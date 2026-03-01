@@ -28,7 +28,7 @@ public class ProductController {
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String sort,
             @RequestParam(required = false) String keyword) {
-        return ApiResponse.success(productService.listProducts(page, size, categoryId, null, sort, keyword));
+        return ApiResponse.success(productService.listProducts(page, size, categoryId, "PUBLISHED", sort, keyword));
     }
 
     @GetMapping("/featured")

@@ -167,7 +167,11 @@
     "releaseNotes": "Release Notes",
     "platforms": "Platforms",
     "developer": "Developer",
-    "publishedAt": "Published At"
+    "publishedAt": "Published At",
+    "confirmAudit": {
+      "title": "Confirm {{status}}?",
+      "content": "Are you sure you want to mark this product as {{status}}?"
+    }
   },
   "productDetail": {
     "overview": "Overview",
@@ -273,6 +277,7 @@
     "approve": "Approve",
     "reject": "Reject",
     "publish": "Publish",
+    "launch": "Launch",
     "edit": "Edit",
     "delete": "Delete",
     "confirmApprove": "Confirm Approve?",
@@ -492,9 +497,10 @@
     "createVersion": "Create Version",
     "latest": "Latest",
     "noVersions": "No versions yet",
-    "saveFirstToAddVersion": "Please save the product first before adding versions",
+    "saveFirstToAddVersion": "Please fill in the relevant information in the \"Basic Information\" tab first, then click the \"Create Product\" button at the bottom. After successful creation, you can add versions.",
     "versionRequired": "Version number is required",
     "platformRequired": "Platform is required",
+    "statusRequired": "Status is required",
     "selectPlatform": "Select platform",
     "pleaseUploadFile": "Please upload a file first",
     "fileUploaded": "File uploaded successfully",
@@ -511,7 +517,20 @@
     "leave": "Leave",
     "stay": "Stay",
     "unsavedTag": "Unsaved",
-    "goToBasicInfo": "Fill Basic Info"
+    "goToBasicInfo": "Fill Basic Info",
+    "newProductDesc": "Fill in product info, upload media files, and add versions. Click \"Create Product\" in the top right when done.",
+    "versionAdded": "Version added to list",
+    "versionHint": "Added versions will be saved when the product is created. Please add at least one version.",
+    "pending": "Pending",
+    "noVersionsYet": "No versions added yet. Click \"Add Version\" above to add one.",
+    "fileName": "File Name",
+    "validation": {
+      "title": "Please Complete Required Information",
+      "pleaseComplete": "The following items need to be completed before creating the product:",
+      "basicInfoIncomplete": "Basic Info: Please fill in product name, slug, category, status, and description",
+      "iconRequired": "Media: Please upload a product icon",
+      "versionRequired": "Version Management: Please add at least one version"
+    }
   },
   "profile": {
     "title": "Profile",

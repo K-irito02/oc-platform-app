@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Table, Button, Input, Card, Space } from 'antd';
 import { message } from '@/utils/antdUtils';
 import { adminApi } from '@/utils/api';
@@ -55,9 +55,7 @@ export default function AdminSystem() {
   });
   const [socialSaving, setSocialSaving] = useState(false);
 
-  useEffect(() => { loadData(); }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const res = await adminApi.getSystemConfigs() as ApiResponse<SystemConfig[]>;
@@ -109,7 +107,9 @@ export default function AdminSystem() {
         setSocialConfig(newSocialConfig);
       }
     } catch { /* handled */ } finally { setLoading(false); }
-  };
+  }, [dispatch, t]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => { loadData(); }, [loadData]);
 
   const handleLogoSave = async (url: string) => {
     await adminApi.updateSystemConfig('site.logo', url);

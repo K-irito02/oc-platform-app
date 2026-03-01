@@ -149,12 +149,12 @@ export default function AdminProducts() {
 
   const handleAudit = (id: number, status: string) => {
     Modal.confirm({
-      title: `Confirm ${status}?`,
-      content: `Are you sure you want to mark this product as ${status}?`,
+      title: t('product.confirmAudit.title', { status }),
+      content: t('product.confirmAudit.content', { status }),
       onOk: async () => {
         try {
           await adminApi.auditProduct(id, status);
-          message.success('Operation successful');
+          message.success(t('admin.operationSuccess'));
           loadData();
         } catch { /* handled */ }
       },
@@ -163,13 +163,13 @@ export default function AdminProducts() {
 
   const handleDelete = (id: number) => {
     Modal.confirm({
-      title: 'Delete Product?',
-      content: 'This action cannot be undone.',
+      title: t('admin.confirmDelete'),
+      content: t('admin.cannotUndo'),
       okType: 'danger',
       onOk: async () => {
         try {
           await adminApi.deleteProduct(id);
-          message.success('Deleted successfully');
+          message.success(t('admin.deleteSuccess'));
           loadData();
         } catch { /* handled */ }
       },
@@ -200,7 +200,7 @@ export default function AdminProducts() {
             </>
           )}
           {record.status === 'DRAFT' && (
-            <Button size="small" type="primary" onClick={() => handleAudit(record.id, 'PUBLISHED')}>{t('admin.publish')}</Button>
+            <Button size="small" type="primary" onClick={() => handleAudit(record.id, 'PUBLISHED')}>{t('admin.launch')}</Button>
           )}
           <Button size="small" danger onClick={() => handleDelete(record.id)}>{t('admin.delete')}</Button>
         </Space>

@@ -286,12 +286,12 @@ Get-Content sql/seed.sql | docker exec -i qt-dev-postgres psql -U qt_user -d qt_
 
 - [x] **公共模块**: 统一响应 `ApiResponse<T>` / `PageResponse<T>`、全局异常处理、JWT 工具、Redis/Jackson/MyBatis-Plus 配置
 - [x] **用户模块**: 邮箱注册/登录、GitHub OAuth、JWT 认证、邮箱验证码、密码找回/重置、个人信息管理、语言偏好、极简工业风邮件模板
-- [x] **产品模块**: 产品 CRUD、分类管理、产品列表（分页/筛选/排序）、产品详情、语义化版本管理、多平台支持、灰度发布
+- [x] **产品模块**: 产品 CRUD、分类管理、产品列表（分页/筛选/排序）、产品详情、语义化版本管理、多平台支持、灰度发布、**状态过滤（产品中心仅显示PUBLISHED状态）**
 - [x] **文件模块**: 文件上传/下载、断点续传、SHA256 校验、MinIO 对象存储
 - [x] **评论模块**: 评论 CRUD、评分（1-5 星）、评论点赞、树形回复、回复计数、限流
 - [x] **留言模块**: 留言 CRUD、点赞、回复、排序（时间/点赞/回复数）、频率限制、管理后台
 - [x] **通知/审计**: 站内通知、审计日志
-- [x] **管理后台**: 仪表盘统计、用户管理（封禁/角色）、产品审核、评论管理、分类管理、系统配置、社交链接管理、邮件配置管理
+- [x] **管理后台**: 仪表盘统计、用户管理（封禁/角色）、产品审核、评论管理、分类管理、系统配置、社交链接管理、邮件配置管理、**UI优化（推出按钮、双语支持）**
 - [x] **安全体系**: Spring Security + JWT + RBAC（5 角色 17 权限）、登录限流、CORS
 
 ### 前端（Step 8-9）
@@ -302,6 +302,7 @@ Get-Content sql/seed.sql | docker exec -i qt-dev-postgres psql -U qt_user -d qt_
 - [x] **后台页面（8 个）**: Dashboard、Users、Products、Comments、Categories、System、Feedbacks、Theme
 - [x] **API 层**: Axios 封装（token 注入 + 401 刷新）、9 个 API 模块、Mock 数据拦截器
 - [x] **国际化**: 中文 / 英文完整翻译（支持邮件模板和系统配置）
+- [x] **代码质量**: ESLint + TypeScript 严格模式、代码风格统一、类型安全
 
 ### 部署（Step 10）
 

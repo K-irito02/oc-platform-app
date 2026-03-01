@@ -167,7 +167,11 @@
     "releaseNotes": "更新日志",
     "platforms": "支持平台",
     "developer": "开发者",
-    "publishedAt": "发布时间"
+    "publishedAt": "发布时间",
+    "confirmAudit": {
+      "title": "确认 {{status}}？",
+      "content": "确定要将此产品标记为 {{status}} 吗？"
+    }
   },
   "productDetail": {
     "overview": "概述",
@@ -273,6 +277,7 @@
     "approve": "通过",
     "reject": "拒绝",
     "publish": "发布",
+    "launch": "推出",
     "edit": "编辑",
     "delete": "删除",
     "confirmApprove": "确认通过？",
@@ -493,9 +498,10 @@
     "createVersion": "创建版本",
     "latest": "最新",
     "noVersions": "暂无版本",
-    "saveFirstToAddVersion": "请先保存产品后再添加版本",
+    "saveFirstToAddVersion": "请先在\"基本信息\"分栏下填写相关信息，然后点击最底部的\"创建产品\"按钮，创建成功后就可以添加版本了",
     "versionRequired": "请输入版本号",
     "platformRequired": "请选择平台",
+    "statusRequired": "请选择状态",
     "selectPlatform": "选择平台",
     "pleaseUploadFile": "请先上传文件",
     "fileUploaded": "文件上传成功",
@@ -512,7 +518,20 @@
     "leave": "离开",
     "stay": "留下",
     "unsavedTag": "未保存",
-    "goToBasicInfo": "填写基本信息"
+    "goToBasicInfo": "填写基本信息",
+    "newProductDesc": "填写产品信息、上传媒体文件并添加版本，完成后点击右上角的\"创建产品\"按钮",
+    "versionAdded": "版本已添加到列表",
+    "versionHint": "添加的版本将在创建产品时一并保存。请至少添加一个版本。",
+    "pending": "待创建",
+    "noVersionsYet": "尚未添加版本，请点击上方\"添加版本\"按钮",
+    "fileName": "文件名",
+    "validation": {
+      "title": "请完善必填信息",
+      "pleaseComplete": "以下内容需要完善后才能创建产品：",
+      "basicInfoIncomplete": "基本信息：请填写产品名称、标识符、分类、状态和描述",
+      "iconRequired": "媒体：请上传产品图标",
+      "versionRequired": "版本管理：请至少添加一个版本"
+    }
   },
   "profile": {
     "title": "个人中心",

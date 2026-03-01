@@ -288,15 +288,15 @@ export default function FeedbackSection() {
       console.error('Feedback submission error:', error);
       
       // 改进错误类型定义
-      const err = error as any;
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
       let errorMsg = '';
       
       if (err?.response?.data?.message) {
         errorMsg = err.response.data.message;
       } else if (err?.message) {
         errorMsg = err.message;
-      } else if (typeof err === 'string') {
-        errorMsg = err;
+      } else if (typeof error === 'string') {
+        errorMsg = error;
       }
       
       console.log('Extracted error message:', errorMsg);

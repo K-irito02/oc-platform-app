@@ -38,4 +38,5 @@ public class CreateVersionRequest {
     private Integer rolloutPercentage;
     private String releaseNotes;
     private String releaseNotesEn;
+    private String status; // DRAFT, PUBLISHED, etc.
 }

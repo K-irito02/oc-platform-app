@@ -37,9 +37,8 @@ public class ProductService {
 
         if (StringUtils.hasText(status)) {
             wrapper.eq(Product::getStatus, status);
-        } else {
-            wrapper.eq(Product::getStatus, "PUBLISHED");
         }
+        // 当没有状态参数时，不筛选状态，显示所有产品
         if (categoryId != null) {
             wrapper.eq(Product::getCategoryId, categoryId);
         }

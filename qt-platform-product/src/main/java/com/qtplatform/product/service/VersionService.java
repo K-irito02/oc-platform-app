@@ -103,7 +103,7 @@ public class VersionService {
                 .downloadCount(0L)
                 .isMandatory(request.getIsMandatory() != null ? request.getIsMandatory() : false)
                 .isLatest(true)
-                .status("DRAFT")
+                .status(request.getStatus() != null ? request.getStatus() : "DRAFT")
                 .rolloutPercentage(request.getRolloutPercentage() != null ? request.getRolloutPercentage() : 100)
                 .releaseNotes(request.getReleaseNotes())
                 .releaseNotesEn(request.getReleaseNotesEn())
