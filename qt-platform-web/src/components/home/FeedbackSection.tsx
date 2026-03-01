@@ -285,13 +285,29 @@ export default function FeedbackSection() {
       setLastSubmitTime(Date.now());
       loadFeedbacks(false);
     } catch (error: unknown) {
-      console.error(error);
-      const err = error as { response?: { data?: { message?: string } } };
-      const errorMsg = err.response?.data?.message || '';
+      console.error('Feedback submission error:', error);
+      
+      // 改进错误类型定义
+      const err = error as any;
+      let errorMsg = '';
+      
+      if (err?.response?.data?.message) {
+        errorMsg = err.response.data.message;
+      } else if (err?.message) {
+        errorMsg = err.message;
+      } else if (typeof err === 'string') {
+        errorMsg = err;
+      }
+      
+      console.log('Extracted error message:', errorMsg);
+      
       if (errorMsg.includes('登录')) {
         message.error(t('feedback.loginRequired'));
       } else if (errorMsg.includes('频繁') || errorMsg.includes('rate')) {
         message.error(t('feedback.rateLimitExceeded', { seconds: 60 }));
+      } else if (errorMsg) {
+        // 显示后端返回的具体错误信息
+        message.error(errorMsg);
       } else {
         message.error(t('feedback.submitFailed'));
       }

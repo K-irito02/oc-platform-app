@@ -564,6 +564,9 @@ export default function ProductDetail() {
       const errorMsg = err.response?.data?.message || err.message || '';
       if (errorMsg.includes('频繁') || errorMsg.includes('rate') || errorMsg.includes('RATE_LIMIT')) {
         message.error(t('productDetail.rateLimitExceeded'));
+      } else if (errorMsg) {
+        // 显示后端返回的具体错误信息
+        message.error(errorMsg);
       } else {
         message.error(t('productDetail.commentFailed'));
       }

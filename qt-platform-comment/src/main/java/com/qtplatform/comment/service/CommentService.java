@@ -76,13 +76,21 @@ public class CommentService {
     }
 
     @Transactional
-    public CommentVO createComment(Long productId, CreateCommentRequest request, Long userId, String ipAddress) {
-        // 限流：防止用户频繁发布评论（同一用户60秒内只能发布一条评论）
-        LambdaQueryWrapper<ProductComment> rateLimitCheck = new LambdaQueryWrapper<>();
-        rateLimitCheck.eq(ProductComment::getUserId, userId)
-                .ge(ProductComment::getCreatedAt, java.time.OffsetDateTime.now().minusSeconds(60));
-        if (commentMapper.selectCount(rateLimitCheck) > 0) {
-            throw new BusinessException(ErrorCode.RATE_LIMIT_EXCEEDED, "评论发布过于频繁，请稍后再试");
+    public CommentVO createComment(Long productId, CreateCommentRequest request, Long userId, String ipAddress, boolean isAdmin, String userStatus) {
+        // 检查用户是否被锁定（锁定用户不能发表评论）
+        if ("LOCKED".equals(userStatus)) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED, "您的账户已被锁定，无法发表评论");
+        }
+        
+        // 管理员不受限流限制
+        if (!isAdmin) {
+            // 限流：防止用户频繁发布评论（同一用户60秒内只能发布一条评论）
+            LambdaQueryWrapper<ProductComment> rateLimitCheck = new LambdaQueryWrapper<>();
+            rateLimitCheck.eq(ProductComment::getUserId, userId)
+                    .ge(ProductComment::getCreatedAt, java.time.OffsetDateTime.now().minusSeconds(60));
+            if (commentMapper.selectCount(rateLimitCheck) > 0) {
+                throw new BusinessException(ErrorCode.RATE_LIMIT_EXCEEDED, "评论发布过于频繁，请稍后再试");
+            }
         }
         
         // Check for duplicate rating
@@ -105,13 +113,16 @@ public class CommentService {
             }
         }
 
+        // 管理员发布的评论直接通过，无需审核
+        String status = isAdmin ? "PUBLISHED" : "PENDING";
+
         ProductComment comment = ProductComment.builder()
                 .productId(productId)
                 .userId(userId)
                 .parentId(request.getParentId())
                 .content(request.getContent())
                 .rating(request.getParentId() == null ? request.getRating() : null)
-                .status("PENDING")
+                .status(status)
                 .likeCount(0)
                 .replyCount(0)
                 .ipAddress(ipAddress)
@@ -123,7 +134,12 @@ public class CommentService {
             commentMapper.incrementReplyCount(request.getParentId());
         }
 
-        log.info("Comment created: id={}, product={}, user={}", comment.getId(), productId, userId);
+        // 如果是管理员且有评分，立即更新产品评分
+        if (isAdmin && comment.getRating() != null) {
+            updateProductRating(productId);
+        }
+
+        log.info("Comment created: id={}, product={}, user={}, admin={}", comment.getId(), productId, userId, isAdmin);
         return toVO(comment, false);
     }
 

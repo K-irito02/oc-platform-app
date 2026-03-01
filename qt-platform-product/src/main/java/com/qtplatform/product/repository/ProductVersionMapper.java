@@ -30,4 +30,7 @@ public interface ProductVersionMapper extends BaseMapper<ProductVersion> {
 
     @Select("SELECT EXISTS(SELECT 1 FROM product_versions WHERE product_id = #{productId} AND version_number = #{versionNumber} AND platform = #{platform} AND architecture = #{arch})")
     boolean existsByProductAndVersionAndPlatform(@Param("productId") Long productId, @Param("versionNumber") String versionNumber, @Param("platform") String platform, @Param("arch") String arch);
+
+    @Select("SELECT COALESCE(SUM(download_count), 0) FROM product_versions")
+    Long getTotalDownloadCount();
 }

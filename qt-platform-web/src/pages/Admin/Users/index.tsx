@@ -45,15 +45,40 @@ export default function AdminUsers() {
   };
 
   const handleStatusChange = (userId: number, status: string) => {
+    let title = '';
+    let content = '';
+    
+    switch (status) {
+      case 'BANNED':
+        title = t('admin.confirmBan');
+        content = t('admin.banConfirmContent');
+        break;
+      case 'ACTIVE':
+        title = t('admin.confirmActivate');
+        content = t('admin.activateConfirmContent');
+        break;
+      case 'LOCKED':
+        title = t('admin.confirmLock');
+        content = t('admin.lockConfirmContent');
+        break;
+      default:
+        title = t('admin.confirmActivate');
+        content = t('admin.activateConfirmContent');
+    }
+    
     Modal.confirm({
-      title: status === 'BANNED' ? t('admin.confirmBan') : t('admin.confirmActivate'),
-      content: status === 'BANNED' ? t('admin.banConfirmContent') : t('admin.activateConfirmContent'),
+      title,
+      content,
       onOk: async () => {
         try {
           await adminApi.updateUserStatus(userId, status);
           message.success(t('admin.operationSuccess'));
           loadData();
-        } catch { /* handled */ }
+        } catch (error: any) {
+          // 显示具体的错误信息
+          const errorMessage = error?.response?.data?.message || error?.message || '操作失败';
+          message.error(errorMessage);
+        }
       },
     });
   };
@@ -76,12 +101,22 @@ export default function AdminUsers() {
     },
     { title: t('admin.joinedAt'), dataIndex: 'createdAt', width: 180, render: (v: string) => v?.substring(0, 19).replace('T', ' ') },
     {
-      title: t('admin.action'), width: 100, fixed: 'right',
+      title: t('admin.action'), width: 180, fixed: 'right',
       render: (_, record) => (
         <Space>
-          {record.status === 'ACTIVE' ? (
-            <Button size="small" danger onClick={() => handleStatusChange(record.id, 'BANNED')}>{t('admin.ban')}</Button>
-          ) : (
+          {record.status === 'ACTIVE' && (
+            <>
+              <Button size="small" onClick={() => handleStatusChange(record.id, 'LOCKED')}>{t('admin.lock')}</Button>
+              <Button size="small" danger onClick={() => handleStatusChange(record.id, 'BANNED')}>{t('admin.ban')}</Button>
+            </>
+          )}
+          {record.status === 'LOCKED' && (
+            <>
+              <Button size="small" type="primary" onClick={() => handleStatusChange(record.id, 'ACTIVE')}>{t('admin.unlock')}</Button>
+              <Button size="small" danger onClick={() => handleStatusChange(record.id, 'BANNED')}>{t('admin.ban')}</Button>
+            </>
+          )}
+          {record.status === 'BANNED' && (
             <Button size="small" type="primary" onClick={() => handleStatusChange(record.id, 'ACTIVE')}>{t('admin.activate')}</Button>
           )}
         </Space>

@@ -65,27 +65,41 @@ export default function AdminCategories() {
     try {
       if (editing) {
         await adminApi.updateCategory(editing.id, values);
-        message.success('Updated successfully');
+        message.success(t('admin.categoryUpdated'));
       } else {
         await adminApi.createCategory(values);
-        message.success('Created successfully');
+        message.success(t('admin.categoryCreated'));
       }
       setModalVisible(false);
       loadData();
-    } catch { /* handled */ }
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      if (editing) {
+        message.error(err?.response?.data?.message || t('admin.categoryUpdateFailed'));
+      } else {
+        message.error(err?.response?.data?.message || t('admin.categoryCreateFailed'));
+      }
+    }
   };
 
   const handleDelete = (id: number) => {
     Modal.confirm({
       title: t('admin.confirmDelete'),
-      content: t('admin.cannotUndo'),
+      content: t('admin.categoryDeleteConfirm'),
       okType: 'danger',
       onOk: async () => {
         try {
           await adminApi.deleteCategory(id);
-          message.success('Deleted successfully');
+          message.success(t('admin.categoryDeleted'));
           loadData();
-        } catch { /* handled */ }
+        } catch (error: unknown) {
+          const err = error as { response?: { data?: { message?: string; code?: number } } };
+          if (err?.response?.data?.code === 409) {
+            message.error(t('admin.categoryHasProducts'));
+          } else {
+            message.error(err?.response?.data?.message || t('admin.categoryDeleteFailed'));
+          }
+        }
       },
     });
   };

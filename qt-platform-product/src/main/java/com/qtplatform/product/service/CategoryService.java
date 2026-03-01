@@ -1,10 +1,13 @@
 package com.qtplatform.product.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.qtplatform.common.exception.BusinessException;
 import com.qtplatform.common.response.ErrorCode;
 import com.qtplatform.product.dto.CategoryVO;
 import com.qtplatform.product.entity.Category;
+import com.qtplatform.product.entity.Product;
 import com.qtplatform.product.repository.CategoryMapper;
+import com.qtplatform.product.repository.ProductMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +19,7 @@ import java.util.stream.Collectors;
 public class CategoryService {
 
     private final CategoryMapper categoryMapper;
+    private final ProductMapper productMapper;
 
     public List<CategoryVO> getAllCategories() {
         List<Category> topLevel = categoryMapper.findTopLevel();
@@ -77,6 +81,12 @@ public class CategoryService {
         List<Category> children = categoryMapper.findByParentId(id);
         if (!children.isEmpty()) {
             throw new BusinessException(ErrorCode.PARAM_INVALID, "该分类下有子分类，无法删除");
+        }
+        // Check if has products
+        long productCount = productMapper.selectCount(
+                new LambdaQueryWrapper<Product>().eq(Product::getCategoryId, id));
+        if (productCount > 0) {
+            throw new BusinessException(ErrorCode.CONFLICT, "该分类下有产品，无法删除。请先将产品移至其他分类。");
         }
         categoryMapper.deleteById(id);
     }

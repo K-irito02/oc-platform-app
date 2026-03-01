@@ -88,11 +88,8 @@ public class AuthService {
         User user = userMapper.findByEmail(request.getEmail())
                 .orElseThrow(() -> new BusinessException(ErrorCode.LOGIN_FAILED));
 
-        if (!"ACTIVE".equals(user.getStatus())) {
-            if ("BANNED".equals(user.getStatus())) {
-                throw new BusinessException(ErrorCode.ACCOUNT_DISABLED);
-            }
-            throw new BusinessException(ErrorCode.ACCOUNT_LOCKED);
+        if ("BANNED".equals(user.getStatus())) {
+            throw new BusinessException(ErrorCode.ACCOUNT_DISABLED);
         }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
@@ -122,7 +119,7 @@ public class AuthService {
         }
 
         User user = userMapper.selectById(userId);
-        if (user == null || !"ACTIVE".equals(user.getStatus())) {
+        if (user == null || "BANNED".equals(user.getStatus())) {
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
 

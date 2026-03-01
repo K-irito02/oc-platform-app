@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Form, Input, Select, Button, Card, Upload, Spin, Tabs, Image, Modal, Table, Tag, Popconfirm } from 'antd';
 import { message } from '@/utils/antdUtils';
@@ -118,6 +118,9 @@ export default function ProductEdit() {
   const [versionForm] = Form.useForm();
   const [uploadingVersion, setUploadingVersion] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<{ id: number; name: string; size: number; checksum: string; path: string } | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [activeTab, setActiveTab] = useState('basic');
+  const isNewProduct = !id;
 
   useEffect(() => {
     loadCategories();
@@ -126,6 +129,40 @@ export default function ProductEdit() {
       loadVersions(parseInt(id));
     }
   }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 监听页面离开事件
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
+
+  // 表单变化时标记为有未保存更改
+  const handleFormChange = useCallback(() => {
+    if (!hasUnsavedChanges) {
+      setHasUnsavedChanges(true);
+    }
+  }, [hasUnsavedChanges]);
+
+  // 安全导航（检查未保存更改）
+  const safeNavigate = useCallback((path: string) => {
+    if (hasUnsavedChanges) {
+      Modal.confirm({
+        title: t('productEdit.unsavedChanges'),
+        content: t('productEdit.unsavedChangesContent'),
+        okText: t('productEdit.leave'),
+        cancelText: t('productEdit.stay'),
+        onOk: () => navigate(path),
+      });
+    } else {
+      navigate(path);
+    }
+  }, [hasUnsavedChanges, navigate, t]);
 
   const loadVersions = async (productId: number) => {
     try {
@@ -274,10 +311,17 @@ export default function ProductEdit() {
       if (id) {
         await adminApi.updateProduct(parseInt(id), payload);
         message.success(t('productEdit.updateSuccess'));
+        setHasUnsavedChanges(false);
       } else {
-        await adminApi.createProduct(payload);
+        const res = await adminApi.createProduct(payload) as ApiResponse<ProductData>;
         message.success(t('productEdit.createSuccess'));
-        navigate('/admin/products');
+        setHasUnsavedChanges(false);
+        // 创建成功后跳转到编辑页面，以便添加版本
+        if (res.data?.id) {
+          navigate(`/admin/products/${res.data.id}/edit`, { replace: true });
+        } else {
+          navigate('/admin/products');
+        }
       }
     } catch {
       message.error(t('productEdit.saveFailed'));
@@ -366,7 +410,7 @@ export default function ProductEdit() {
       <div className="flex items-center gap-4">
         <Button 
           icon={<ArrowLeft size={16} />} 
-          onClick={() => navigate('/admin/products')}
+          onClick={() => safeNavigate('/admin/products')}
         >
           {t('productEdit.back')}
         </Button>
@@ -378,12 +422,16 @@ export default function ProductEdit() {
             {id ? t('productEdit.editDesc') : t('productEdit.createDesc')}
           </p>
         </div>
+        {hasUnsavedChanges && (
+          <Tag color="orange" className="ml-auto">{t('productEdit.unsavedTag')}</Tag>
+        )}
       </div>
 
       <Form
         form={form}
         layout="vertical"
         onFinish={handleSave}
+        onValuesChange={handleFormChange}
         className="max-w-5xl"
       >
         <Tabs
@@ -727,13 +775,42 @@ export default function ProductEdit() {
               ),
             },
           ]}
+          activeKey={activeTab}
+          onChange={setActiveTab}
         />
 
+        {/* 底部按钮区域 - 根据场景显示不同按钮 */}
         <div className="flex justify-end gap-4 mt-6">
-          <Button onClick={() => navigate('/admin/products')}>{t('productEdit.cancel')}</Button>
-          <Button type="primary" htmlType="submit" loading={saving} disabled={uploading}>
-            {id ? t('productEdit.saveChanges') : t('productEdit.createProduct')}
-          </Button>
+          <Button onClick={() => safeNavigate('/admin/products')}>{t('productEdit.cancel')}</Button>
+          {/* 新建产品：只在基本信息页显示创建按钮 */}
+          {isNewProduct && activeTab === 'basic' && (
+            <Button type="primary" htmlType="submit" loading={saving} disabled={uploading}>
+              {t('productEdit.createProduct')}
+            </Button>
+          )}
+          {/* 新建产品：媒体和版本页显示提示 */}
+          {isNewProduct && activeTab !== 'basic' && (
+            <Button type="primary" onClick={() => setActiveTab('basic')}>
+              {t('productEdit.goToBasicInfo')}
+            </Button>
+          )}
+          {/* 编辑产品：显示保存按钮（仅在有更改时启用） */}
+          {!isNewProduct && activeTab !== 'versions' && (
+            <Button 
+              type="primary" 
+              htmlType="submit" 
+              loading={saving} 
+              disabled={uploading || !hasUnsavedChanges}
+            >
+              {t('productEdit.saveChanges')}
+            </Button>
+          )}
+          {/* 编辑产品：版本管理页不显示保存按钮（版本操作自动保存） */}
+          {!isNewProduct && activeTab === 'versions' && hasUnsavedChanges && (
+            <Button type="primary" htmlType="submit" loading={saving}>
+              {t('productEdit.saveChanges')}
+            </Button>
+          )}
         </div>
       </Form>
 

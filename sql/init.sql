@@ -15,7 +15,7 @@ CREATE TABLE users (
     avatar_url      VARCHAR(500),
     bio             VARCHAR(500),
     status          VARCHAR(20) DEFAULT 'ACTIVE'
-                    CHECK (status IN ('ACTIVE', 'INACTIVE', 'BANNED')),
+                    CHECK (status IN ('ACTIVE', 'INACTIVE', 'BANNED', 'LOCKED')),
     language        VARCHAR(10) DEFAULT 'zh-CN',
     email_verified  BOOLEAN DEFAULT FALSE,
     created_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,

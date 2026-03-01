@@ -67,6 +67,11 @@ public class UserService {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
 
+        // 检查用户是否被锁定（锁定用户不能修改个人信息）
+        if ("LOCKED".equals(user.getStatus())) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED, "您的账户已被锁定，无法修改个人信息");
+        }
+
         // 更新用户名（需要检查唯一性）
         if (StringUtils.hasText(request.getUsername()) && !request.getUsername().equals(user.getUsername())) {
             if (userMapper.existsByUsername(request.getUsername())) {
@@ -93,6 +98,12 @@ public class UserService {
         if (user == null) {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
+        
+        // 检查用户是否被锁定（锁定用户不能修改语言设置）
+        if ("LOCKED".equals(user.getStatus())) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED, "您的账户已被锁定，无法修改语言设置");
+        }
+        
         user.setLanguage(language);
         userMapper.updateById(user);
     }
@@ -110,6 +121,12 @@ public class UserService {
         if (user == null) {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
+        
+        // 检查用户是否被锁定（锁定用户不能修改主题设置）
+        if ("LOCKED".equals(user.getStatus())) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED, "您的账户已被锁定，无法修改主题设置");
+        }
+        
         user.setThemeConfig(themeConfig);
         userMapper.updateById(user);
         log.info("User {} theme config updated", userId);

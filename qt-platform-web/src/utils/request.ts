@@ -30,7 +30,11 @@ request.interceptors.response.use(
   (response) => {
     const { data } = response;
     if (data.code !== 0) {
-      message.error(data.message || '请求失败');
+      // 检查是否需要静默处理错误（通过自定义header）
+      const silentError = response.config.headers?.['X-Silent-Error'];
+      if (!silentError) {
+        message.error(data.message || '请求失败');
+      }
       return Promise.reject(new Error(data.message));
     }
     return data;
@@ -38,6 +42,9 @@ request.interceptors.response.use(
   (error: AxiosError<{ code: number; message: string }>) => {
     if (error.response) {
       const { status, data } = error.response;
+      // 检查是否需要静默处理错误
+      const silentError = error.config?.headers?.['X-Silent-Error'];
+      
       switch (status) {
         case 401:
           // Prevent infinite loop if already on login page
@@ -48,13 +55,13 @@ request.interceptors.response.use(
           }
           break;
         case 403:
-          message.error('权限不足');
+          if (!silentError) message.error('权限不足');
           break;
         case 429:
-          message.error('请求过于频繁，请稍后再试');
+          if (!silentError) message.error('请求过于频繁，请稍后再试');
           break;
         default:
-          message.error(data?.message || '服务器错误');
+          if (!silentError) message.error(data?.message || '服务器错误');
       }
     } else {
       message.error('网络连接失败');

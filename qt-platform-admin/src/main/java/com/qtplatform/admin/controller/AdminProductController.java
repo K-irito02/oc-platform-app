@@ -66,6 +66,11 @@ public class AdminProductController {
 
     // --- Versions ---
 
+    @GetMapping("/{id}/versions")
+    public ApiResponse<java.util.List<ProductVersionVO>> getVersions(@PathVariable Long id) {
+        return ApiResponse.success(versionService.getAllVersionsByProduct(id));
+    }
+
     @PostMapping("/{id}/versions")
     public ApiResponse<ProductVersionVO> createVersion(@PathVariable Long id,
                                                        @Valid @RequestBody CreateVersionRequest request) {
@@ -75,6 +80,12 @@ public class AdminProductController {
     @PutMapping("/versions/{vid}/publish")
     public ApiResponse<Void> publishVersion(@PathVariable Long vid) {
         versionService.publishVersion(vid);
+        return ApiResponse.success();
+    }
+
+    @DeleteMapping("/versions/{vid}")
+    public ApiResponse<Void> deleteVersion(@PathVariable Long vid) {
+        versionService.deleteVersion(vid);
         return ApiResponse.success();
     }
 

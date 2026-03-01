@@ -6,6 +6,8 @@ import com.qtplatform.comment.service.SiteFeedbackService;
 import com.qtplatform.common.response.ApiResponse;
 import com.qtplatform.common.response.PageResponse;
 import com.qtplatform.common.util.IpUtil;
+import com.qtplatform.user.entity.User;
+import com.qtplatform.user.repository.UserMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 public class SiteFeedbackController {
 
     private final SiteFeedbackService feedbackService;
+    private final UserMapper userMapper;
 
     @GetMapping
     public ApiResponse<PageResponse<FeedbackVO>> getFeedbacks(
@@ -45,6 +48,11 @@ public class SiteFeedbackController {
         }
         if (userId == null) {
             return ApiResponse.error(40001, "请登录后再留言");
+        }
+        // 检查用户是否被锁定
+        User user = userMapper.selectById(userId);
+        if (user != null && "LOCKED".equals(user.getStatus())) {
+            return ApiResponse.error(40003, "您的账户已被锁定，无法发表留言");
         }
         String ip = IpUtil.getClientIp(httpRequest);
         return ApiResponse.success(feedbackService.createFeedback(request, userId, ip));

@@ -6,6 +6,8 @@ import com.qtplatform.comment.service.CommentService;
 import com.qtplatform.common.response.ApiResponse;
 import com.qtplatform.common.response.PageResponse;
 import com.qtplatform.common.util.IpUtil;
+import com.qtplatform.user.entity.User;
+import com.qtplatform.user.repository.UserMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +22,7 @@ import java.util.Map;
 public class CommentController {
 
     private final CommentService commentService;
+    private final UserMapper userMapper;
 
     @GetMapping("/product/{productId}")
     public ApiResponse<PageResponse<CommentVO>> getProductComments(
@@ -41,7 +44,12 @@ public class CommentController {
             HttpServletRequest httpRequest) {
         Long userId = (Long) authentication.getPrincipal();
         String ip = IpUtil.getClientIp(httpRequest);
-        return ApiResponse.success(commentService.createComment(productId, request, userId, ip));
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_SUPER_ADMIN"));
+        // 获取用户状态以检查是否被锁定
+        User user = userMapper.selectById(userId);
+        String userStatus = user != null ? user.getStatus() : null;
+        return ApiResponse.success(commentService.createComment(productId, request, userId, ip, isAdmin, userStatus));
     }
 
     @PutMapping("/{id}")

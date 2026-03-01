@@ -43,6 +43,9 @@ public enum ErrorCode {
     VERSION_NOT_FOUND(40005, "版本不存在"),
     VERSION_EXISTS(40006, "版本号已存在"),
     CATEGORY_NOT_FOUND(40007, "分类不存在"),
+    CATEGORY_HAS_PRODUCTS(40008, "该分类下有产品，无法删除"),
+    CATEGORY_HAS_CHILDREN(40009, "该分类下有子分类，无法删除"),
+    CONFLICT(40010, "资源冲突"),
 
     // 文件错误 5xxxx
     FILE_NOT_FOUND(50001, "文件不存在"),

@@ -65,7 +65,9 @@ export const commentApi = {
   getProductComments: (productId: number, params: { page?: number; size?: number; sortBy?: string; sortOrder?: string }) =>
     request.get(`/comments/product/${productId}`, { params }),
   create: (productId: number, data: { content: string; parentId?: number; rating?: number }) =>
-    request.post(`/comments/product/${productId}`, data),
+    request.post(`/comments/product/${productId}`, data, {
+      headers: { 'X-Silent-Error': 'true' }
+    }),
   update: (id: number, content: string) =>
     request.put(`/comments/${id}`, { content }),
   delete: (id: number) => request.delete(`/comments/${id}`),
@@ -76,7 +78,9 @@ export const commentApi = {
 // ===== Feedback API =====
 export const feedbackApi = {
   create: (data: { content: string; email?: string; contact?: string; nickname?: string; parentId?: number; isPublic?: boolean }) =>
-    request.post('/feedbacks', data),
+    request.post('/feedbacks', data, {
+      headers: { 'X-Silent-Error': 'true' }
+    }),
   list: (params: { page?: number; size?: number; sortBy?: string; sortOrder?: string }) =>
     request.get('/feedbacks', { params }),
   like: (id: number) => request.post(`/feedbacks/${id}/like`),
@@ -165,7 +169,9 @@ export const adminApi = {
     request.get('/admin/users', { params }),
   getUser: (id: number) => request.get(`/admin/users/${id}`),
   updateUserStatus: (id: number, status: string) =>
-    request.put(`/admin/users/${id}/status`, { status }),
+    request.put(`/admin/users/${id}/status`, { status }, {
+      headers: { 'X-Silent-Error': 'true' }
+    }),
   // Products
   listProducts: (params: { page?: number; size?: number; categoryId?: number; status?: string; keyword?: string }) =>
     request.get('/admin/products', { params }),
@@ -178,15 +184,15 @@ export const adminApi = {
   auditProduct: (id: number, status: string) =>
     request.put(`/admin/products/${id}/audit`, { status }),
   createVersion: (productId: number, data: Record<string, unknown>) =>
-    request.post(`/products/${productId}/versions`, data),
+    request.post(`/admin/products/${productId}/versions`, data),
   updateVersion: (versionId: number, data: Record<string, unknown>) =>
-    request.put(`/products/versions/${versionId}`, data),
+    request.put(`/admin/products/versions/${versionId}`, data),
   deleteVersion: (versionId: number) =>
-    request.delete(`/products/versions/${versionId}`),
+    request.delete(`/admin/products/versions/${versionId}`),
   publishVersion: (versionId: number) =>
-    request.post(`/products/versions/${versionId}/publish`),
+    request.put(`/admin/products/versions/${versionId}/publish`),
   getVersions: (productId: number) =>
-    request.get(`/products/${productId}/versions/all`),
+    request.get(`/admin/products/${productId}/versions`),
   // Comments
   listComments: (params: { page?: number; size?: number; status?: string; productId?: number }) =>
     request.get('/admin/comments', { params }),
