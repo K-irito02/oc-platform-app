@@ -361,6 +361,7 @@ public class ProductService {
                 .downloadCount(product.getDownloadCount())
                 .ratingAverage(product.getRatingAverage())
                 .ratingCount(product.getRatingCount())
+                .ratingDistribution(product.getRatingDistribution())
                 .viewCount(product.getViewCount())
                 .isFeatured(product.getIsFeatured())
                 .createdAt(product.getCreatedAt())

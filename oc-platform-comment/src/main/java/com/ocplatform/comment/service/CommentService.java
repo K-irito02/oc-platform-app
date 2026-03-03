@@ -77,14 +77,11 @@ public class CommentService {
 
     @Transactional
     public CommentVO createComment(Long productId, CreateCommentRequest request, Long userId, String ipAddress, boolean isAdmin, String userStatus) {
-        // 检查用户是否被锁定（锁定用户不能发表评论）
         if ("LOCKED".equals(userStatus)) {
             throw new BusinessException(ErrorCode.ACCESS_DENIED, "您的账户已被锁定，无法发表评论");
         }
         
-        // 管理员不受限流限制
         if (!isAdmin) {
-            // 限流：防止用户频繁发布评论（同一用户60秒内只能发布一条评论）
             LambdaQueryWrapper<ProductComment> rateLimitCheck = new LambdaQueryWrapper<>();
             rateLimitCheck.eq(ProductComment::getUserId, userId)
                     .ge(ProductComment::getCreatedAt, java.time.OffsetDateTime.now().minusSeconds(60));
@@ -92,20 +89,7 @@ public class CommentService {
                 throw new BusinessException(ErrorCode.RATE_LIMIT_EXCEEDED, "评论发布过于频繁，请稍后再试");
             }
         }
-        
-        // Check for duplicate rating
-        if (request.getRating() != null && request.getParentId() == null) {
-            LambdaQueryWrapper<ProductComment> ratingCheck = new LambdaQueryWrapper<>();
-            ratingCheck.eq(ProductComment::getProductId, productId)
-                    .eq(ProductComment::getUserId, userId)
-                    .isNotNull(ProductComment::getRating)
-                    .isNull(ProductComment::getParentId);
-            if (commentMapper.selectCount(ratingCheck) > 0) {
-                throw new BusinessException(ErrorCode.DUPLICATE_RATING);
-            }
-        }
 
-        // Validate parent exists
         if (request.getParentId() != null) {
             ProductComment parent = commentMapper.selectById(request.getParentId());
             if (parent == null || !parent.getProductId().equals(productId)) {
@@ -113,7 +97,6 @@ public class CommentService {
             }
         }
 
-        // 管理员发布的评论直接通过，无需审核
         String status = isAdmin ? "PUBLISHED" : "PENDING";
 
         ProductComment comment = ProductComment.builder()
@@ -129,17 +112,12 @@ public class CommentService {
                 .build();
         commentMapper.insert(comment);
         
-        // 更新父评论的reply_count
         if (request.getParentId() != null) {
             commentMapper.incrementReplyCount(request.getParentId());
         }
 
-        // 如果是管理员且有评分，立即更新产品评分
-        if (isAdmin && comment.getRating() != null) {
-            updateProductRating(productId);
-        }
-
-        log.info("Comment created: id={}, product={}, user={}, admin={}", comment.getId(), productId, userId, isAdmin);
+        log.info("Comment created: id={}, product={}, user={}, admin={}, rating={}", 
+                comment.getId(), productId, userId, isAdmin, comment.getRating());
         return toVO(comment, false);
     }
 
@@ -196,19 +174,7 @@ public class CommentService {
         }
         comment.setStatus(status);
         commentMapper.updateById(comment);
-
-        // If published and has rating, recalculate product rating
-        if ("PUBLISHED".equals(status) && comment.getRating() != null) {
-            updateProductRating(comment.getProductId());
-        }
-    }
-
-    public void updateProductRating(Long productId) {
-        Double avg = commentMapper.getAverageRating(productId);
-        int count = commentMapper.getRatingCount(productId);
-        // This needs ProductMapper - will be called from admin module
-        // For now just log
-        log.info("Product {} rating updated: avg={}, count={}", productId, avg, count);
+        log.info("Comment audited: id={}, status={}", commentId, status);
     }
 
     public PageResponse<CommentVO> listAllComments(int page, int size, String status, Long productId, String keyword) {

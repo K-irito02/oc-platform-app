@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAppSelector } from '@/store/hooks';
-import { productApi, commentApi } from '@/utils/api';
-import { Button, Tag, Tabs, Rate, Avatar, Form, Input, Spin, Empty, Card, Progress } from 'antd';
+import { productApi, commentApi, ratingApi } from '@/utils/api';
+import { Button, Tag, Tabs, Rate, Avatar, Form, Input, Spin, Empty, Card, Progress, Popconfirm } from 'antd';
 import { message } from '@/utils/antdUtils';
 const { TextArea } = Input;
 import { Github, ExternalLink, Star, Clock, Eye, Download as DownloadIcon, Terminal, Shield, CheckCircle, Tag as TagIcon, User, Play, Pause, Volume2, VolumeX, Maximize, ThumbsUp } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import ScreenshotGallery from '@/components/ScreenshotGallery';
+import RatingStats from '@/components/RatingStats';
 import type { TFunction } from 'i18next';
 
 type ApiResponse<T> = {
@@ -33,6 +34,8 @@ type ProductItem = {
   downloadCount?: number;
   viewCount?: number;
   ratingAverage?: number;
+  ratingCount?: number;
+  ratingDistribution?: Record<string, number>;
   homepageUrl?: string;
   sourceUrl?: string;
   username?: string;
@@ -40,6 +43,14 @@ type ProductItem = {
   demoVideoUrl?: string;
   bannerUrl?: string;
   screenshots?: string[];
+};
+
+type RatingStatsData = {
+  averageRating: number;
+  totalRatings: number;
+  distribution: Record<number, number>;
+  userRating?: number | null;
+  userRatingId?: number | null;
 };
 
 type VersionItem = {
@@ -395,6 +406,8 @@ export default function ProductDetail() {
   const [commentSortBy, setCommentSortBy] = useState<string>('time');
   const [commentSortOrder, setCommentSortOrder] = useState<string>('desc');
   const [replyingTo, setReplyingTo] = useState<{ id: number; name: string } | null>(null);
+  const [ratingStats, setRatingStats] = useState<RatingStatsData | null>(null);
+  const [userRatingId, setUserRatingId] = useState<number | null>(null);
 
   const loadVersions = useCallback(async (productId: number) => {
     try {
@@ -402,6 +415,47 @@ export default function ProductDetail() {
       setVersions(res.data || []);
     } catch { /* handled */ }
   }, []);
+
+  const loadRatingStats = useCallback(async (productId: number) => {
+    try {
+      const res = await ratingApi.getStats(productId) as ApiResponse<RatingStatsData>;
+      setRatingStats(res.data);
+      if (res.data.userRating) {
+        const myRatingRes = await ratingApi.getMyRating(productId) as ApiResponse<{ id: number; rating: number }>;
+        setUserRatingId(myRatingRes.data?.id || null);
+      }
+    } catch { /* handled */ }
+  }, []);
+
+  const handleRate = async (rating: number) => {
+    if (!product?.id || !isAuthenticated) return;
+    try {
+      if (userRatingId) {
+        await ratingApi.update(userRatingId, rating);
+        message.success(t('rating.ratingUpdated'));
+      } else {
+        const res = await ratingApi.create(product.id, rating) as ApiResponse<{ id: number }>;
+        setUserRatingId(res.data?.id || null);
+        message.success(t('rating.ratingSubmitted'));
+      }
+      loadRatingStats(product.id);
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
+      message.error(err.response?.data?.message || t('rating.submitFailed'));
+    }
+  };
+
+  const handleDeleteRating = async () => {
+    if (!userRatingId || !product?.id) return;
+    try {
+      await ratingApi.delete(userRatingId);
+      setUserRatingId(null);
+      message.success(t('rating.ratingDeleted'));
+      loadRatingStats(product.id);
+    } catch {
+      message.error(t('rating.deleteFailed'));
+    }
+  };
 
   const loadComments = useCallback(async (productId: number, page: number, sortBy?: string, sortOrder?: string) => {
     try {
@@ -424,13 +478,14 @@ export default function ProductDetail() {
         setProduct(res.data);
         if (res.data.id) {
           loadVersions(res.data.id);
+          loadRatingStats(res.data.id);
           loadComments(res.data.id, 1);
         }
       }
     } catch { /* handled */ } finally { 
       setLoading(false); 
     }
-  }, [loadVersions, loadComments, slug]);
+  }, [loadVersions, loadComments, loadRatingStats, slug]);
 
   useEffect(() => { 
     if (slug) {
@@ -797,6 +852,40 @@ export default function ProductDetail() {
 
           {/* Sidebar Column */}
           <div className="space-y-8">
+            <Card title={t('rating.title')} variant="borderless" className="shadow-sm dark:bg-slate-900 dark:border-slate-800">
+              {ratingStats ? (
+                <div className="space-y-4">
+                  <RatingStats
+                    averageRating={ratingStats.averageRating}
+                    totalRatings={ratingStats.totalRatings}
+                    distribution={ratingStats.distribution}
+                    userRating={ratingStats.userRating}
+                    onRate={handleRate}
+                    isAuthenticated={isAuthenticated}
+                    showInput={true}
+                  />
+                  {userRatingId && isAuthenticated && (
+                    <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
+                      <Popconfirm
+                        title={t('rating.confirmDelete')}
+                        description={t('rating.cannotUndo')}
+                        onConfirm={handleDeleteRating}
+                        okText={t('common.confirm')}
+                        cancelText={t('common.cancel')}
+                      >
+                        <Button size="small" danger type="text">
+                          {t('rating.deleteRating')}
+                        </Button>
+                      </Popconfirm>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex justify-center py-4">
+                  <Spin size="small" />
+                </div>
+              )}
+            </Card>
             <Card title={t('productDetail.information')} variant="borderless" className="shadow-sm dark:bg-slate-900 dark:border-slate-800 sticky top-20">
               <div className="space-y-4">
                 <div className="flex justify-between py-3 border-b border-slate-100 dark:border-slate-800">

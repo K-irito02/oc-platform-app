@@ -144,6 +144,7 @@ CREATE TABLE products (
     download_count  BIGINT DEFAULT 0,
     rating_average  DECIMAL(2,1) DEFAULT 0.0,
     rating_count    INTEGER DEFAULT 0,
+    rating_distribution JSONB DEFAULT '{"1":0,"2":0,"3":0,"4":0,"5":0}',
     view_count      BIGINT DEFAULT 0,
     is_featured     BOOLEAN DEFAULT FALSE,
     tags            TEXT[] DEFAULT '{}',
@@ -184,6 +185,7 @@ CREATE TABLE product_versions (
     checksum_md5    VARCHAR(32),
     checksum_sha256 VARCHAR(64) NOT NULL,
     signature       TEXT,
+    file_record_id  BIGINT,
     download_count  BIGINT DEFAULT 0,
     is_mandatory    BOOLEAN DEFAULT FALSE,
     is_latest       BOOLEAN DEFAULT FALSE,
@@ -253,6 +255,26 @@ CREATE TABLE comment_likes (
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(comment_id, user_id)
 );
+
+-- ============================================================
+-- 产品评分表
+-- ============================================================
+CREATE TABLE product_ratings (
+    id              BIGSERIAL PRIMARY KEY,
+    product_id      BIGINT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    user_id         BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    rating          INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    created_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uk_product_user_rating UNIQUE(product_id, user_id)
+);
+
+CREATE INDEX idx_ratings_product ON product_ratings(product_id);
+CREATE INDEX idx_ratings_user ON product_ratings(user_id);
+CREATE INDEX idx_ratings_created ON product_ratings(created_at DESC);
+
+COMMENT ON TABLE product_ratings IS '产品评分表';
+COMMENT ON COLUMN product_ratings.rating IS '评分值(1-5)';
 
 -- ============================================================
 -- 系统通知表
@@ -516,6 +538,10 @@ CREATE TRIGGER trigger_subscriptions_updated_at
 
 CREATE TRIGGER trigger_i18n_updated_at
     BEFORE UPDATE ON i18n_messages
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER trigger_ratings_updated_at
+    BEFORE UPDATE ON product_ratings
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ============================================================

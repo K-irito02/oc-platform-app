@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Data
 @Builder
@@ -36,6 +37,7 @@ public class ProductVO {
     private Long downloadCount;
     private BigDecimal ratingAverage;
     private Integer ratingCount;
+    private Map<String, Integer> ratingDistribution;
     private Long viewCount;
     private Boolean isFeatured;
     private List<String> tags;

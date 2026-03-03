@@ -75,6 +75,22 @@ export const commentApi = {
   unlike: (id: number) => request.delete(`/comments/${id}/like`),
 };
 
+// ===== Rating API =====
+export const ratingApi = {
+  create: (productId: number, rating: number) =>
+    request.post(`/ratings/product/${productId}`, { rating }),
+  update: (id: number, rating: number) =>
+    request.put(`/ratings/${id}`, { rating }),
+  delete: (id: number) =>
+    request.delete(`/ratings/${id}`),
+  getStats: (productId: number) =>
+    request.get(`/ratings/product/${productId}/stats`),
+  getMyRating: (productId: number) =>
+    request.get(`/ratings/product/${productId}/me`),
+  getMyRatings: (params: { page?: number; size?: number }) =>
+    request.get('/ratings/me', { params }),
+};
+
 // ===== Feedback API =====
 export const feedbackApi = {
   create: (data: { content: string; email?: string; contact?: string; parentId?: number; isPublic?: boolean }) =>
