@@ -13,7 +13,6 @@ const { TextArea } = Input;
 
 type FeedbackUser = {
   username?: string;
-  nickname?: string;
   avatarUrl?: string | null;
 };
 
@@ -68,13 +67,13 @@ const ReplyItem = ({ reply, isAuthenticated, handleLike, handleReply, t }: Reply
         size={28}
         className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white shrink-0"
       >
-        {reply.username?.[0] || reply.nickname?.[0] || 'U'}
+        {reply.username?.[0] || 'U'}
       </Avatar>
       <div className="flex-1 min-w-0">
         <div className="space-y-1">
           <div className="flex items-center gap-1 flex-wrap text-sm">
             <span className="font-semibold text-slate-900 dark:text-white">
-              {reply.username || reply.nickname || t('feedback.anonymous')}
+              {reply.username || t('feedback.anonymous')}
             </span>
             {reply.replyToName && (
               <>
@@ -97,7 +96,7 @@ const ReplyItem = ({ reply, isAuthenticated, handleLike, handleReply, t }: Reply
             </button>
             {isAuthenticated && (
               <button 
-                onClick={() => handleReply(reply.id, reply.username || reply.nickname || t('feedback.anonymous'))}
+                onClick={() => handleReply(reply.id, reply.username || t('feedback.anonymous'))}
                 className="text-xs text-slate-400 hover:text-blue-500 transition-colors"
               >
                 {t('feedback.reply')}
@@ -133,13 +132,13 @@ const FeedbackItem = ({ feedback, isAuthenticated, handleLike, handleReply, t }:
         size={36}
         className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white shrink-0"
       >
-        {feedback.username?.[0] || feedback.nickname?.[0] || 'U'}
+        {feedback.username?.[0] || 'U'}
       </Avatar>
       <div className="flex-1 min-w-0">
         <div className="space-y-1">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-semibold text-slate-900 dark:text-white">
-              {feedback.username || feedback.nickname || t('feedback.anonymous')}
+              {feedback.username || t('feedback.anonymous')}
             </span>
           </div>
           <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
@@ -156,7 +155,7 @@ const FeedbackItem = ({ feedback, isAuthenticated, handleLike, handleReply, t }:
             </button>
             {isAuthenticated && (
               <button 
-                onClick={() => handleReply(feedback.id, feedback.username || feedback.nickname || t('feedback.anonymous'))}
+                onClick={() => handleReply(feedback.id, feedback.username || t('feedback.anonymous'))}
                 className="text-xs text-slate-400 hover:text-blue-500 transition-colors"
               >
                 {t('feedback.reply')}

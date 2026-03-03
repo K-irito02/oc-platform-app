@@ -626,7 +626,8 @@
     "hint": "Supports JPG/PNG/WebP/GIF, max 5MB",
     "cropTitle": "Crop Logo",
     "confirmCrop": "Crop & Upload",
-    "scrollToZoom": "Scroll to zoom, drag to move",
+    "scrollToZoom": "Scroll to zoom",
+    "dragToMove": "Drag to move",
     "uploadSuccess": "Logo uploaded successfully",
     "uploadFailed": "Logo upload failed",
     "editLogo": "Edit Site Logo",
@@ -642,7 +643,12 @@
     "faviconCurrent": "Current Icon",
     "shapeSquare": "Square",
     "shapeCircle": "Circle",
-    "shapeFree": "Free"
+    "shapeFree": "Free",
+    "zoomIn": "Zoom In",
+    "zoomOut": "Zoom Out",
+    "reset": "Reset",
+    "freeDrawHint": "Drag to draw any shape",
+    "clearPath": "Clear"
   },
   "avatar": {
     "change": "Change Avatar",
@@ -764,6 +770,8 @@
     "weibo": "Weibo",
     "wechat": "WeChat Official Account",
     "wechatPlaceholder": "WeChat account name or link",
-    "contactEmail": "Contact Email"
+    "contactEmail": "Contact Email",
+    "linkedin": "LinkedIn",
+    "email": "Email"
   }
 }

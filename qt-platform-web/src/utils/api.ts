@@ -4,7 +4,7 @@ import request from './request';
 export const authApi = {
   login: (data: { email: string; password: string }) =>
     request.post('/auth/login', data),
-  register: (data: { username: string; email: string; password: string; verificationCode: string; nickname?: string }) =>
+  register: (data: { username: string; email: string; password: string; verificationCode: string }) =>
     request.post('/auth/register', data),
   logout: () => request.post('/auth/logout'),
   refresh: (refreshToken: string) =>
@@ -27,7 +27,7 @@ export const authApi = {
 // ===== User API =====
 export const userApi = {
   getProfile: () => request.get('/users/profile'),
-  updateProfile: (data: { nickname?: string; bio?: string; avatarUrl?: string }) =>
+  updateProfile: (data: { bio?: string; avatarUrl?: string }) =>
     request.put('/users/profile', data),
   updateLanguage: (language: string) =>
     request.put('/users/language', { language }),
@@ -77,7 +77,7 @@ export const commentApi = {
 
 // ===== Feedback API =====
 export const feedbackApi = {
-  create: (data: { content: string; email?: string; contact?: string; nickname?: string; parentId?: number; isPublic?: boolean }) =>
+  create: (data: { content: string; email?: string; contact?: string; parentId?: number; isPublic?: boolean }) =>
     request.post('/feedbacks', data, {
       headers: { 'X-Silent-Error': 'true' }
     }),

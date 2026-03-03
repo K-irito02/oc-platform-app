@@ -22,7 +22,6 @@ public class SiteFeedback {
 
     private Long userId;
     private Long parentId;
-    private String nickname;
     private String email;
     private String contact;
     private String content;

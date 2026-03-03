@@ -38,15 +38,10 @@ public class SiteFeedbackService {
         // 从用户信息中获取邮箱和昵称
         User user = userMapper.selectById(userId);
         String userEmail = user != null ? user.getEmail() : null;
-        String nickname = request.getNickname();
-        if (nickname == null || nickname.isBlank()) {
-            nickname = user != null ? user.getUsername() : null;
-        }
         
         SiteFeedback feedback = SiteFeedback.builder()
                 .userId(userId)
                 .parentId(request.getParentId())
-                .nickname(nickname)
                 .email(userEmail)
                 .contact(request.getContact())
                 .content(request.getContent())
@@ -223,17 +218,13 @@ public class SiteFeedbackService {
                             }
                             break;
                         default:
-                            // 未知类型，使用全局搜索
                             wrapper.and(w -> w.like(SiteFeedback::getContent, searchValue)
-                                    .or().like(SiteFeedback::getNickname, searchValue)
                                     .or().like(SiteFeedback::getEmail, searchValue));
                             break;
                     }
                 }
             } else {
-                // 全局搜索（兼容旧逻辑）
                 wrapper.and(w -> w.like(SiteFeedback::getContent, keyword)
-                        .or().like(SiteFeedback::getNickname, keyword)
                         .or().like(SiteFeedback::getEmail, keyword));
             }
         }
@@ -317,7 +308,7 @@ public class SiteFeedbackService {
                 .id(f.getId())
                 .userId(f.getUserId())
                 .parentId(f.getParentId())
-                .nickname(f.getNickname() != null ? f.getNickname() : (username != null ? username : "匿名用户"))
+                .nickname(username != null ? username : "匿名用户")
                 .username(username)
                 .avatarUrl(avatarUrl)
                 .replyToName(replyToName)
@@ -350,7 +341,7 @@ public class SiteFeedbackService {
                 .id(f.getId())
                 .userId(f.getUserId())
                 .parentId(f.getParentId())
-                .nickname(f.getNickname())
+                .nickname(username)
                 .username(username)
                 .email(userEmail)
                 .avatarUrl(avatarUrl)

@@ -11,7 +11,6 @@ import { userApi, authApi } from '@/utils/api';
 type UserProfile = {
   id: number;
   username: string;
-  nickname?: string;
   email: string;
   avatarUrl?: string | null;
   roles?: string[];

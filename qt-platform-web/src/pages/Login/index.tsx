@@ -14,7 +14,6 @@ interface LoginResponse {
       id: number;
       email: string;
       username: string;
-      nickname?: string;
       avatarUrl?: string;
       roles: string[];
     };

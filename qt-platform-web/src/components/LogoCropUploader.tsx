@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
-import { Modal, Upload, Button, Segmented, Space, message } from 'antd';
-import { UploadOutlined, BorderOutlined, DragOutlined, UndoOutlined } from '@ant-design/icons';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { Modal, Upload, Button, Segmented, Space, message, Slider } from 'antd';
+import { UploadOutlined, BorderOutlined, DragOutlined, UndoOutlined, ZoomInOutlined, ZoomOutOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { fileApi } from '@/utils/api';
 
@@ -8,6 +8,7 @@ interface LogoCropUploaderProps {
   value?: string;
   onChange?: (url: string) => void;
   onSave?: (url: string) => Promise<void>;
+  title?: string;
 }
 
 type CropShape = 'square' | 'circle' | 'free';
@@ -21,12 +22,26 @@ type UploadImageResponse = {
   fileUrl?: string;
 };
 
+const OUTPUT_SIZE = 512;
+
+const loadImage = (url: string): Promise<HTMLImageElement> =>
+  new Promise((resolve, reject) => {
+    const image = new Image();
+    image.addEventListener('load', () => resolve(image));
+    image.addEventListener('error', (error) => reject(error));
+    image.setAttribute('crossOrigin', 'anonymous');
+    image.src = url;
+  });
+
 const createCroppedImage = async (
   imageSrc: string,
   shape: CropShape,
-  cropData?: any
+  cropData?: { path?: { x: number; y: number }[] },
+  scale: number = 1,
+  offsetX: number = 0,
+  offsetY: number = 0
 ): Promise<Blob> => {
-  const image = await createImage(imageSrc);
+  const image = await loadImage(imageSrc);
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
 
@@ -34,10 +49,22 @@ const createCroppedImage = async (
     throw new Error('No 2d context');
   }
 
-  canvas.width = image.width;
-  canvas.height = image.height;
+  canvas.width = OUTPUT_SIZE;
+  canvas.height = OUTPUT_SIZE;
 
-  if (shape === 'free' && cropData?.path) {
+  ctx.fillStyle = 'white';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const centerX = OUTPUT_SIZE / 2;
+  const centerY = OUTPUT_SIZE / 2;
+
+  const imgDrawWidth = image.width * scale;
+  const imgDrawHeight = image.height * scale;
+  const imgDrawX = centerX - imgDrawWidth / 2 + offsetX;
+  const imgDrawY = centerY - imgDrawHeight / 2 + offsetY;
+
+  if (shape === 'free' && cropData?.path && cropData.path.length > 2) {
+    ctx.save();
     ctx.beginPath();
     ctx.moveTo(cropData.path[0].x, cropData.path[0].y);
     for (let i = 1; i < cropData.path.length; i++) {
@@ -45,17 +72,19 @@ const createCroppedImage = async (
     }
     ctx.closePath();
     ctx.clip();
+    ctx.drawImage(image, imgDrawX, imgDrawY, imgDrawWidth, imgDrawHeight);
+    ctx.restore();
   } else if (shape === 'circle') {
-    const centerX = image.width / 2;
-    const centerY = image.height / 2;
-    const radius = Math.min(centerX, centerY);
+    ctx.save();
     ctx.beginPath();
-    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+    ctx.arc(centerX, centerY, OUTPUT_SIZE / 2, 0, Math.PI * 2);
     ctx.closePath();
     ctx.clip();
+    ctx.drawImage(image, imgDrawX, imgDrawY, imgDrawWidth, imgDrawHeight);
+    ctx.restore();
+  } else {
+    ctx.drawImage(image, imgDrawX, imgDrawY, imgDrawWidth, imgDrawHeight);
   }
-
-  ctx.drawImage(image, 0, 0);
 
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => {
@@ -68,26 +97,129 @@ const createCroppedImage = async (
   });
 };
 
-const createImage = (url: string): Promise<HTMLImageElement> =>
-  new Promise((resolve, reject) => {
-    const image = new Image();
-    image.addEventListener('load', () => resolve(image));
-    image.addEventListener('error', (error) => reject(error));
-    image.setAttribute('crossOrigin', 'anonymous');
-    image.src = url;
-  });
-
-export const LogoCropUploader = ({ value, onChange, onSave }: LogoCropUploaderProps) => {
+export const LogoCropUploader = ({ value, onChange, onSave, title }: LogoCropUploaderProps) => {
   const { t } = useTranslation();
   const [modalOpen, setModalOpen] = useState(false);
   const [imageSrc, setImageSrc] = useState<string | null>(null);
+  const [imageElement, setImageElement] = useState<HTMLImageElement | null>(null);
   const [cropShape, setCropShape] = useState<CropShape>('square');
   const [uploading, setUploading] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
   const [path, setPath] = useState<{ x: number; y: number }[]>([]);
-  
+  const [scale, setScale] = useState(1);
+  const [offsetX, setOffsetX] = useState(0);
+  const [offsetY, setOffsetY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [isLoading, setIsLoading] = useState(false);
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const imageRef = useRef<HTMLImageElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const resetState = useCallback(() => {
+    setScale(1);
+    setOffsetX(0);
+    setOffsetY(0);
+    setPath([]);
+    setIsDrawing(false);
+    setIsDragging(false);
+    setImageElement(null);
+  }, []);
+
+  useEffect(() => {
+    if (!modalOpen || !imageSrc) {
+      setImageElement(null);
+      return;
+    }
+
+    let mounted = true;
+    setIsLoading(true);
+
+    loadImage(imageSrc)
+      .then((img) => {
+        if (mounted) {
+          setImageElement(img);
+          setIsLoading(false);
+        }
+      })
+      .catch(() => {
+        if (mounted) {
+          setIsLoading(false);
+          message.error('Failed to load image');
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [modalOpen, imageSrc]);
+
+  useEffect(() => {
+    if (!modalOpen || !imageElement || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    canvas.width = OUTPUT_SIZE;
+    canvas.height = OUTPUT_SIZE;
+
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const centerX = OUTPUT_SIZE / 2;
+    const centerY = OUTPUT_SIZE / 2;
+
+    const drawWidth = imageElement.width * scale;
+    const drawHeight = imageElement.height * scale;
+    const drawX = centerX - drawWidth / 2 + offsetX;
+    const drawY = centerY - drawHeight / 2 + offsetY;
+
+    if (cropShape === 'free' && path.length > 1) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(path[0].x, path[0].y);
+      for (let i = 1; i < path.length; i++) {
+        ctx.lineTo(path[i].x, path[i].y);
+      }
+      ctx.closePath();
+      ctx.clip();
+      ctx.drawImage(imageElement, drawX, drawY, drawWidth, drawHeight);
+      ctx.restore();
+
+      ctx.beginPath();
+      ctx.moveTo(path[0].x, path[0].y);
+      for (let i = 1; i < path.length; i++) {
+        ctx.lineTo(path[i].x, path[i].y);
+      }
+      ctx.closePath();
+      ctx.strokeStyle = '#1890ff';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    } else if (cropShape === 'circle') {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, OUTPUT_SIZE / 2, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+      ctx.drawImage(imageElement, drawX, drawY, drawWidth, drawHeight);
+      ctx.restore();
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, OUTPUT_SIZE / 2, 0, Math.PI * 2);
+      ctx.strokeStyle = '#1890ff';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.restore();
+    } else {
+      ctx.drawImage(imageElement, drawX, drawY, drawWidth, drawHeight);
+
+      ctx.strokeStyle = '#1890ff';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
+    }
+  }, [modalOpen, imageElement, cropShape, path, scale, offsetX, offsetY]);
 
   const handleFileChange = (file: File) => {
     const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -104,8 +236,7 @@ export const LogoCropUploader = ({ value, onChange, onSave }: LogoCropUploaderPr
     reader.addEventListener('load', () => {
       setImageSrc(reader.result as string);
       setModalOpen(true);
-      setCropShape('square');
-      setPath([]);
+      resetState();
     });
     reader.readAsDataURL(file);
 
@@ -116,24 +247,25 @@ export const LogoCropUploader = ({ value, onChange, onSave }: LogoCropUploaderPr
     if (!imageSrc) return;
 
     if (cropShape === 'free' && path.length < 3) {
-      message.error('请绘制一个完整的形状');
+      message.error(t('logo.freeDrawHint') || '请绘制一个完整的形状');
       return;
     }
 
     setUploading(true);
     try {
-      const croppedBlob = await createCroppedImage(imageSrc, cropShape, { path });
-      
+      const croppedBlob = await createCroppedImage(imageSrc, cropShape, { path }, scale, offsetX, offsetY);
+
       const logoFile = new File([croppedBlob], 'logo.png', { type: 'image/png' });
-      
+
       const res = await fileApi.uploadImage(logoFile) as ApiResponse<UploadImageResponse>;
       const logoUrl = res.data?.url || res.data?.fileUrl;
-      
+
       if (logoUrl) {
         onChange?.(logoUrl);
         await onSave?.(logoUrl);
         message.success(t('logo.uploadSuccess') || 'Logo uploaded successfully');
         setModalOpen(false);
+        resetState();
       }
     } catch {
       message.error(t('logo.uploadFailed') || 'Logo upload failed');
@@ -144,28 +276,32 @@ export const LogoCropUploader = ({ value, onChange, onSave }: LogoCropUploaderPr
 
   const handleCanvasMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (cropShape !== 'free') return;
-    
+
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
+
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+
     setIsDrawing(true);
     setPath([{ x, y }]);
   };
 
   const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isDrawing || cropShape !== 'free') return;
-    
+
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
+
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+
     setPath(prev => [...prev, { x, y }]);
   };
 
@@ -181,31 +317,46 @@ export const LogoCropUploader = ({ value, onChange, onSave }: LogoCropUploaderPr
     setPath([]);
   };
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const image = imageRef.current;
-    
-    if (canvas && image && imageSrc) {
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        canvas.width = image.width;
-        canvas.height = image.height;
-        ctx.drawImage(image, 0, 0);
-        
-        if (cropShape === 'free' && path.length > 1) {
-          ctx.beginPath();
-          ctx.moveTo(path[0].x, path[0].y);
-          for (let i = 1; i < path.length; i++) {
-            ctx.lineTo(path[i].x, path[i].y);
-          }
-          ctx.closePath();
-          ctx.strokeStyle = 'white';
-          ctx.lineWidth = 2;
-          ctx.stroke();
-        }
-      }
-    }
-  }, [imageSrc, cropShape, path]);
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -0.1 : 0.1;
+    const newScale = Math.max(0.3, Math.min(5, scale + delta));
+    setScale(newScale);
+  };
+
+  const handleZoomIn = () => {
+    setScale(prev => Math.min(5, prev + 0.2));
+  };
+
+  const handleZoomOut = () => {
+    setScale(prev => Math.max(0.3, prev - 0.2));
+  };
+
+  const handleReset = () => {
+    setScale(1);
+    setOffsetX(0);
+    setOffsetY(0);
+  };
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (cropShape === 'free' || !imageElement) return;
+    setIsDragging(true);
+    setDragStart({ x: e.clientX - offsetX, y: e.clientY - offsetY });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDragging || cropShape === 'free' || !imageElement) return;
+    setOffsetX(e.clientX - dragStart.x);
+    setOffsetY(e.clientY - dragStart.y);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseLeave = () => {
+    setIsDragging(false);
+  };
 
   return (
     <div className="logo-crop-uploader">
@@ -234,9 +385,12 @@ export const LogoCropUploader = ({ value, onChange, onSave }: LogoCropUploaderPr
       </div>
 
       <Modal
-        title={t('logo.cropTitle') || 'Crop Logo'}
+        title={title || t('logo.cropTitle') || 'Crop Logo'}
         open={modalOpen}
-        onCancel={() => setModalOpen(false)}
+        onCancel={() => {
+          setModalOpen(false);
+          resetState();
+        }}
         footer={null}
         width={600}
         centered
@@ -259,50 +413,91 @@ export const LogoCropUploader = ({ value, onChange, onSave }: LogoCropUploaderPr
               />
             </div>
 
-            <div className="flex justify-center">
-              {cropShape === 'free' && (
-                <div className="text-center text-sm text-slate-500 mb-2">
-                  {t('logo.freeDrawHint') || '拖动鼠标绘制任意形状'}
-                  <Button 
-                    icon={<UndoOutlined />} 
-                    size="small" 
+            {cropShape === 'free' && (
+              <div className="text-center text-sm text-slate-500">
+                <Space>
+                  <span>{t('logo.freeDrawHint') || '拖动鼠标绘制任意形状'}</span>
+                  <Button
+                    icon={<UndoOutlined />}
+                    size="small"
                     onClick={handleClearPath}
-                    className="ml-2"
                   >
                     {t('logo.clearPath') || '清除'}
                   </Button>
+                </Space>
+              </div>
+            )}
+
+            <div
+              ref={containerRef}
+              className="relative w-full flex justify-center items-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 rounded-xl overflow-hidden"
+              style={{ height: '420px' }}
+              onWheel={handleWheel}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseLeave}
+            >
+              {isLoading ? (
+                <div className="flex items-center justify-center">
+                  <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                 </div>
+              ) : (
+                <canvas
+                  ref={canvasRef}
+                  className={`max-w-[380px] max-h-[380px] shadow-2xl transition-transform duration-150 ${cropShape === 'free' ? 'cursor-crosshair' : isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+                  style={{
+                    borderRadius: cropShape === 'circle' ? '50%' : '8px'
+                  }}
+                  onMouseDown={handleCanvasMouseDown}
+                  onMouseMove={handleCanvasMouseMove}
+                  onMouseUp={handleCanvasMouseUp}
+                  onMouseLeave={handleCanvasMouseLeave}
+                />
               )}
             </div>
 
-            <div className="relative w-full flex justify-center">
-              <img 
-                ref={imageRef}
-                src={imageSrc} 
-                alt="Preview" 
-                style={{ display: 'none' }}
-                onLoad={() => {
-                  const canvas = canvasRef.current;
-                  const image = imageRef.current;
-                  if (canvas && image) {
-                    canvas.width = image.width;
-                    canvas.height = image.height;
-                  }
-                }}
-              />
-              
-              <canvas
-                ref={canvasRef}
-                className={`cursor-${cropShape === 'free' ? 'crosshair' : 'default'}`}
-                onMouseDown={handleCanvasMouseDown}
-                onMouseMove={handleCanvasMouseMove}
-                onMouseUp={handleCanvasMouseUp}
-                onMouseLeave={handleCanvasMouseLeave}
-              />
+            <div className="space-y-3">
+              <div className="flex items-center justify-center gap-3">
+                <Button
+                  icon={<ZoomOutOutlined />}
+                  onClick={handleZoomOut}
+                  disabled={scale <= 0.3}
+                >
+                  {t('logo.zoomOut') || '缩小'}
+                </Button>
+                <Slider
+                  min={0.3}
+                  max={5}
+                  step={0.1}
+                  value={scale}
+                  onChange={(v) => setScale(v as number)}
+                  style={{ width: 180 }}
+                />
+                <Button
+                  icon={<ZoomInOutlined />}
+                  onClick={handleZoomIn}
+                  disabled={scale >= 5}
+                >
+                  {t('logo.zoomIn') || '放大'}
+                </Button>
+                <Button
+                  onClick={handleReset}
+                  disabled={scale === 1 && offsetX === 0 && offsetY === 0}
+                >
+                  {t('logo.reset') || '重置'}
+                </Button>
+              </div>
+              <p className="text-center text-sm text-slate-500">
+                {t('logo.scrollToZoom') || '滚动鼠标缩放'} · {t('logo.dragToMove') || '拖动移动'}
+              </p>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t">
-              <Button onClick={() => setModalOpen(false)}>
+            <div className="flex justify-end gap-2 pt-4 border-t">
+              <Button onClick={() => {
+                setModalOpen(false);
+                resetState();
+              }}>
                 {t('common.cancel') || 'Cancel'}
               </Button>
               <Button type="primary" onClick={handleUploadAndSave} loading={uploading}>

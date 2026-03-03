@@ -96,7 +96,7 @@ export const Header: React.FC = () => {
               <div className="flex items-center gap-3 pl-2 cursor-pointer hover:bg-white/30 p-1.5 rounded-xl transition-colors">
                 <Avatar src={user?.avatarUrl} className="bg-gradient-to-tr from-blue-400 to-indigo-500 border-2 border-white shadow-sm" />
                 <div className="hidden md:block text-sm">
-                  <p className="font-semibold text-slate-800 leading-none">{user?.nickname || user?.username}</p>
+                  <p className="font-semibold text-slate-800 leading-none">{user?.username}</p>
                   <p className="text-xs text-slate-500 mt-0.5 capitalize">{user?.roles?.[0]?.toLowerCase().replace('_', ' ')}</p>
                 </div>
               </div>

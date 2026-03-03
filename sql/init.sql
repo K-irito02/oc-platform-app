@@ -11,7 +11,6 @@ CREATE TABLE users (
     username        VARCHAR(50) UNIQUE NOT NULL,
     email           VARCHAR(100) UNIQUE NOT NULL,
     password_hash   VARCHAR(255),
-    nickname        VARCHAR(100),
     avatar_url      VARCHAR(500),
     bio             VARCHAR(500),
     status          VARCHAR(20) DEFAULT 'ACTIVE'
@@ -391,6 +390,52 @@ CREATE TABLE i18n_messages (
 CREATE INDEX idx_i18n_lang ON i18n_messages(language_code);
 
 -- ============================================================
+-- 网站留言反馈表
+-- ============================================================
+CREATE TABLE site_feedbacks (
+    id          BIGSERIAL PRIMARY KEY,
+    user_id     BIGINT REFERENCES users(id),
+    parent_id   BIGINT REFERENCES site_feedbacks(id) ON DELETE CASCADE,
+    contact     VARCHAR(100),
+    content     TEXT NOT NULL,
+    status      VARCHAR(20) DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'PUBLISHED', 'REJECTED', 'HIDDEN')),
+    ip_address  INET,
+    like_count  INTEGER DEFAULT 0,
+    reply_count INTEGER DEFAULT 0,
+    is_public   BOOLEAN DEFAULT true,
+    email       VARCHAR(255),
+    created_at  TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_feedbacks_created_at ON site_feedbacks(created_at DESC);
+CREATE INDEX idx_feedbacks_status ON site_feedbacks(status);
+CREATE INDEX idx_feedbacks_parent_id ON site_feedbacks(parent_id);
+CREATE INDEX idx_feedbacks_user_id ON site_feedbacks(user_id);
+CREATE INDEX idx_feedbacks_is_public ON site_feedbacks(is_public);
+
+-- ============================================================
+-- 网站留言点赞表
+-- ============================================================
+CREATE TABLE site_feedback_likes (
+    id          BIGSERIAL PRIMARY KEY,
+    feedback_id BIGINT NOT NULL REFERENCES site_feedbacks(id) ON DELETE CASCADE,
+    user_id     BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at  TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(feedback_id, user_id)
+);
+
+CREATE INDEX idx_feedback_likes_feedback_id ON site_feedback_likes(feedback_id);
+CREATE INDEX idx_feedback_likes_user_id ON site_feedback_likes(user_id);
+
+COMMENT ON COLUMN site_feedbacks.parent_id IS '父留言ID，用于回复功能';
+COMMENT ON COLUMN site_feedbacks.like_count IS '点赞数';
+COMMENT ON COLUMN site_feedbacks.reply_count IS '回复数';
+COMMENT ON COLUMN site_feedbacks.is_public IS '是否公开显示在留言板';
+COMMENT ON COLUMN site_feedbacks.email IS '用户邮箱（选填，仅管理员可见）';
+COMMENT ON TABLE site_feedback_likes IS '留言点赞表';
+
+-- ============================================================
 -- 订单表（阶段二实现支付时启用）
 -- ============================================================
 CREATE TABLE orders (
@@ -540,6 +585,31 @@ INSERT INTO system_configs (config_key, config_value, description) VALUES
     ('site.name_en',        'KiritoLab',             '站点英文名称'),
     ('site.description',    '免费提供个人开发的工具类应用程序', '站点描述'),
     ('site.logo',           '',                       '站点Logo图片URL'),
+    ('site.favicon',        '',                       '浏览器标签页图标URL'),
+    ('site.url',            'https://kiritolab.com',  '官网URL'),
+    ('site.url_en',         'https://kiritolab.com',  'Website URL'),
     ('upload.max_file_size', '1073741824',            '最大上传文件大小（字节）'),
     ('comment.auto_approve', 'false',                 '评论是否自动通过审核'),
-    ('register.enabled',     'true',                  '是否开放注册');
+    ('register.enabled',     'true',                  '是否开放注册'),
+    ('footer.beian',         '',                       '网站备案号'),
+    ('footer.beian_en',     '',                       'Website Filing Number'),
+    ('footer.icp',          '',                       'ICP备案号'),
+    ('footer.icp_en',       '',                       'ICP Filing Number'),
+    ('footer.holiday',      '',                       '节假日定制信息'),
+    ('footer.holiday_en',   '',                       'Holiday Custom Message'),
+    ('footer.quote',        '',                       '名人名言'),
+    ('footer.quote_en',     '',                       'Famous Quote'),
+    ('footer.quote_author', '',                       '名言作者'),
+    ('footer.quote_author_en', '',                    'Quote Author'),
+    ('email.sender_name',   '桐人创研',               '邮件发件人名称（中文）'),
+    ('email.sender_name_en', 'KiritoLab',             '邮件发件人名称（英文）'),
+    ('email.copyright',     '© 2026 桐人创研. 保留所有权利.', '邮件版权信息（中文）'),
+    ('email.copyright_en',  '© 2026 KiritoLab. All rights reserved.', '邮件版权信息（英文）'),
+    ('email.security_tip',  '如果这不是您本人的操作，请忽略此邮件。您的账户仍然安全。', '邮件安全提示（中文）'),
+    ('email.security_tip_en', 'If you did not request this, please ignore this email. Your account is still secure.', '邮件安全提示（英文）'),
+    ('social.github',       '',                       'GitHub 链接'),
+    ('social.twitter',      '',                       'Twitter/X 链接'),
+    ('social.linkedin',     '',                       'LinkedIn 链接'),
+    ('social.weibo',        '',                       '微博链接'),
+    ('social.wechat',       '',                       '微信公众号'),
+    ('social.email',        '',                       '联系邮箱');

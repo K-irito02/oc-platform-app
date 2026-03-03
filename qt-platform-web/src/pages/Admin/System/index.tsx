@@ -267,6 +267,7 @@ export default function AdminSystem() {
           value={faviconUrl}
           onChange={setFaviconUrl}
           onSave={handleFaviconSave}
+          title={t('logo.faviconCropTitle')}
         />
       </Card>
 

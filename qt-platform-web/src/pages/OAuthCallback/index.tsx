@@ -12,7 +12,6 @@ interface AuthResponse {
       id: number;
       email: string;
       username: string;
-      nickname?: string;
       avatarUrl?: string;
       roles: string[];
     };

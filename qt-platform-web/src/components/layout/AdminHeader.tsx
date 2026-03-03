@@ -87,7 +87,7 @@ export const AdminHeader = ({ collapsed, setCollapsed }: AdminHeaderProps) => {
         <Dropdown menu={userMenu} placement="bottomRight" arrow>
           <div className="flex items-center gap-3 cursor-pointer pl-2 border-l border-slate-200 dark:border-slate-800">
             <div className="text-right hidden sm:block">
-              <div className="text-sm font-medium text-slate-900 dark:text-white">{user?.nickname || user?.username}</div>
+              <div className="text-sm font-medium text-slate-900 dark:text-white">{user?.username}</div>
               <div className="text-xs text-slate-500 dark:text-slate-400">Admin</div>
             </div>
             <Avatar src={user?.avatarUrl} className="bg-blue-600">{user?.username?.[0]?.toUpperCase()}</Avatar>

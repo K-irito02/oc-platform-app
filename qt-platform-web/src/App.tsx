@@ -17,7 +17,6 @@ import { useFavicon } from '@/hooks/useFavicon'
 type UserProfile = {
   id: number
   username: string
-  nickname: string
   email: string
   avatarUrl: string | null
   roles: string[]

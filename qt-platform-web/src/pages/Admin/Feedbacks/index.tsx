@@ -10,7 +10,6 @@ import dayjs from 'dayjs';
 interface FeedbackRecord {
   id: number;
   username?: string;
-  nickname?: string;
   email?: string;
   content: string;
   parentId?: number;
@@ -114,7 +113,7 @@ export default function AdminFeedbacks() {
       dataIndex: 'username', 
       key: 'username',
       width: 120,
-      render: (_, r) => r.username || r.nickname || t('feedback.anonymous')
+      render: (_, r) => r.username || t('feedback.anonymous')
     },
     { 
       title: t('adminFeedback.email'), 

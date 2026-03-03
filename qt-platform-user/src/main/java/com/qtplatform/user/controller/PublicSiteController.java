@@ -25,7 +25,7 @@ public class PublicSiteController {
         List<SystemConfig> configs = systemConfigMapper.selectList(
             new LambdaQueryWrapper<SystemConfig>()
                 .in(SystemConfig::getConfigKey, 
-                    "site.name", "site.name_en", "site.description", "site.logo", "site.url",
+                    "site.name", "site.name_en", "site.description", "site.logo", "site.url", "site.favicon",
                     "register.enabled", "comment.auto_approve", "upload.max_file_size",
                     "footer.beian", "footer.beian_en", "footer.icp", "footer.icp_en",
                     "footer.holiday", "footer.holiday_en", "footer.quote", "footer.quote_en",
@@ -51,6 +51,9 @@ public class PublicSiteController {
                     break;
                 case "site.logo":
                     result.put("siteLogo", value);
+                    break;
+                case "site.favicon":
+                    result.put("siteFavicon", value);
                     break;
                 case "register.enabled":
                     result.put("registerEnabled", "true".equalsIgnoreCase(value));
@@ -124,6 +127,7 @@ public class PublicSiteController {
         result.putIfAbsent("siteNameEn", "KiritoLab");
         result.putIfAbsent("siteDescription", "");
         result.putIfAbsent("siteLogo", "");
+        result.putIfAbsent("siteFavicon", "");
         result.putIfAbsent("registerEnabled", true);
         result.putIfAbsent("commentAutoApprove", false);
         result.putIfAbsent("uploadMaxFileSize", 1073741824L);

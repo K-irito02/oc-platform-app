@@ -82,10 +82,9 @@ export const fetchSiteConfig = createAsyncThunk(
     try {
       const res = await request.get('/public/site-config') as ApiResponse<any>;
       if (res.data) {
-        // 从系统配置中提取 faviconLogo
         const config = {
           ...res.data,
-          faviconLogo: res.data['site.favicon'] || '',
+          faviconLogo: res.data['siteFavicon'] || '',
         };
         return config;
       }

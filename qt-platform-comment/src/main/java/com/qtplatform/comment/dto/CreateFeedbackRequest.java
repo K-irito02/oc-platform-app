@@ -17,9 +17,6 @@ public class CreateFeedbackRequest {
     @Size(max = 100, message = "联系方式长度不能超过100个字符")
     private String contact;
 
-    @Size(max = 50, message = "昵称长度不能超过50个字符")
-    private String nickname;
-
     private Long parentId;
 
     private Boolean isPublic = true;
