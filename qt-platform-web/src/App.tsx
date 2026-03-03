@@ -12,6 +12,7 @@ import { userApi } from '@/utils/api'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { useAntdStaticFunctions } from '@/utils/antdUtils'
 import { useTranslation } from 'react-i18next'
+import { useFavicon } from '@/hooks/useFavicon'
 
 type UserProfile = {
   id: number
@@ -36,6 +37,8 @@ function App() {
   const dispatch = useAppDispatch()
   const { isAuthenticated, user } = useAppSelector((s) => s.auth)
   const { i18n } = useTranslation()
+  
+  useFavicon()
 
   const antdLocale = useMemo(() => {
     switch (i18n.language) {

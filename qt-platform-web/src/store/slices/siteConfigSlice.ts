@@ -6,6 +6,7 @@ export interface SiteConfig {
   siteNameEn: string;
   siteDescription: string;
   siteLogo: string;
+  faviconLogo: string;
   siteUrl: string;
   registerEnabled: boolean;
   commentAutoApprove: boolean;
@@ -28,11 +29,7 @@ export interface SiteConfig {
   socialEmail: string;
 }
 
-type ApiResponse<T> = {
-  data: T;
-};
-
-interface SiteConfigState {
+export interface SiteConfigState {
   config: SiteConfig;
   loading: boolean;
   error: string | null;
@@ -44,6 +41,7 @@ const defaultConfig: SiteConfig = {
   siteNameEn: 'KiritoLab',
   siteDescription: '',
   siteLogo: '',
+  faviconLogo: '',
   siteUrl: '',
   registerEnabled: true,
   commentAutoApprove: false,
@@ -73,13 +71,25 @@ const initialState: SiteConfigState = {
   lastFetched: null,
 };
 
+type ApiResponse<T> = {
+  data?: T;
+};
+
 // 从后端获取站点配置（公共 API，无需认证）
 export const fetchSiteConfig = createAsyncThunk(
   'siteConfig/fetch',
   async (_, { rejectWithValue }) => {
     try {
-      const res = await request.get('/public/site-config') as ApiResponse<SiteConfig>;
-      return res.data;
+      const res = await request.get('/public/site-config') as ApiResponse<any>;
+      if (res.data) {
+        // 从系统配置中提取 faviconLogo
+        const config = {
+          ...res.data,
+          faviconLogo: res.data['site.favicon'] || '',
+        };
+        return config;
+      }
+      return defaultConfig;
     } catch (error: unknown) {
       const err = error as { message?: string };
       return rejectWithValue(err.message || 'Failed to fetch site config');
@@ -87,15 +97,15 @@ export const fetchSiteConfig = createAsyncThunk(
   }
 );
 
-export const siteConfigSlice = createSlice({
+const siteConfigSlice = createSlice({
   name: 'siteConfig',
   initialState,
   reducers: {
-    updateSiteConfig: (state, action: PayloadAction<Partial<SiteConfig>>) => {
+    updateConfig: (state, action: PayloadAction<Partial<SiteConfig>>) => {
       state.config = { ...state.config, ...action.payload };
     },
-    resetSiteConfig: (state) => {
-      state.config = defaultConfig;
+    clearError: (state) => {
+      state.error = null;
     },
   },
   extraReducers: (builder) => {
@@ -105,17 +115,16 @@ export const siteConfigSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchSiteConfig.fulfilled, (state, action) => {
+        state.config = action.payload;
         state.loading = false;
-        state.config = { ...defaultConfig, ...action.payload };
         state.lastFetched = Date.now();
       })
       .addCase(fetchSiteConfig.rejected, (state, action) => {
-        state.loading = false;
         state.error = action.payload as string;
+        state.loading = false;
       });
   },
 });
 
-export const { updateSiteConfig, resetSiteConfig } = siteConfigSlice.actions;
-
+export const { updateConfig, clearError } = siteConfigSlice.actions;
 export default siteConfigSlice.reducer;

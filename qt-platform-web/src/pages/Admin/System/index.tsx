@@ -27,6 +27,7 @@ export default function AdminSystem() {
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState('');
   const [logoUrl, setLogoUrl] = useState('');
+  const [faviconUrl, setFaviconUrl] = useState('');
   const [footerConfig, setFooterConfig] = useState({
     beian: '',
     beianEn: '',
@@ -64,6 +65,11 @@ export default function AdminSystem() {
       const logoConfig = res.data?.find((c) => c.configKey === 'site.logo');
       if (logoConfig) {
         setLogoUrl(logoConfig.configValue || '');
+      }
+      // 获取当前 Favicon URL
+      const faviconConfig = res.data?.find((c) => c.configKey === 'site.favicon');
+      if (faviconConfig) {
+        setFaviconUrl(faviconConfig.configValue || '');
       }
       // 获取 Footer 配置
       const footerConfigs = res.data?.filter((c: SystemConfig) => c.configKey.startsWith('footer.'));
@@ -113,6 +119,14 @@ export default function AdminSystem() {
 
   const handleLogoSave = async (url: string) => {
     await adminApi.updateSystemConfig('site.logo', url);
+    message.success(t('admin.saveSuccess'));
+    loadData();
+    // 刷新全局站点配置
+    dispatch(fetchSiteConfig());
+  };
+
+  const handleFaviconSave = async (url: string) => {
+    await adminApi.updateSystemConfig('site.favicon', url);
     message.success(t('admin.saveSuccess'));
     loadData();
     // 刷新全局站点配置
@@ -236,6 +250,23 @@ export default function AdminSystem() {
           value={logoUrl}
           onChange={setLogoUrl}
           onSave={handleLogoSave}
+        />
+      </Card>
+
+      {/* Favicon 编辑卡片 */}
+      <Card 
+        title={
+          <div className="flex items-center gap-2">
+            <Image size={18} className="text-purple-600" />
+            <span>{t('logo.faviconTitle')}</span>
+          </div>
+        }
+        className="border-slate-200 dark:border-slate-800 dark:bg-slate-900 shadow-sm"
+      >
+        <LogoCropUploader
+          value={faviconUrl}
+          onChange={setFaviconUrl}
+          onSave={handleFaviconSave}
         />
       </Card>
 

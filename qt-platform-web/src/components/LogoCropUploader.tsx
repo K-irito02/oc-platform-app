@@ -1,10 +1,7 @@
-import { useState, useCallback } from 'react';
-import { Modal, Upload, Slider, Button } from 'antd';
-import { message } from '@/utils/antdUtils';
-import { UploadOutlined, ZoomInOutlined, ZoomOutOutlined, RotateLeftOutlined, RotateRightOutlined } from '@ant-design/icons';
+import { useState, useRef, useEffect } from 'react';
+import { Modal, Upload, Button, Segmented, Space, message } from 'antd';
+import { UploadOutlined, BorderOutlined, DragOutlined, UndoOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import Cropper from 'react-easy-crop';
-import type { Area, Point } from 'react-easy-crop';
 import { fileApi } from '@/utils/api';
 
 interface LogoCropUploaderProps {
@@ -12,6 +9,8 @@ interface LogoCropUploaderProps {
   onChange?: (url: string) => void;
   onSave?: (url: string) => Promise<void>;
 }
+
+type CropShape = 'square' | 'circle' | 'free';
 
 type ApiResponse<T> = {
   data?: T;
@@ -22,11 +21,10 @@ type UploadImageResponse = {
   fileUrl?: string;
 };
 
-// 创建裁剪后的图片
 const createCroppedImage = async (
   imageSrc: string,
-  pixelCrop: Area,
-  rotation = 0
+  shape: CropShape,
+  cropData?: any
 ): Promise<Blob> => {
   const image = await createImage(imageSrc);
   const canvas = document.createElement('canvas');
@@ -36,53 +34,31 @@ const createCroppedImage = async (
     throw new Error('No 2d context');
   }
 
-  const rotRad = (rotation * Math.PI) / 180;
+  canvas.width = image.width;
+  canvas.height = image.height;
 
-  // 计算旋转后的边界框
-  const { width: bBoxWidth, height: bBoxHeight } = rotateSize(
-    image.width,
-    image.height,
-    rotation
-  );
-
-  // 设置 canvas 大小为边界框大小
-  canvas.width = bBoxWidth;
-  canvas.height = bBoxHeight;
-
-  // 平移到中心，旋转，然后绘制
-  ctx.translate(bBoxWidth / 2, bBoxHeight / 2);
-  ctx.rotate(rotRad);
-  ctx.translate(-image.width / 2, -image.height / 2);
+  if (shape === 'free' && cropData?.path) {
+    ctx.beginPath();
+    ctx.moveTo(cropData.path[0].x, cropData.path[0].y);
+    for (let i = 1; i < cropData.path.length; i++) {
+      ctx.lineTo(cropData.path[i].x, cropData.path[i].y);
+    }
+    ctx.closePath();
+    ctx.clip();
+  } else if (shape === 'circle') {
+    const centerX = image.width / 2;
+    const centerY = image.height / 2;
+    const radius = Math.min(centerX, centerY);
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+    ctx.closePath();
+    ctx.clip();
+  }
 
   ctx.drawImage(image, 0, 0);
 
-  // 创建裁剪后的 canvas
-  const croppedCanvas = document.createElement('canvas');
-  const croppedCtx = croppedCanvas.getContext('2d');
-
-  if (!croppedCtx) {
-    throw new Error('No 2d context');
-  }
-
-  // 设置裁剪后的 canvas 大小
-  croppedCanvas.width = pixelCrop.width;
-  croppedCanvas.height = pixelCrop.height;
-
-  // 绘制裁剪区域
-  croppedCtx.drawImage(
-    canvas,
-    pixelCrop.x,
-    pixelCrop.y,
-    pixelCrop.width,
-    pixelCrop.height,
-    0,
-    0,
-    pixelCrop.width,
-    pixelCrop.height
-  );
-
   return new Promise((resolve, reject) => {
-    croppedCanvas.toBlob((blob) => {
+    canvas.toBlob((blob) => {
       if (blob) {
         resolve(blob);
       } else {
@@ -101,37 +77,25 @@ const createImage = (url: string): Promise<HTMLImageElement> =>
     image.src = url;
   });
 
-const rotateSize = (width: number, height: number, rotation: number) => {
-  const rotRad = (rotation * Math.PI) / 180;
-  return {
-    width: Math.abs(Math.cos(rotRad) * width) + Math.abs(Math.sin(rotRad) * height),
-    height: Math.abs(Math.sin(rotRad) * width) + Math.abs(Math.cos(rotRad) * height),
-  };
-};
-
 export const LogoCropUploader = ({ value, onChange, onSave }: LogoCropUploaderProps) => {
   const { t } = useTranslation();
   const [modalOpen, setModalOpen] = useState(false);
   const [imageSrc, setImageSrc] = useState<string | null>(null);
-  const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [rotation, setRotation] = useState(0);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+  const [cropShape, setCropShape] = useState<CropShape>('square');
   const [uploading, setUploading] = useState(false);
-
-  const onCropComplete = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
-    setCroppedAreaPixels(croppedAreaPixels);
-  }, []);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [path, setPath] = useState<{ x: number; y: number }[]>([]);
+  
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
 
   const handleFileChange = (file: File) => {
-    // 验证文件类型
     const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     if (!validTypes.includes(file.type)) {
       message.error(t('avatar.formatError') || 'Unsupported image format');
       return false;
     }
 
-    // 验证文件大小（5MB）
     if (file.size > 5 * 1024 * 1024) {
       message.warning(t('avatar.sizeWarning') || 'File size exceeds 5MB');
     }
@@ -140,10 +104,8 @@ export const LogoCropUploader = ({ value, onChange, onSave }: LogoCropUploaderPr
     reader.addEventListener('load', () => {
       setImageSrc(reader.result as string);
       setModalOpen(true);
-      // 重置裁剪参数
-      setCrop({ x: 0, y: 0 });
-      setZoom(1);
-      setRotation(0);
+      setCropShape('square');
+      setPath([]);
     });
     reader.readAsDataURL(file);
 
@@ -151,14 +113,17 @@ export const LogoCropUploader = ({ value, onChange, onSave }: LogoCropUploaderPr
   };
 
   const handleUploadAndSave = async () => {
-    if (!imageSrc || !croppedAreaPixels) return;
+    if (!imageSrc) return;
+
+    if (cropShape === 'free' && path.length < 3) {
+      message.error('请绘制一个完整的形状');
+      return;
+    }
 
     setUploading(true);
     try {
-      // 创建裁剪后的图片
-      const croppedBlob = await createCroppedImage(imageSrc, croppedAreaPixels, rotation);
+      const croppedBlob = await createCroppedImage(imageSrc, cropShape, { path });
       
-      // 转换 Blob 为 File 对象
       const logoFile = new File([croppedBlob], 'logo.png', { type: 'image/png' });
       
       const res = await fileApi.uploadImage(logoFile) as ApiResponse<UploadImageResponse>;
@@ -177,21 +142,73 @@ export const LogoCropUploader = ({ value, onChange, onSave }: LogoCropUploaderPr
     }
   };
 
-  const handleZoomIn = () => setZoom((z) => Math.min(z + 0.1, 3));
-  const handleZoomOut = () => setZoom((z) => Math.max(z - 0.1, 1));
-  const handleRotateLeft = () => setRotation((r) => r - 90);
-  const handleRotateRight = () => setRotation((r) => r + 90);
+  const handleCanvasMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (cropShape !== 'free') return;
+    
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    setIsDrawing(true);
+    setPath([{ x, y }]);
+  };
 
-  // 处理滚轮缩放
-  const handleWheel = useCallback((e: React.WheelEvent) => {
-    e.preventDefault();
-    const delta = e.deltaY > 0 ? -0.1 : 0.1;
-    setZoom((z) => Math.min(Math.max(z + delta, 1), 3));
-  }, []);
+  const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isDrawing || cropShape !== 'free') return;
+    
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    setPath(prev => [...prev, { x, y }]);
+  };
+
+  const handleCanvasMouseUp = () => {
+    setIsDrawing(false);
+  };
+
+  const handleCanvasMouseLeave = () => {
+    setIsDrawing(false);
+  };
+
+  const handleClearPath = () => {
+    setPath([]);
+  };
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const image = imageRef.current;
+    
+    if (canvas && image && imageSrc) {
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        canvas.width = image.width;
+        canvas.height = image.height;
+        ctx.drawImage(image, 0, 0);
+        
+        if (cropShape === 'free' && path.length > 1) {
+          ctx.beginPath();
+          ctx.moveTo(path[0].x, path[0].y);
+          for (let i = 1; i < path.length; i++) {
+            ctx.lineTo(path[i].x, path[i].y);
+          }
+          ctx.closePath();
+          ctx.strokeStyle = 'white';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+      }
+    }
+  }, [imageSrc, cropShape, path]);
 
   return (
     <div className="logo-crop-uploader">
-      {/* 当前 Logo 预览 */}
       <div className="flex items-center gap-4 mb-4">
         <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center overflow-hidden border-2 border-dashed border-slate-300 dark:border-slate-600">
           {value ? (
@@ -216,61 +233,74 @@ export const LogoCropUploader = ({ value, onChange, onSave }: LogoCropUploaderPr
         </div>
       </div>
 
-      {/* 裁剪 Modal */}
       <Modal
         title={t('logo.cropTitle') || 'Crop Logo'}
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
         footer={null}
-        width={500}
+        width={600}
         centered
         destroyOnHidden
       >
         {imageSrc && (
           <div className="space-y-4">
-            {/* 裁剪区域 */}
-            <div 
-              className="relative w-full h-80 bg-slate-900 rounded-lg overflow-hidden"
-              onWheel={handleWheel}
-            >
-              <Cropper
-                image={imageSrc}
-                crop={crop}
-                zoom={zoom}
-                rotation={rotation}
-                aspect={1}
-                cropShape="rect"
-                showGrid
-                onCropChange={setCrop}
-                onZoomChange={setZoom}
-                onCropComplete={onCropComplete}
+            <div className="flex justify-center">
+              <Segmented
+                value={cropShape}
+                onChange={(v) => {
+                  setCropShape(v as CropShape);
+                  setPath([]);
+                }}
+                options={[
+                  { label: <Space><BorderOutlined />{t('logo.shapeSquare') || '正方形'}</Space>, value: 'square' },
+                  { label: <Space><BorderOutlined style={{ borderRadius: '50%' }} />{t('logo.shapeCircle') || '圆形'}</Space>, value: 'circle' },
+                  { label: <Space><DragOutlined />{t('logo.shapeFree') || '自由'}</Space>, value: 'free' },
+                ]}
               />
             </div>
 
-            {/* 控制按钮 */}
-            <div className="flex items-center justify-center gap-2">
-              <Button icon={<ZoomOutOutlined />} onClick={handleZoomOut} disabled={zoom <= 1} />
-              <Slider
-                min={1}
-                max={3}
-                step={0.1}
-                value={zoom}
-                onChange={setZoom}
-                style={{ width: 150 }}
-                tooltip={{ formatter: (v) => `${Math.round((v || 1) * 100)}%` }}
-              />
-              <Button icon={<ZoomInOutlined />} onClick={handleZoomIn} disabled={zoom >= 3} />
-              <div className="mx-2 h-6 w-px bg-slate-300" />
-              <Button icon={<RotateLeftOutlined />} onClick={handleRotateLeft} />
-              <Button icon={<RotateRightOutlined />} onClick={handleRotateRight} />
+            <div className="flex justify-center">
+              {cropShape === 'free' && (
+                <div className="text-center text-sm text-slate-500 mb-2">
+                  {t('logo.freeDrawHint') || '拖动鼠标绘制任意形状'}
+                  <Button 
+                    icon={<UndoOutlined />} 
+                    size="small" 
+                    onClick={handleClearPath}
+                    className="ml-2"
+                  >
+                    {t('logo.clearPath') || '清除'}
+                  </Button>
+                </div>
+              )}
             </div>
 
-            {/* 提示文字 */}
-            <p className="text-center text-sm text-slate-500">
-              {t('logo.scrollToZoom') || 'Scroll to zoom, drag to move'}
-            </p>
+            <div className="relative w-full flex justify-center">
+              <img 
+                ref={imageRef}
+                src={imageSrc} 
+                alt="Preview" 
+                style={{ display: 'none' }}
+                onLoad={() => {
+                  const canvas = canvasRef.current;
+                  const image = imageRef.current;
+                  if (canvas && image) {
+                    canvas.width = image.width;
+                    canvas.height = image.height;
+                  }
+                }}
+              />
+              
+              <canvas
+                ref={canvasRef}
+                className={`cursor-${cropShape === 'free' ? 'crosshair' : 'default'}`}
+                onMouseDown={handleCanvasMouseDown}
+                onMouseMove={handleCanvasMouseMove}
+                onMouseUp={handleCanvasMouseUp}
+                onMouseLeave={handleCanvasMouseLeave}
+              />
+            </div>
 
-            {/* 操作按钮 */}
             <div className="flex justify-end gap-2 pt-2 border-t">
               <Button onClick={() => setModalOpen(false)}>
                 {t('common.cancel') || 'Cancel'}

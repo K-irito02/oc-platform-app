@@ -529,7 +529,7 @@ export default function ProductEdit() {
   const handleSave = async (values: ProductFormValues) => {
     // 验证状态转换
     const currentStatus = product?.status || 'DRAFT';
-    const publishError = validatePublishStatus(currentStatus, values.status, versions);
+    const publishError = validatePublishStatus(currentStatus, values.status || 'DRAFT', versions);
     if (publishError) {
       Modal.warning({
         title: t('productEdit.validation.title'),

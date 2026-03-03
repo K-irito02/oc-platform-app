@@ -193,59 +193,6 @@ const MarkdownRenderer = ({ content }: { content: string }) => {
   );
 };
 
-// Mock Data
-const MOCK_PRODUCT = {
-  id: 999,
-  name: 'Qt Creator Ultimate',
-  slug: 'qt-creator-ultimate',
-  description: `# Qt Creator Ultimate Edition
-
-The most powerful IDE for Qt development, enhanced with AI capabilities and advanced profiling tools.
-
-## Key Features
-
-- **Intelligent Code Completion**: Powered by latest LLMs to suggest code snippets.
-- **Real-time Profiling**: Analyze CPU and memory usage as you code.
-- **Cross-Platform Deployment**: One-click deploy to Windows, macOS, Linux, Android, and iOS.
-- **Integrated Design Tools**: Drag-and-drop UI builder with support for Qt Quick and Widgets.
-
-## What's New in v5.0
-
-> "This release changes everything we know about Qt development." - TechReview
-
-- Added support for Qt 6.8 LTS
-- New dark mode theme
-- Improved CMake integration
-- 50% faster indexing speed
-
-### System Requirements
-
-- OS: Windows 10/11, macOS 12+, Ubuntu 22.04+
-- RAM: 8GB (16GB recommended)
-- Disk: 2GB free space
-`,
-  iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/0/0b/Qt_logo_2016.svg',
-  categoryName: 'Development Tools',
-  license: 'GPLv3',
-  isFeatured: true,
-  downloadCount: 12580,
-  viewCount: 45020,
-  ratingAverage: 4.8,
-  homepageUrl: 'https://www.qt.io',
-  sourceUrl: 'https://github.com/qt/qt5',
-  username: 'QtCompany',
-  updatedAt: '2026-05-15T10:30:00',
-  tags: ['IDE', 'C++', 'QML', 'Cross-Platform'],
-};
-
-const MOCK_VERSIONS = [
-  { id: 1, versionNumber: 'v5.0.0', platform: 'Windows', fileSize: 450 * 1024 * 1024, isLatest: true, createdAt: '2026-05-15' },
-  { id: 2, versionNumber: 'v5.0.0', platform: 'macOS', fileSize: 480 * 1024 * 1024, isLatest: true, createdAt: '2026-05-15' },
-  { id: 3, versionNumber: 'v5.0.0', platform: 'Linux', fileSize: 420 * 1024 * 1024, isLatest: true, createdAt: '2026-05-15' },
-  { id: 4, versionNumber: 'v4.9.2', platform: 'Windows', fileSize: 440 * 1024 * 1024, isLatest: false, createdAt: '2026-04-01' },
-];
-
-
 // 扁平化所有回复（最多两级台阶：楼主一级，所有回复都在二级）
 const flattenReplies = (replies: CommentReply[], parentUsername: string): CommentReply[] => {
   const result: CommentReply[] = [];
@@ -449,13 +396,6 @@ export default function ProductDetail() {
   const [commentSortOrder, setCommentSortOrder] = useState<string>('desc');
   const [replyingTo, setReplyingTo] = useState<{ id: number; name: string } | null>(null);
 
-  const applyMockData = useCallback(() => {
-    setProduct(MOCK_PRODUCT);
-    setVersions(MOCK_VERSIONS);
-    setComments([]);
-    setCommentTotal(0);
-  }, []);
-
   const loadVersions = useCallback(async (productId: number) => {
     try {
       const res = await productApi.getVersions(productId) as ApiResponse<VersionItem[]>;
@@ -486,18 +426,11 @@ export default function ProductDetail() {
           loadVersions(res.data.id);
           loadComments(res.data.id, 1);
         }
-      } else {
-        if (slug === 'mock-product' || slug === 'qt-creator-ultimate') {
-           applyMockData();
-        }
       }
-    } catch {
-      console.log('API failed, using mock data');
-      applyMockData();
-    } finally { 
+    } catch { /* handled */ } finally { 
       setLoading(false); 
     }
-  }, [applyMockData, loadVersions, loadComments, slug]);
+  }, [loadVersions, loadComments, slug]);
 
   useEffect(() => { 
     if (slug) {
@@ -632,7 +565,7 @@ export default function ProductDetail() {
             <div className="flex-1 w-full">
               <div className="flex flex-wrap items-center gap-3 mb-4">
                 <h1 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white tracking-tight">{displayName}</h1>
-                {product.isFeatured && <Tag color="gold" className="px-2 py-1 text-xs font-semibold uppercase tracking-wider rounded-md border-none">Featured</Tag>}
+                {product.isFeatured && <Tag color="gold" className="px-2 py-1 text-xs font-semibold uppercase tracking-wider rounded-md border-none">{t('productDetail.featured')}</Tag>}
               </div>
               
               <p className="text-lg md:text-xl text-slate-600 dark:text-slate-300 mb-8 max-w-3xl leading-relaxed">

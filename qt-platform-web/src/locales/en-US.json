@@ -631,7 +631,18 @@
     "uploadFailed": "Logo upload failed",
     "editLogo": "Edit Site Logo",
     "currentLogo": "Current Logo",
-    "noLogo": "No logo set"
+    "noLogo": "No logo set",
+    "faviconTitle": "Browser Tab Icon",
+    "faviconHint": "Square images recommended, 64x64 or 128x128",
+    "faviconCropTitle": "Crop Browser Icon",
+    "faviconConfirmCrop": "Crop & Upload",
+    "faviconUploadSuccess": "Browser icon uploaded successfully",
+    "faviconUploadFailed": "Browser icon upload failed",
+    "faviconEdit": "Edit Browser Icon",
+    "faviconCurrent": "Current Icon",
+    "shapeSquare": "Square",
+    "shapeCircle": "Circle",
+    "shapeFree": "Free"
   },
   "avatar": {
     "change": "Change Avatar",

@@ -163,7 +163,7 @@ export default function Products() {
                       </div>
                     )}
                     {p.isFeatured && (
-                      <Tag color="gold" className="absolute top-2 right-2 m-0 border-none">Featured</Tag>
+                      <Tag color="gold" className="absolute top-2 right-2 m-0 border-none">{t('home.featured')}</Tag>
                     )}
                   </div>
                 }
