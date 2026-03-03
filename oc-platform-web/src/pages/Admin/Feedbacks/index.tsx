@@ -1,0 +1,316 @@
+import { useState, useEffect } from 'react';
+import { Table, Space, Tag, Button, Modal, Select, Card, Input } from 'antd';
+import { message } from '@/utils/antdUtils';
+import { adminApi } from '@/utils/api';
+import type { ColumnsType } from 'antd/es/table';
+import { useTranslation } from 'react-i18next';
+import { Check, X, Trash2, Search, Eye, EyeOff } from 'lucide-react';
+import dayjs from 'dayjs';
+
+interface FeedbackRecord {
+  id: number;
+  username?: string;
+  email?: string;
+  content: string;
+  parentId?: number;
+  likeCount?: number;
+  replyCount?: number;
+  isPublic?: boolean;
+  status: string;
+  createdAt: string;
+}
+
+interface ApiResponse<T> {
+  data: T;
+}
+
+interface PaginatedResponse<T> {
+  records: T[];
+  total: number;
+}
+
+export default function AdminFeedbacks() {
+  const { t } = useTranslation();
+  const [data, setData] = useState<FeedbackRecord[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string | undefined>();
+  const [keyword, setKeyword] = useState('');
+  const [searchType, setSearchType] = useState<'all' | 'feedbackId' | 'userId' | 'username' | 'email' | 'content' | 'parentId'>('all');
+
+  useEffect(() => { loadData(); }, [page, statusFilter]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      let searchKeyword: string | undefined;
+      if (keyword) {
+        if (searchType === 'all') {
+          searchKeyword = keyword;
+        } else {
+          searchKeyword = `${searchType}:${keyword}`;
+        }
+      }
+      const res = await adminApi.listFeedbacks({ page, size: 20, status: statusFilter, keyword: searchKeyword }) as ApiResponse<PaginatedResponse<FeedbackRecord>>;
+      setData(res.data?.records || []);
+      setTotal(res.data?.total || 0);
+    } catch (error: unknown) {
+      console.error('Failed to load feedbacks:', error);
+      const err = error as { response?: { data?: { message?: string } } };
+      message.error(err?.response?.data?.message || t('admin.operationFailed'));
+    } finally { 
+      setLoading(false); 
+    }
+  };
+
+  const handleSearch = () => {
+    setPage(1);
+    loadData();
+  };
+
+  const handleStatusChange = async (id: number, status: string) => {
+    try {
+      await adminApi.updateFeedbackStatus(id, status);
+      message.success(t('admin.operationSuccess'));
+      loadData();
+    } catch {
+      message.error(t('admin.operationFailed'));
+    }
+  };
+
+  const handleDelete = (id: number) => {
+    Modal.confirm({
+      title: t('admin.confirmDelete'),
+      content: t('admin.cannotUndo'),
+      onOk: async () => {
+        try {
+          await adminApi.deleteFeedback(id);
+          message.success(t('admin.deleteSuccess'));
+          loadData();
+        } catch {
+          message.error(t('admin.deleteFailed'));
+        }
+      }
+    });
+  };
+
+  const getStatusTag = (status: string) => {
+    const statusMap: Record<string, { color: string; text: string }> = {
+      PENDING: { color: 'orange', text: t('admin.pending') },
+      PUBLISHED: { color: 'green', text: t('admin.published') },
+      REJECTED: { color: 'red', text: t('admin.rejected') },
+      HIDDEN: { color: 'default', text: t('admin.hidden') },
+    };
+    const s = statusMap[status] || { color: 'default', text: status };
+    return <Tag color={s.color}>{s.text}</Tag>;
+  };
+
+  const columns: ColumnsType<FeedbackRecord> = [
+    { title: t('admin.id'), dataIndex: 'id', key: 'id', width: 80 },
+    { 
+      title: t('admin.username'), 
+      dataIndex: 'username', 
+      key: 'username',
+      width: 120,
+      render: (_, r) => r.username || t('feedback.anonymous')
+    },
+    { 
+      title: t('adminFeedback.email'), 
+      dataIndex: 'email', 
+      key: 'email',
+      width: 180,
+      ellipsis: true,
+      render: (email: string) => email || '-'
+    },
+    { 
+      title: t('admin.content'), 
+      dataIndex: 'content', 
+      key: 'content',
+      ellipsis: true,
+      render: (text: string) => (
+        <span className="text-slate-600 dark:text-slate-300" title={text}>
+          {text?.length > 50 ? text.substring(0, 50) + '...' : text}
+        </span>
+      )
+    },
+    { 
+      title: t('admin.parentId'), 
+      dataIndex: 'parentId', 
+      key: 'parentId',
+      width: 100,
+      render: (val) => val || '-'
+    },
+    { 
+      title: t('admin.likeCount'), 
+      dataIndex: 'likeCount', 
+      key: 'likeCount',
+      width: 80,
+      sorter: (a, b) => (a.likeCount || 0) - (b.likeCount || 0)
+    },
+    { 
+      title: t('admin.replyCount'), 
+      dataIndex: 'replyCount', 
+      key: 'replyCount',
+      width: 80,
+      sorter: (a, b) => (a.replyCount || 0) - (b.replyCount || 0)
+    },
+    {
+      title: t('adminFeedback.isPublic'),
+      dataIndex: 'isPublic',
+      key: 'isPublic',
+      width: 80,
+      render: (val) => val ? <Eye size={16} className="text-green-500" /> : <EyeOff size={16} className="text-slate-400" />
+    },
+    { 
+      title: t('admin.status'), 
+      dataIndex: 'status', 
+      key: 'status',
+      width: 100,
+      render: (status: string) => getStatusTag(status)
+    },
+    { 
+      title: t('admin.createdAt'), 
+      dataIndex: 'createdAt', 
+      key: 'createdAt',
+      width: 120,
+      render: (date: string) => dayjs(date).format('YYYY-MM-DD HH:mm')
+    },
+    {
+      title: t('admin.action'),
+      key: 'action',
+      width: 180,
+      fixed: 'right',
+      render: (_, record) => (
+        <Space size="small">
+          {record.status !== 'PUBLISHED' && (
+            <Button 
+              type="text" 
+              size="small" 
+              icon={<Check size={14} />}
+              className="text-green-600 hover:text-green-700"
+              onClick={() => handleStatusChange(record.id, 'PUBLISHED')}
+              title={t('admin.approve')}
+            />
+          )}
+          {record.status !== 'HIDDEN' && (
+            <Button 
+              type="text" 
+              size="small" 
+              icon={<EyeOff size={14} />}
+              className="text-orange-600 hover:text-orange-700"
+              onClick={() => handleStatusChange(record.id, 'HIDDEN')}
+              title={t('admin.hide')}
+            />
+          )}
+          {record.status !== 'REJECTED' && (
+            <Button 
+              type="text" 
+              size="small" 
+              icon={<X size={14} />}
+              className="text-red-600 hover:text-red-700"
+              onClick={() => handleStatusChange(record.id, 'REJECTED')}
+              title={t('admin.reject')}
+            />
+          )}
+          <Button 
+            type="text" 
+            size="small" 
+            danger 
+            icon={<Trash2 size={14} />}
+            onClick={() => handleDelete(record.id)}
+            title={t('admin.delete')}
+          />
+        </Space>
+      )
+    }
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t('adminFeedback.title')}</h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-1">{t('adminFeedback.desc')}</p>
+      </div>
+
+      {/* 筛选区 */}
+      <Card className="border-slate-200 dark:border-slate-800 dark:bg-slate-900 shadow-sm">
+        <div className="flex flex-wrap gap-4 items-center">
+          <div className="flex items-center gap-2">
+            <Select
+              value={searchType}
+              onChange={setSearchType}
+              className="w-32 h-10"
+              options={[
+                { value: 'all', label: t('admin.searchAll') },
+                { value: 'feedbackId', label: t('adminFeedback.feedbackId') },
+                { value: 'userId', label: t('admin.userId') },
+                { value: 'username', label: t('admin.username') },
+                { value: 'email', label: t('admin.email') },
+                { value: 'content', label: t('admin.content') },
+                { value: 'parentId', label: t('admin.parentId') },
+              ]}
+            />
+            <Input
+              placeholder={
+                searchType === 'all'
+                  ? t('adminFeedback.searchPlaceholder')
+                  : searchType === 'feedbackId'
+                    ? t('adminFeedback.searchFeedbackId')
+                    : searchType === 'userId'
+                      ? t('admin.searchUserId')
+                      : searchType === 'username'
+                        ? t('admin.searchUsername')
+                        : searchType === 'email'
+                          ? t('admin.searchEmail')
+                          : searchType === 'content'
+                            ? t('adminFeedback.searchContent')
+                            : t('adminFeedback.searchParentId')
+              }
+              allowClear
+              className="w-64 md:w-80 h-10"
+              value={keyword}
+              onChange={e => setKeyword(e.target.value)}
+              onPressEnter={handleSearch}
+              prefix={<Search size={14} className="text-slate-400 shrink-0" />}
+            />
+            <Button onClick={handleSearch}>{t('common.search')}</Button>
+          </div>
+          <Select
+            placeholder={t('admin.status')}
+            allowClear
+            value={statusFilter}
+            onChange={setStatusFilter}
+            className="w-36 h-9"
+            options={[
+              { value: 'PENDING', label: t('admin.pending') },
+              { value: 'PUBLISHED', label: t('admin.published') },
+              { value: 'REJECTED', label: t('admin.rejected') },
+              { value: 'HIDDEN', label: t('admin.hidden') },
+            ]}
+          />
+          <span className="text-sm text-slate-500">{t('admin.total')} {total} {t('admin.items')}</span>
+        </div>
+      </Card>
+
+      {/* 数据表格 */}
+      <Card className="border-slate-200 dark:border-slate-800 dark:bg-slate-900 shadow-sm" styles={{ body: { padding: 0 } }}>
+        <Table 
+          columns={columns} 
+          dataSource={data} 
+          rowKey="id" 
+          loading={loading}
+          scroll={{ x: 1200 }}
+          pagination={{
+            current: page,
+            total,
+            pageSize: 20,
+            onChange: setPage,
+            showSizeChanger: false,
+            showTotal: (totalCount) => `${totalCount} ${t('admin.items')}`
+          }}
+        />
+      </Card>
+    </div>
+  );
+}

@@ -570,10 +570,10 @@ SELECT r.id, p.id FROM roles r, permissions p
 WHERE r.code = 'USER' AND p.code IN ('PRODUCT:READ', 'COMMENT:CREATE');
 
 -- 超级管理员账号（密码: Admin@123456）
-INSERT INTO users (username, email, password_hash, nickname, status, email_verified) VALUES
-    ('admin', 'admin@qtplatform.com',
+INSERT INTO users (username, email, password_hash, status, email_verified) VALUES
+    ('admin', 'admin@ocplatform.com',
      '$2b$12$tH4WN5HN71TGIqpNy/MYj.1jC2UOCQEJcAWt1YNangzAD/xTjGR5K',
-     '超级管理员', 'ACTIVE', TRUE);
+     'ACTIVE', TRUE);
 
 INSERT INTO user_roles (user_id, role_id)
 SELECT u.id, r.id FROM users u, roles r

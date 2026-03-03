@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-primary: 37 99 235; /* blue-600 */
+    --color-secondary: 71 85 105; /* slate-600 */
+    --color-accent: 225 29 72; /* rose-600 */
+
+    /* Legacy Ink Theme Mappings (for compatibility) */
+    --ink-darkest: #0f172a; /* slate-900 */
+    --ink-dark: #334155; /* slate-700 */
+    --ink-medium: #64748b; /* slate-500 */
+    --ink-light: #94a3b8; /* slate-400 */
+    --ink-lighter: #cbd5e1; /* slate-300 */
+    --ink-lightest: #e2e8f0; /* slate-200 */
+    --paper-white: #ffffff;
+    --paper-warm: #f8fafc; /* slate-50 */
+    --paper-cream: #f1f5f9; /* slate-100 */
+    --cinnabar: #ef4444; /* red-500 */
+    --indigo: #3b82f6; /* blue-500 */
+    --celadon: #10b981; /* emerald-500 */
+    --gamboge: #f59e0b; /* amber-500 */
+    --font-serif: 'Inter', system-ui, sans-serif;
+  }
+
+  .dark {
+    --color-primary: 96 165 250; /* blue-400 */
+    --color-secondary: 148 163 184; /* slate-400 */
+    --color-accent: 251 113 133; /* rose-400 */
+
+    /* Legacy Ink Theme Mappings (Dark Mode) */
+    --ink-darkest: #f8fafc; /* slate-50 */
+    --ink-dark: #e2e8f0; /* slate-200 */
+    --ink-medium: #cbd5e1; /* slate-300 */
+    --ink-light: #94a3b8; /* slate-400 */
+    --ink-lighter: #64748b; /* slate-500 */
+    --ink-lightest: #334155; /* slate-700 */
+    --paper-white: #0f172a; /* slate-900 */
+    --paper-warm: #1e293b; /* slate-800 */
+    --paper-cream: #020617; /* slate-950 */
+  }
+
+  body {
+    @apply antialiased bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50 transition-colors duration-300;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-xl;
+  }
+  
+  .paper-card {
+    @apply bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800;
+  }
+}

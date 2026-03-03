@@ -7,8 +7,8 @@ services:
     container_name: qt-postgres
     restart: always
     environment:
-      POSTGRES_DB: ${DB_NAME:-qt_platform}
-      POSTGRES_USER: ${DB_USER:-qt_user}
+      POSTGRES_DB: ${DB_NAME:-oc_platform}
+      POSTGRES_USER: ${DB_USER:-oc_user}
       POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
     ports:
       - "${DB_PORT:-5432}:5432"
@@ -16,7 +16,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-qt_user}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-oc_user}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -43,7 +43,7 @@ services:
   backend:
     build:
       context: .
-      dockerfile: qt-platform-app/Dockerfile
+      dockerfile: oc-platform-app/Dockerfile
     container_name: qt-backend
     restart: always
     depends_on:
@@ -52,8 +52,8 @@ services:
       redis:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-qt_platform}
-      SPRING_DATASOURCE_USERNAME: ${DB_USER:-qt_user}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-oc_platform}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER:-oc_user}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
       SPRING_REDIS_HOST: redis
       SPRING_REDIS_PORT: 6379
@@ -80,7 +80,7 @@ services:
 
   frontend:
     build:
-      context: ./qt-platform-web
+      context: ./oc-platform-web
       dockerfile: Dockerfile
     container_name: qt-frontend
     restart: always

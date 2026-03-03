@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.OcPlatform</groupId>
+        <artifactId>oc-platform</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>oc-platform-product</artifactId>
+    <name>Qt Platform - Product</name>
+    <description>产品模块：产品管理、版本管理、分类、下载、更新检查</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.OcPlatform</groupId>
+            <artifactId>oc-platform-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.OcPlatform</groupId>
+            <artifactId>oc-platform-file</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+    </dependencies>
+</project>

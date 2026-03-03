@@ -18,13 +18,13 @@ jobs:
       postgres:
         image: postgres:15-alpine
         env:
-          POSTGRES_DB: qt_platform_test
-          POSTGRES_USER: qt_user
+          POSTGRES_DB: oc_platform_test
+          POSTGRES_USER: oc_user
           POSTGRES_PASSWORD: test_password
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U qt_user"
+          --health-cmd="pg_isready -U oc_user"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
@@ -51,8 +51,8 @@ jobs:
       - name: Build with Maven
         run: mvn clean package -B
         env:
-          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/qt_platform_test
-          SPRING_DATASOURCE_USERNAME: qt_user
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/oc_platform_test
+          SPRING_DATASOURCE_USERNAME: oc_user
           SPRING_DATASOURCE_PASSWORD: test_password
           SPRING_REDIS_HOST: localhost
           JWT_SECRET: ci-test-secret-key-must-be-at-least-64-characters-long-for-hmac-sha256
@@ -62,7 +62,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: backend-jar
-          path: qt-platform-app/target/*.jar
+          path: oc-platform-app/target/*.jar
           retention-days: 7
 
   # ===== Frontend Build & Test =====
@@ -70,7 +70,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: qt-platform-web
+        working-directory: oc-platform-web
 
     steps:
       - uses: actions/checkout@v4
@@ -80,7 +80,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-          cache-dependency-path: qt-platform-web/package-lock.json
+          cache-dependency-path: oc-platform-web/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -97,7 +97,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: frontend-dist
-          path: qt-platform-web/dist
+          path: oc-platform-web/dist
           retention-days: 7
 
   # ===== Docker Build (main branch only) =====
@@ -111,16 +111,16 @@ jobs:
 
       - name: Build backend Docker image
         run: |
-          docker build -f qt-platform-app/Dockerfile -t qt-platform-backend:${{ github.sha }} .
-          docker tag qt-platform-backend:${{ github.sha }} qt-platform-backend:latest
+          docker build -f oc-platform-app/Dockerfile -t oc-platform-backend:${{ github.sha }} .
+          docker tag oc-platform-backend:${{ github.sha }} oc-platform-backend:latest
 
       - name: Build frontend Docker image
         run: |
-          docker build -f qt-platform-web/Dockerfile -t qt-platform-frontend:${{ github.sha }} qt-platform-web/
-          docker tag qt-platform-frontend:${{ github.sha }} qt-platform-frontend:latest
+          docker build -f oc-platform-web/Dockerfile -t oc-platform-frontend:${{ github.sha }} oc-platform-web/
+          docker tag oc-platform-frontend:${{ github.sha }} oc-platform-frontend:latest
 
       - name: Docker images summary
         run: |
-          echo "Backend image: qt-platform-backend:${{ github.sha }}"
-          echo "Frontend image: qt-platform-frontend:${{ github.sha }}"
-          docker images | grep qt-platform
+          echo "Backend image: oc-platform-backend:${{ github.sha }}"
+          echo "Frontend image: oc-platform-frontend:${{ github.sha }}"
+          docker images | grep oc-platform

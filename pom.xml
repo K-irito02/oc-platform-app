@@ -11,21 +11,21 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.qtplatform</groupId>
-    <artifactId>qt-platform</artifactId>
+    <groupId>com.OcPlatform</groupId>
+    <artifactId>oc-platform</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Qt Platform</name>
     <description>Qt Product Release Platform - Phase One MVP</description>
 
     <modules>
-        <module>qt-platform-common</module>
-        <module>qt-platform-user</module>
-        <module>qt-platform-product</module>
-        <module>qt-platform-comment</module>
-        <module>qt-platform-file</module>
-        <module>qt-platform-admin</module>
-        <module>qt-platform-app</module>
+        <module>oc-platform-common</module>
+        <module>oc-platform-user</module>
+        <module>oc-platform-product</module>
+        <module>oc-platform-comment</module>
+        <module>oc-platform-file</module>
+        <module>oc-platform-admin</module>
+        <module>oc-platform-app</module>
     </modules>
 
     <properties>
@@ -49,33 +49,33 @@
         <dependencies>
             <!-- 内部模块 -->
             <dependency>
-                <groupId>com.qtplatform</groupId>
-                <artifactId>qt-platform-common</artifactId>
+                <groupId>com.OcPlatform</groupId>
+                <artifactId>oc-platform-common</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.qtplatform</groupId>
-                <artifactId>qt-platform-user</artifactId>
+                <groupId>com.OcPlatform</groupId>
+                <artifactId>oc-platform-user</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.qtplatform</groupId>
-                <artifactId>qt-platform-product</artifactId>
+                <groupId>com.OcPlatform</groupId>
+                <artifactId>oc-platform-product</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.qtplatform</groupId>
-                <artifactId>qt-platform-comment</artifactId>
+                <groupId>com.OcPlatform</groupId>
+                <artifactId>oc-platform-comment</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.qtplatform</groupId>
-                <artifactId>qt-platform-file</artifactId>
+                <groupId>com.OcPlatform</groupId>
+                <artifactId>oc-platform-file</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.qtplatform</groupId>
-                <artifactId>qt-platform-admin</artifactId>
+                <groupId>com.OcPlatform</groupId>
+                <artifactId>oc-platform-admin</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
