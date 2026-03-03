@@ -400,7 +400,13 @@
     "commentSortBy": "Comment Sort",
     "byCommentRating": "By Rating",
     "byLikes": "By Likes",
-    "byReplies": "By Replies"
+    "byReplies": "By Replies",
+    "submitForReview": "Submit for Review",
+    "launchNeedsPublishedVersion": "At least one published version is required to launch",
+    "approveNeedsPublishedVersion": "At least one published version is required to approve",
+    "resubmit": "Resubmit",
+    "archive": "Archive",
+    "republish": "Republish"
   },
   "adminFeedback": {
     "title": "Feedback Management",
@@ -531,6 +537,7 @@
     "publishedVersionRequired": "When product status is \"Published\", at least one version must be published",
     "atLeastOneVersionRequired": "Please add at least one version",
     "publishNeedsVersion": "Before publishing, please add and publish at least one version",
+    "pendingNeedsVersion": "Before submitting for review, please add at least one version",
     "pending": "Pending",
     "noVersionsYet": "No versions added yet. Click \"Add Version\" above to add one.",
     "fileName": "File Name",

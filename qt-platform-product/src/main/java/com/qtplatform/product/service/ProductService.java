@@ -171,9 +171,8 @@ public class ProductService {
             throw new BusinessException(ErrorCode.PRODUCT_NOT_FOUND);
         }
 
-        // 如果要将状态改为PUBLISHED，检查是否有已发布的版本
-        if ("PUBLISHED".equals(request.getStatus())) {
-            validatePublishStatus(id);
+        if (StringUtils.hasText(request.getStatus()) && !request.getStatus().equals(product.getStatus())) {
+            validateStatusTransition(product.getStatus(), request.getStatus(), id);
         }
 
         // 检查产品名称唯一性（更新时排除自己）
@@ -221,6 +220,9 @@ public class ProductService {
         if (product == null) {
             throw new BusinessException(ErrorCode.PRODUCT_NOT_FOUND);
         }
+        
+        validateStatusTransition(product.getStatus(), status, id);
+        
         product.setStatus(status);
         if ("PUBLISHED".equals(status) && product.getPublishedAt() == null) {
             product.setPublishedAt(OffsetDateTime.now());
@@ -234,12 +236,79 @@ public class ProductService {
     }
 
     /**
-     * 验证产品是否可以发布：必须有至少一个已发布的版本
+     * 验证状态转换是否合法
+     * 状态机规则：
+     * - DRAFT -> PENDING: 至少有一个版本
+     * - DRAFT -> PUBLISHED: 至少有一个已发布版本
+     * - PENDING -> PUBLISHED: 至少有一个已发布版本
+     * - PENDING -> REJECTED: 无条件
+     * - REJECTED -> PENDING: 无条件
+     * - PUBLISHED -> ARCHIVED: 无条件
+     * - ARCHIVED -> PUBLISHED: 至少有一个已发布版本
      */
-    private void validatePublishStatus(Long productId) {
+    private void validateStatusTransition(String currentStatus, String targetStatus, Long productId) {
+        if (currentStatus.equals(targetStatus)) {
+            return;
+        }
+        
+        long allVersionCount = versionMapper.countAllVersions(productId);
         long publishedVersionCount = versionMapper.countPublishedVersions(productId);
-        if (publishedVersionCount == 0) {
-            throw new BusinessException(ErrorCode.PARAM_INVALID, "发布产品前，请先发布至少一个版本");
+        
+        switch (currentStatus) {
+            case "DRAFT":
+                if ("PENDING".equals(targetStatus)) {
+                    if (allVersionCount == 0) {
+                        throw new BusinessException(ErrorCode.NO_VERSION, "提交审核前，请先添加至少一个版本");
+                    }
+                } else if ("PUBLISHED".equals(targetStatus)) {
+                    if (publishedVersionCount == 0) {
+                        throw new BusinessException(ErrorCode.NO_PUBLISHED_VERSION, "发布产品前，请先发布至少一个版本");
+                    }
+                } else if (!"ARCHIVED".equals(targetStatus)) {
+                    throw new BusinessException(ErrorCode.INVALID_STATUS_TRANSITION, 
+                            "产品状态不能从 " + currentStatus + " 转换为 " + targetStatus);
+                }
+                break;
+                
+            case "PENDING":
+                if ("PUBLISHED".equals(targetStatus)) {
+                    if (publishedVersionCount == 0) {
+                        throw new BusinessException(ErrorCode.NO_PUBLISHED_VERSION, "审核通过前，请先发布至少一个版本");
+                    }
+                } else if (!"REJECTED".equals(targetStatus) && !"DRAFT".equals(targetStatus)) {
+                    throw new BusinessException(ErrorCode.INVALID_STATUS_TRANSITION, 
+                            "产品状态不能从 " + currentStatus + " 转换为 " + targetStatus);
+                }
+                break;
+                
+            case "REJECTED":
+                if (!"PENDING".equals(targetStatus) && !"DRAFT".equals(targetStatus)) {
+                    throw new BusinessException(ErrorCode.INVALID_STATUS_TRANSITION, 
+                            "产品状态不能从 " + currentStatus + " 转换为 " + targetStatus);
+                }
+                break;
+                
+            case "PUBLISHED":
+                if (!"ARCHIVED".equals(targetStatus)) {
+                    throw new BusinessException(ErrorCode.INVALID_STATUS_TRANSITION, 
+                            "产品状态不能从 " + currentStatus + " 转换为 " + targetStatus);
+                }
+                break;
+                
+            case "ARCHIVED":
+                if ("PUBLISHED".equals(targetStatus)) {
+                    if (publishedVersionCount == 0) {
+                        throw new BusinessException(ErrorCode.NO_PUBLISHED_VERSION, "发布产品前，请先发布至少一个版本");
+                    }
+                } else if (!"DRAFT".equals(targetStatus)) {
+                    throw new BusinessException(ErrorCode.INVALID_STATUS_TRANSITION, 
+                            "产品状态不能从 " + currentStatus + " 转换为 " + targetStatus);
+                }
+                break;
+                
+            default:
+                throw new BusinessException(ErrorCode.INVALID_STATUS_TRANSITION, 
+                        "未知的产品状态: " + currentStatus);
         }
     }
 

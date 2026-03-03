@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Table, Space, Tag, Button, Modal, Select, Input, Card } from 'antd';
+import { Table, Space, Tag, Button, Modal, Select, Input, Card, Tooltip } from 'antd';
 import { message } from '@/utils/antdUtils';
 import { useTranslation } from 'react-i18next';
 import { adminApi, categoryApi, productApi } from '@/utils/api';
@@ -23,6 +23,11 @@ interface ProductOption {
   downloadCount: number;
   ratingAverage: number;
   ratingCount: number;
+}
+
+interface ProductVersion {
+  id: number;
+  status: string;
 }
 
 interface ProductRecord {
@@ -53,6 +58,11 @@ interface ProductListItem {
   ratingCount?: number;
 }
 
+interface VersionInfo {
+  allCount: number;
+  publishedCount: number;
+}
+
 export default function AdminProducts() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -62,6 +72,7 @@ export default function AdminProducts() {
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string | undefined>();
   const [keyword, setKeyword] = useState('');
+  const [versionInfoMap, setVersionInfoMap] = useState<Map<number, VersionInfo>>(new Map());
   
   // 多级筛选状态
   const [categories, setCategories] = useState<Category[]>([]);
@@ -144,7 +155,27 @@ export default function AdminProducts() {
       }
       setData(records);
       setTotal(productFilter ? records.length : res.data.total);
+      
+      // 加载版本信息
+      await loadVersionInfo(records);
     } catch { /* handled */ } finally { setLoading(false); }
+  };
+
+  const loadVersionInfo = async (products: ProductRecord[]) => {
+    const newVersionInfoMap = new Map<number, VersionInfo>();
+    await Promise.all(products.map(async (product) => {
+      try {
+        const res = await adminApi.getVersions(product.id) as ApiResponse<ProductVersion[]>;
+        const versions = res.data || [];
+        newVersionInfoMap.set(product.id, {
+          allCount: versions.length,
+          publishedCount: versions.filter(v => v.status === 'PUBLISHED').length,
+        });
+      } catch {
+        newVersionInfoMap.set(product.id, { allCount: 0, publishedCount: 0 });
+      }
+    }));
+    setVersionInfoMap(newVersionInfoMap);
   };
 
   const handleAudit = (id: number, status: string) => {
@@ -189,22 +220,54 @@ export default function AdminProducts() {
     { title: t('admin.rating'), dataIndex: 'ratingAverage', width: 80, render: (v: number) => v?.toFixed(1) || '-' },
     { title: t('admin.createdAt'), dataIndex: 'createdAt', width: 170, render: (v: string) => v?.substring(0, 19).replace('T', ' ') },
     {
-      title: t('admin.action'), width: 260, fixed: 'right',
-      render: (_, record) => (
-        <Space size="small">
-          <Button size="small" icon={<Edit size={14} />} onClick={() => navigate(`/admin/products/${record.id}/edit`)}>{t('admin.edit')}</Button>
-          {record.status === 'PENDING' && (
-            <>
-              <Button size="small" type="primary" onClick={() => handleAudit(record.id, 'PUBLISHED')}>{t('admin.approve')}</Button>
-              <Button size="small" danger onClick={() => handleAudit(record.id, 'REJECTED')}>{t('admin.reject')}</Button>
-            </>
-          )}
-          {record.status === 'DRAFT' && (
-            <Button size="small" type="primary" onClick={() => handleAudit(record.id, 'PUBLISHED')}>{t('admin.launch')}</Button>
-          )}
-          <Button size="small" danger onClick={() => handleDelete(record.id)}>{t('admin.delete')}</Button>
-        </Space>
-      ),
+      title: t('admin.action'), width: 320, fixed: 'right',
+      render: (_, record) => {
+        const versionInfo = versionInfoMap.get(record.id);
+        const hasVersions = versionInfo && versionInfo.allCount > 0;
+        const hasPublishedVersions = versionInfo && versionInfo.publishedCount > 0;
+        
+        return (
+          <Space size="small">
+            <Button size="small" icon={<Edit size={14} />} onClick={() => navigate(`/admin/products/${record.id}/edit`)}>{t('admin.edit')}</Button>
+            {record.status === 'DRAFT' && (
+              <>
+                {hasVersions && (
+                  <Button size="small" onClick={() => handleAudit(record.id, 'PENDING')}>{t('admin.submitForReview') || '提交审核'}</Button>
+                )}
+                {hasPublishedVersions ? (
+                  <Button size="small" type="primary" onClick={() => handleAudit(record.id, 'PUBLISHED')}>{t('admin.launch')}</Button>
+                ) : (
+                  <Tooltip title={t('admin.launchNeedsPublishedVersion') || '需要至少一个已发布的版本才能推出'}>
+                    <Button size="small" type="primary" disabled>{t('admin.launch')}</Button>
+                  </Tooltip>
+                )}
+              </>
+            )}
+            {record.status === 'PENDING' && (
+              <>
+                {hasPublishedVersions ? (
+                  <Button size="small" type="primary" onClick={() => handleAudit(record.id, 'PUBLISHED')}>{t('admin.approve')}</Button>
+                ) : (
+                  <Tooltip title={t('admin.approveNeedsPublishedVersion') || '需要至少一个已发布的版本才能通过审核'}>
+                    <Button size="small" type="primary" disabled>{t('admin.approve')}</Button>
+                  </Tooltip>
+                )}
+                <Button size="small" danger onClick={() => handleAudit(record.id, 'REJECTED')}>{t('admin.reject')}</Button>
+              </>
+            )}
+            {record.status === 'REJECTED' && (
+              <Button size="small" onClick={() => handleAudit(record.id, 'PENDING')}>{t('admin.resubmit') || '重新提交'}</Button>
+            )}
+            {record.status === 'PUBLISHED' && (
+              <Button size="small" onClick={() => handleAudit(record.id, 'ARCHIVED')}>{t('admin.archive') || '归档'}</Button>
+            )}
+            {record.status === 'ARCHIVED' && hasPublishedVersions && (
+              <Button size="small" type="primary" onClick={() => handleAudit(record.id, 'PUBLISHED')}>{t('admin.republish') || '重新发布'}</Button>
+            )}
+            <Button size="small" danger onClick={() => handleDelete(record.id)}>{t('admin.delete')}</Button>
+          </Space>
+        );
+      },
     },
   ];
 

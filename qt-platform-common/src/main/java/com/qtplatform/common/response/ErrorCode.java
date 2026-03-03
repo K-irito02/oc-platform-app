@@ -46,6 +46,9 @@ public enum ErrorCode {
     CATEGORY_HAS_PRODUCTS(40008, "该分类下有产品，无法删除"),
     CATEGORY_HAS_CHILDREN(40009, "该分类下有子分类，无法删除"),
     CONFLICT(40010, "资源冲突"),
+    INVALID_STATUS_TRANSITION(40011, "无效的状态转换"),
+    NO_PUBLISHED_VERSION(40012, "没有已发布的版本"),
+    NO_VERSION(40013, "没有添加任何版本"),
 
     // 文件错误 5xxxx
     FILE_NOT_FOUND(50001, "文件不存在"),

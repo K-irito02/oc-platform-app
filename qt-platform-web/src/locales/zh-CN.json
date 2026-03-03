@@ -401,7 +401,13 @@
     "byCommentRating": "按评分",
     "byLikes": "按点赞数",
     "byReplies": "按回复数",
-    "rateLimitExceeded": "评论发布过于频繁，请稍后再试"
+    "rateLimitExceeded": "评论发布过于频繁，请稍后再试",
+    "submitForReview": "提交审核",
+    "launchNeedsPublishedVersion": "需要至少一个已发布的版本才能推出",
+    "approveNeedsPublishedVersion": "需要至少一个已发布的版本才能通过审核",
+    "resubmit": "重新提交",
+    "archive": "归档",
+    "republish": "重新发布"
   },
   "adminFeedback": {
     "title": "留言管理",
@@ -532,6 +538,7 @@
     "publishedVersionRequired": "产品状态为\"发布\"时，需要至少有一个已发布的版本",
     "atLeastOneVersionRequired": "请至少添加一个版本",
     "publishNeedsVersion": "发布产品前，请先添加并发布至少一个版本",
+    "pendingNeedsVersion": "提交审核前，请先添加至少一个版本",
     "pending": "待创建",
     "noVersionsYet": "尚未添加版本，请点击上方\"添加版本\"按钮",
     "fileName": "文件名",

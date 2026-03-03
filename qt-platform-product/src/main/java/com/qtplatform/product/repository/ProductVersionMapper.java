@@ -36,4 +36,7 @@ public interface ProductVersionMapper extends BaseMapper<ProductVersion> {
 
     @Select("SELECT COUNT(*) FROM product_versions WHERE product_id = #{productId} AND status = 'PUBLISHED'")
     long countPublishedVersions(@Param("productId") Long productId);
+
+    @Select("SELECT COUNT(*) FROM product_versions WHERE product_id = #{productId}")
+    long countAllVersions(@Param("productId") Long productId);
 }
