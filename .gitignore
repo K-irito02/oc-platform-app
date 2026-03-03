@@ -41,25 +41,25 @@ desktop.ini
 .env.test
 
 # ===== Node.js (前端) =====
-qt-platform-web/node_modules/
-qt-platform-web/dist/
-qt-platform-web/.env.local
-qt-platform-web/.env.production
-qt-platform-web/.env.development
-qt-platform-web/.env.test
-qt-platform-web/npm-debug.log*
-qt-platform-web/yarn-debug.log*
-qt-platform-web/yarn-error.log*
-qt-platform-web/lerna-debug.log*
-qt-platform-web/.pnpm-debug.log*
-qt-platform-web/.yarn-integrity
+oc-platform-web/node_modules/
+oc-platform-web/dist/
+oc-platform-web/.env.local
+oc-platform-web/.env.production
+oc-platform-web/.env.development
+oc-platform-web/.env.test
+oc-platform-web/npm-debug.log*
+oc-platform-web/yarn-debug.log*
+oc-platform-web/yarn-error.log*
+oc-platform-web/lerna-debug.log*
+oc-platform-web/.pnpm-debug.log*
+oc-platform-web/.yarn-integrity
 
 # ===== 前端构建产物 =====
-qt-platform-web/coverage/
-qt-platform-web/.nyc_output/
-qt-platform-web/.cache/
-qt-platform-web/.temp/
-qt-platform-web/.vite/
+oc-platform-web/coverage/
+oc-platform-web/.nyc_output/
+oc-platform-web/.cache/
+oc-platform-web/.temp/
+oc-platform-web/.vite/
 
 # ===== Docker =====
 docker-compose.override.yml
@@ -69,6 +69,7 @@ docker-compose.override.yml
 logs/
 *.log
 nohup.out
+backend*.log
 
 # ===== 上传文件 =====
 uploads/
@@ -115,6 +116,13 @@ Front-end testing/
 *.pptx
 *.mp4
 *.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+*.webp
+*.svg
+*.ico
 
 # ===== AI/IDE 相关 =====
 .trae/
@@ -141,12 +149,6 @@ temp/
 # 缓存
 .cache/
 .cache-loader/
-
-# 编辑器配置
-.editorconfig
-
-# Lerna
-lerna-debug.log*
 
 # ===== 开发工具 =====
 .sonar/
