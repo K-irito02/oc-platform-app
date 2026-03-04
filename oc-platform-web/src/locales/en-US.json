@@ -429,7 +429,14 @@
     "approveNeedsPublishedVersion": "At least one published version is required to approve",
     "resubmit": "Resubmit",
     "archive": "Archive",
-    "republish": "Republish"
+    "republish": "Republish",
+    "featured": "Featured",
+    "setFeatured": "Set as Featured",
+    "removeFeatured": "Remove Featured",
+    "yes": "Yes",
+    "no": "No",
+    "productId": "Product ID",
+    "productName": "Product Name"
   },
   "adminFeedback": {
     "title": "Feedback Management",
@@ -561,6 +568,7 @@
     "atLeastOneVersionRequired": "Please add at least one version",
     "publishNeedsVersion": "Before publishing, please add and publish at least one version",
     "pendingNeedsVersion": "Before submitting for review, please add at least one version",
+    "featuredTooltip": "Featured products will be displayed in the homepage recommendation section",
     "pending": "Pending",
     "noVersionsYet": "No versions added yet. Click \"Add Version\" above to add one.",
     "fileName": "File Name",
