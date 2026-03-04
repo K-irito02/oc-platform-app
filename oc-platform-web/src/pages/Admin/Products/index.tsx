@@ -5,7 +5,7 @@ import { message } from '@/utils/antdUtils';
 import { useTranslation } from 'react-i18next';
 import { adminApi, categoryApi, productApi } from '@/utils/api';
 import type { ColumnsType } from 'antd/es/table';
-import { Search, Plus, Edit, Filter } from 'lucide-react';
+import { Search, Plus, Edit, Filter, Star, StarOff } from 'lucide-react';
 
 const statusColors: Record<string, string> = {
   DRAFT: 'default', PENDING: 'orange', PUBLISHED: 'green', REJECTED: 'red', ARCHIVED: 'gray',
@@ -39,6 +39,7 @@ interface ProductRecord {
   downloadCount: number;
   ratingAverage?: number;
   createdAt: string;
+  isFeatured?: boolean;
 }
 
 interface ApiResponse<T> {
@@ -74,6 +75,10 @@ export default function AdminProducts() {
   const [keyword, setKeyword] = useState('');
   const [versionInfoMap, setVersionInfoMap] = useState<Map<number, VersionInfo>>(new Map());
   
+  // 搜索字段选择和精选筛选
+  const [searchField, setSearchField] = useState<string>('all');
+  const [featuredFilter, setFeaturedFilter] = useState<boolean | undefined>();
+  
   // 多级筛选状态
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoryFilter, setCategoryFilter] = useState<number | undefined>();
@@ -94,7 +99,7 @@ export default function AdminProducts() {
     }
   }, [categoryFilter]);
 
-  useEffect(() => { loadData(); }, [page, statusFilter, categoryFilter, productFilter, sortBy]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { loadData(); }, [page, statusFilter, categoryFilter, productFilter, sortBy, featuredFilter]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadCategories = async () => {
     try {
@@ -145,7 +150,11 @@ export default function AdminProducts() {
       const params: Record<string, unknown> = { page, size: 20 };
       if (statusFilter) params.status = statusFilter;
       if (categoryFilter) params.categoryId = categoryFilter;
-      if (keyword) params.keyword = keyword;
+      if (keyword) {
+        params.keyword = keyword;
+        if (searchField !== 'all') params.searchField = searchField;
+      }
+      if (featuredFilter !== undefined) params.isFeatured = featuredFilter;
       // 如果选择了特定产品，只显示该产品
       // 注意：后端目前不支持单个产品筛选，这里通过前端过滤
       const res = await adminApi.listProducts(params) as ApiResponse<PaginatedResponse<ProductRecord>>;
@@ -207,11 +216,27 @@ export default function AdminProducts() {
     });
   };
 
+  const handleToggleFeatured = async (id: number, currentFeatured: boolean) => {
+    try {
+      await adminApi.updateProduct(id, { isFeatured: !currentFeatured });
+      message.success(currentFeatured ? t('admin.removeFeatured') : t('admin.setFeatured'));
+      loadData();
+    } catch { /* handled */ }
+  };
+
   const columns: ColumnsType<ProductRecord> = [
     { title: t('admin.id'), dataIndex: 'id', width: 60 },
     { title: t('admin.name'), dataIndex: 'name', ellipsis: true },
     { title: t('admin.slug'), dataIndex: 'slug', ellipsis: true, width: 140 },
     { title: t('admin.category'), dataIndex: 'categoryName', width: 120 },
+    {
+      title: t('admin.featured'), dataIndex: 'isFeatured', width: 80,
+      render: (v: boolean) => v ? (
+        <Tag color="gold" icon={<Star size={12} className="inline mr-1" />}>{t('admin.yes')}</Tag>
+      ) : (
+        <Tag color="default">{t('admin.no')}</Tag>
+      ),
+    },
     {
       title: t('admin.status'), dataIndex: 'status', width: 100,
       render: (s: string) => <Tag color={statusColors[s] || 'default'}>{s}</Tag>,
@@ -220,7 +245,7 @@ export default function AdminProducts() {
     { title: t('admin.rating'), dataIndex: 'ratingAverage', width: 80, render: (v: number) => v?.toFixed(1) || '-' },
     { title: t('admin.createdAt'), dataIndex: 'createdAt', width: 170, render: (v: string) => v?.substring(0, 19).replace('T', ' ') },
     {
-      title: t('admin.action'), width: 320, fixed: 'right',
+      title: t('admin.action'), width: 380, fixed: 'right',
       render: (_, record) => {
         const versionInfo = versionInfoMap.get(record.id);
         const hasVersions = versionInfo && versionInfo.allCount > 0;
@@ -229,6 +254,13 @@ export default function AdminProducts() {
         return (
           <Space size="small">
             <Button size="small" icon={<Edit size={14} />} onClick={() => navigate(`/admin/products/${record.id}/edit`)}>{t('admin.edit')}</Button>
+            <Tooltip title={record.isFeatured ? t('admin.removeFeatured') : t('admin.setFeatured')}>
+              <Button 
+                size="small" 
+                icon={record.isFeatured ? <StarOff size={14} /> : <Star size={14} />}
+                onClick={() => handleToggleFeatured(record.id, record.isFeatured || false)}
+              />
+            </Tooltip>
             {record.status === 'DRAFT' && (
               <>
                 {hasVersions && (
@@ -278,25 +310,9 @@ export default function AdminProducts() {
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t('admin.products')}</h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm">{t('admin.manageProducts')}</p>
         </div>
-        <div className="flex items-center gap-3">
-          <Button type="primary" icon={<Plus size={16} />} className="h-9" onClick={() => navigate('/admin/products/new')}>
-            {t('admin.newProduct')}
-          </Button>
-          <Input 
-            prefix={<Search size={14} className="text-slate-400 shrink-0" />}
-            placeholder={t('admin.searchProduct')}
-            allowClear 
-            className="w-64 md:w-80 h-10"
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            onPressEnter={(e) => { 
-              const value = e.currentTarget.value;
-              setKeyword(value);
-              setPage(1); 
-              loadData(); 
-            }} 
-          />
-        </div>
+        <Button type="primary" icon={<Plus size={16} />} className="h-9" onClick={() => navigate('/admin/products/new')}>
+          {t('admin.newProduct')}
+        </Button>
       </div>
 
       {/* 多级筛选区域 */}
@@ -365,14 +381,63 @@ export default function AdminProducts() {
             ]} 
           />
           
+          {/* 精选筛选 */}
+          <Select 
+            placeholder={t('admin.featured') || 'Featured'} 
+            allowClear 
+            className="w-28"
+            value={featuredFilter}
+            onChange={(v) => { setFeaturedFilter(v); setPage(1); }}
+            options={[
+              { value: true, label: t('admin.yes') || 'Yes' },
+              { value: false, label: t('admin.no') || 'No' },
+            ]} 
+          />
+          
+          <div className="border-l border-slate-300 dark:border-slate-600 h-6 mx-1" />
+          
+          {/* 搜索属性选择 */}
+          <Select
+            className="w-28"
+            value={searchField}
+            onChange={(v) => setSearchField(v)}
+            options={[
+              { value: 'all', label: t('admin.searchAll') || 'All' },
+              { value: 'id', label: t('admin.productId') || 'Product ID' },
+              { value: 'name', label: t('admin.productName') || 'Name' },
+              { value: 'slug', label: t('admin.slug') || 'Slug' },
+            ]}
+          />
+          
+          {/* 搜索框 */}
+          <Input 
+            prefix={<Search size={14} className="text-slate-400 shrink-0" />}
+            placeholder={t('admin.searchProduct')}
+            allowClear 
+            className="w-48 md:w-64 h-8"
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            onPressEnter={() => { 
+              setPage(1); 
+              loadData(); 
+            }} 
+          />
+          
+          <Button type="primary" size="small" onClick={() => { setPage(1); loadData(); }}>
+            {t('common.search') || 'Search'}
+          </Button>
+          
           {/* 清除筛选 */}
-          {(categoryFilter || statusFilter || productFilter) && (
+          {(categoryFilter || statusFilter || productFilter || featuredFilter !== undefined || keyword) && (
             <Button 
               size="small" 
               onClick={() => {
                 setCategoryFilter(undefined);
                 setProductFilter(undefined);
                 setStatusFilter(undefined);
+                setFeaturedFilter(undefined);
+                setSearchField('all');
+                setKeyword('');
                 setSortBy('downloads');
                 setPage(1);
               }}

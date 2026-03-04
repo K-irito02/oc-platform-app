@@ -24,6 +24,9 @@ public interface ProductCommentMapper extends BaseMapper<ProductComment> {
     @Select("SELECT COUNT(*) FROM product_comments WHERE product_id = #{productId} AND rating IS NOT NULL AND status = 'PUBLISHED' AND parent_id IS NULL")
     int getRatingCount(@Param("productId") Long productId);
 
+    @Select("SELECT rating, COUNT(*) as count FROM product_comments WHERE product_id = #{productId} AND rating IS NOT NULL AND status = 'PUBLISHED' AND parent_id IS NULL GROUP BY rating ORDER BY rating DESC")
+    List<java.util.Map<String, Object>> getRatingDistribution(@Param("productId") Long productId);
+
     @Select("SELECT username FROM users WHERE id = #{userId,jdbcType=BIGINT}")
     String getUsernameById(@Param("userId") Long userId);
 
@@ -33,8 +36,14 @@ public interface ProductCommentMapper extends BaseMapper<ProductComment> {
     @Update("UPDATE product_comments SET reply_count = COALESCE(reply_count, 0) + 1 WHERE id = #{commentId}")
     void incrementReplyCount(@Param("commentId") Long commentId);
 
+    @Update("UPDATE product_comments SET reply_count = GREATEST(COALESCE(reply_count, 0) - 1, 0) WHERE id = #{commentId}")
+    void decrementReplyCount(@Param("commentId") Long commentId);
+
     @Select("SELECT email FROM users WHERE id = #{userId,jdbcType=BIGINT}")
     String getEmailById(@Param("userId") Long userId);
+
+    @Update("UPDATE products SET rating_average = #{avg}, rating_count = #{count}, rating_distribution = #{distribution}::jsonb WHERE id = #{productId}")
+    void updateProductRatingStats(@Param("productId") Long productId, @Param("avg") double avg, @Param("count") int count, @Param("distribution") String distribution);
 
     @Select("<script>" +
             "SELECT c.* FROM product_comments c " +

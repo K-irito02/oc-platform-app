@@ -2,6 +2,7 @@ package com.ocplatform.common.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import com.ocplatform.common.handler.InetTypeHandler;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -28,6 +29,8 @@ public class AuditLog {
     @TableField(typeHandler = JacksonTypeHandler.class)
     private Map<String, Object> detail;
 
+    @TableField(typeHandler = InetTypeHandler.class)
     private String ipAddress;
+    
     private OffsetDateTime createdAt;
 }

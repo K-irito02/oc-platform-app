@@ -2,6 +2,8 @@ package com.ocplatform.comment.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ocplatform.comment.dto.CommentVO;
 import com.ocplatform.comment.dto.CreateCommentRequest;
 import com.ocplatform.comment.entity.CommentLike;
@@ -17,8 +19,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -28,6 +34,7 @@ public class CommentService {
 
     private final ProductCommentMapper commentMapper;
     private final CommentLikeMapper commentLikeMapper;
+    private final ObjectMapper objectMapper;
 
     public PageResponse<CommentVO> getProductComments(Long productId, int page, int size, Long currentUserId,
                                                       String sortBy, String sortOrder) {
@@ -116,6 +123,10 @@ public class CommentService {
             commentMapper.incrementReplyCount(request.getParentId());
         }
 
+        if (request.getRating() != null && request.getParentId() == null && "PUBLISHED".equals(status)) {
+            updateProductRatingStats(productId);
+        }
+
         log.info("Comment created: id={}, product={}, user={}, admin={}, rating={}", 
                 comment.getId(), productId, userId, isAdmin, comment.getRating());
         return toVO(comment, false);
@@ -144,7 +155,21 @@ public class CommentService {
         if (!isAdmin && !comment.getUserId().equals(userId)) {
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
         }
+        
+        Long productId = comment.getProductId();
+        Integer rating = comment.getRating();
+        Long parentId = comment.getParentId();
+        boolean wasPublished = "PUBLISHED".equals(comment.getStatus());
+        
         commentMapper.deleteById(commentId);
+        
+        if (parentId != null) {
+            commentMapper.decrementReplyCount(parentId);
+        }
+        
+        if (rating != null && parentId == null && wasPublished) {
+            updateProductRatingStats(productId);
+        }
     }
 
     @Transactional
@@ -172,8 +197,22 @@ public class CommentService {
         if (comment == null) {
             throw new BusinessException(ErrorCode.COMMENT_NOT_FOUND);
         }
+        String oldStatus = comment.getStatus();
         comment.setStatus(status);
         commentMapper.updateById(comment);
+        
+        if (comment.getRating() != null && comment.getParentId() == null) {
+            boolean shouldUpdateStats = false;
+            if ("PUBLISHED".equals(status) && !"PUBLISHED".equals(oldStatus)) {
+                shouldUpdateStats = true;
+            } else if (!"PUBLISHED".equals(status) && "PUBLISHED".equals(oldStatus)) {
+                shouldUpdateStats = true;
+            }
+            if (shouldUpdateStats) {
+                updateProductRatingStats(comment.getProductId());
+            }
+        }
+        
         log.info("Comment audited: id={}, status={}", commentId, status);
     }
 
@@ -276,5 +315,34 @@ public class CommentService {
                 .createdAt(c.getCreatedAt())
                 .updatedAt(c.getUpdatedAt())
                 .build();
+    }
+
+    private void updateProductRatingStats(Long productId) {
+        Double avgRating = commentMapper.getAverageRating(productId);
+        int totalCount = commentMapper.getRatingCount(productId);
+        List<Map<String, Object>> distributionList = commentMapper.getRatingDistribution(productId);
+
+        Map<Integer, Integer> distribution = new HashMap<>();
+        for (int i = 1; i <= 5; i++) {
+            distribution.put(i, 0);
+        }
+        for (Map<String, Object> item : distributionList) {
+            Integer rating = (Integer) item.get("rating");
+            Long count = (Long) item.get("count");
+            distribution.put(rating, count.intValue());
+        }
+
+        String distributionJson;
+        try {
+            distributionJson = objectMapper.writeValueAsString(distribution);
+        } catch (JsonProcessingException e) {
+            log.error("Failed to serialize rating distribution", e);
+            distributionJson = "{\"1\":0,\"2\":0,\"3\":0,\"4\":0,\"5\":0}";
+        }
+
+        double avg = avgRating != null ? BigDecimal.valueOf(avgRating).setScale(1, RoundingMode.HALF_UP).doubleValue() : 0.0;
+        commentMapper.updateProductRatingStats(productId, avg, totalCount, distributionJson);
+
+        log.info("Product rating stats updated from comments: productId={}, avg={}, count={}", productId, avg, totalCount);
     }
 }

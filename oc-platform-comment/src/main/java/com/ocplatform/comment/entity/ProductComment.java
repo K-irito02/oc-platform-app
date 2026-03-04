@@ -1,6 +1,7 @@
 package com.ocplatform.comment.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.ocplatform.common.handler.InetTypeHandler;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,7 +13,7 @@ import java.time.OffsetDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("product_comments")
+@TableName(value = "product_comments", autoResultMap = true)
 public class ProductComment {
 
     @TableId(type = IdType.AUTO)
@@ -26,7 +27,10 @@ public class ProductComment {
     private String status;
     private Integer likeCount;
     private Integer replyCount;
+    
+    @TableField(typeHandler = InetTypeHandler.class)
     private String ipAddress;
+    
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
 }
