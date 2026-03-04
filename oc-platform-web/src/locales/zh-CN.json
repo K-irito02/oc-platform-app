@@ -433,7 +433,9 @@
     "hidden": "已隐藏",
     "draft": "草稿",
     "archived": "已归档",
-    "id": "ID"
+    "id": "ID",
+    "superAdminProtected": "超级管理员受保护",
+    "cannotModifySuperAdmin": "超级管理员账号不能被锁定或禁用"
   },
   "adminFeedback": {
     "title": "留言管理",

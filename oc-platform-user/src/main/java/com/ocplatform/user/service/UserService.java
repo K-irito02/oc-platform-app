@@ -163,6 +163,13 @@ public class UserService {
         if (user == null) {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
+        
+        List<String> roles = roleMapper.findRolesByUserId(userId).stream()
+                .map(Role::getCode).collect(Collectors.toList());
+        if (roles.contains("SUPER_ADMIN") && ("LOCKED".equals(status) || "BANNED".equals(status))) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED, "超级管理员账号不能被锁定或禁用");
+        }
+        
         user.setStatus(status);
         userMapper.updateById(user);
         log.info("User {} status changed to {}", userId, status);

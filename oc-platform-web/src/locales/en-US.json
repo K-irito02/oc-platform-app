@@ -436,7 +436,9 @@
     "yes": "Yes",
     "no": "No",
     "productId": "Product ID",
-    "productName": "Product Name"
+    "productName": "Product Name",
+    "superAdminProtected": "Super Admin Protected",
+    "cannotModifySuperAdmin": "Super admin account cannot be locked or banned"
   },
   "adminFeedback": {
     "title": "Feedback Management",

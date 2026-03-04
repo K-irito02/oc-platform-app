@@ -103,25 +103,33 @@ export default function AdminUsers() {
     { title: t('admin.joinedAt'), dataIndex: 'createdAt', width: 180, render: (v: string) => v?.substring(0, 19).replace('T', ' ') },
     {
       title: t('admin.action'), width: 180, fixed: 'right',
-      render: (_, record) => (
-        <Space>
-          {record.status === 'ACTIVE' && (
-            <>
-              <Button size="small" onClick={() => handleStatusChange(record.id, 'LOCKED')}>{t('admin.lock')}</Button>
-              <Button size="small" danger onClick={() => handleStatusChange(record.id, 'BANNED')}>{t('admin.ban')}</Button>
-            </>
-          )}
-          {record.status === 'LOCKED' && (
-            <>
-              <Button size="small" type="primary" onClick={() => handleStatusChange(record.id, 'ACTIVE')}>{t('admin.unlock')}</Button>
-              <Button size="small" danger onClick={() => handleStatusChange(record.id, 'BANNED')}>{t('admin.ban')}</Button>
-            </>
-          )}
-          {record.status === 'BANNED' && (
-            <Button size="small" type="primary" onClick={() => handleStatusChange(record.id, 'ACTIVE')}>{t('admin.activate')}</Button>
-          )}
-        </Space>
-      ),
+      render: (_, record) => {
+        const isSuperAdmin = record.roles?.includes('SUPER_ADMIN');
+        
+        if (isSuperAdmin) {
+          return <span className="text-slate-400 text-sm">{t('admin.superAdminProtected')}</span>;
+        }
+        
+        return (
+          <Space>
+            {record.status === 'ACTIVE' && (
+              <>
+                <Button size="small" onClick={() => handleStatusChange(record.id, 'LOCKED')}>{t('admin.lock')}</Button>
+                <Button size="small" danger onClick={() => handleStatusChange(record.id, 'BANNED')}>{t('admin.ban')}</Button>
+              </>
+            )}
+            {record.status === 'LOCKED' && (
+              <>
+                <Button size="small" type="primary" onClick={() => handleStatusChange(record.id, 'ACTIVE')}>{t('admin.unlock')}</Button>
+                <Button size="small" danger onClick={() => handleStatusChange(record.id, 'BANNED')}>{t('admin.ban')}</Button>
+              </>
+            )}
+            {record.status === 'BANNED' && (
+              <Button size="small" type="primary" onClick={() => handleStatusChange(record.id, 'ACTIVE')}>{t('admin.activate')}</Button>
+            )}
+          </Space>
+        );
+      },
     },
   ];
 
