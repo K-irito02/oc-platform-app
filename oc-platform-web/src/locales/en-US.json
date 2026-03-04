@@ -148,7 +148,9 @@
     "stepSetPassword": "Set New Password",
     "backToLogin": "Back to Login",
     "registerSuccess": "Registration successful, please login",
-    "registerFailed": "Registration failed, please try again"
+    "registerFailed": "Registration failed, please try again",
+    "userNotRegistered": "This account is not registered, please register first",
+    "loginFailed": "Invalid email or password"
   },
   "product": {
     "allProducts": "All Products",
@@ -225,6 +227,7 @@
     "collapseReplies": "Collapse all replies",
     "remaining": "remaining",
     "commentSubmitted": "Comment submitted, pending review",
+    "commentSuccess": "Comment submitted successfully",
     "commentFailed": "Comment submission failed, please try again"
   },
   "rating": {

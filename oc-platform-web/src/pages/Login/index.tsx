@@ -50,8 +50,15 @@ export default function Login() {
       }));
       message.success(t('auth.loginSuccess') || '登录成功');
       navigate('/');
-    } catch {
-      // Error handled by interceptor
+    } catch (error) {
+      const err = error as Error & { code?: number };
+      const errorCode = err.code;
+      
+      if (errorCode === 20009) {
+        message.error(t('auth.userNotRegistered') || '该账号未注册，请先注册');
+      } else if (errorCode === 20003) {
+        message.error(t('auth.loginFailed') || '用户名或密码错误');
+      }
     } finally {
       setLoading(false);
     }

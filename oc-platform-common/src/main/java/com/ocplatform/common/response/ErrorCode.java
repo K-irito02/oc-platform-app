@@ -19,6 +19,7 @@ public enum ErrorCode {
     UNAUTHORIZED(20001, "未登录或 Token 已过期"),
     ACCESS_DENIED(20002, "权限不足"),
     LOGIN_FAILED(20003, "用户名或密码错误"),
+    USER_NOT_REGISTERED(20009, "该账号未注册，请先注册"),
     ACCOUNT_DISABLED(20004, "账号已被禁用"),
     ACCOUNT_LOCKED(20005, "账号已被锁定"),
     TOKEN_EXPIRED(20006, "Token 已过期"),

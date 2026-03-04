@@ -35,7 +35,10 @@ request.interceptors.response.use(
       if (!silentError) {
         message.error(data.message || '请求失败');
       }
-      return Promise.reject(new Error(data.message));
+      const error = new Error(data.message) as Error & { code?: number; response?: typeof response };
+      error.code = data.code;
+      error.response = response;
+      return Promise.reject(error);
     }
     return data;
   },

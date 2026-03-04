@@ -3,7 +3,9 @@ import request from './request';
 // ===== Auth API =====
 export const authApi = {
   login: (data: { email: string; password: string }) =>
-    request.post('/auth/login', data),
+    request.post('/auth/login', data, {
+      headers: { 'X-Silent-Error': 'true' }
+    }),
   register: (data: { username: string; email: string; password: string; verificationCode: string }) =>
     request.post('/auth/register', data),
   logout: () => request.post('/auth/logout'),

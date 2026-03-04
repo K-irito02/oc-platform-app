@@ -148,7 +148,9 @@
     "stepSetPassword": "设置新密码",
     "backToLogin": "返回登录",
     "registerSuccess": "注册成功，请登录",
-    "registerFailed": "注册失败，请重试"
+    "registerFailed": "注册失败，请重试",
+    "userNotRegistered": "该账号未注册，请先注册",
+    "loginFailed": "用户名或密码错误"
   },
   "product": {
     "allProducts": "全部产品",
@@ -225,6 +227,7 @@
     "collapseReplies": "收起全部回复",
     "remaining": "条剩余",
     "commentSubmitted": "评论已提交，等待审核",
+    "commentSuccess": "评论提交成功",
     "commentFailed": "评论提交失败，请重试"
   },
   "rating": {

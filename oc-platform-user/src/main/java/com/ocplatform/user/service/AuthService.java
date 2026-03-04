@@ -86,7 +86,7 @@ public class AuthService {
         }
 
         User user = userMapper.findByEmail(request.getEmail())
-                .orElseThrow(() -> new BusinessException(ErrorCode.LOGIN_FAILED));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_REGISTERED));
 
         if ("BANNED".equals(user.getStatus())) {
             throw new BusinessException(ErrorCode.ACCOUNT_DISABLED);
