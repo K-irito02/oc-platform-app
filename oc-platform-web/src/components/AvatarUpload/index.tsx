@@ -149,7 +149,7 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({ currentAvatar, onUpl
       </div>
 
       <Modal
-        title={<span><ScissorOutlined /> {t('avatar.cropTitle') || '裁剪头像'}</span>}
+        title={<span className="text-slate-900 dark:text-white"><ScissorOutlined /> {t('avatar.cropTitle') || '裁剪头像'}</span>}
         open={cropModalOpen}
         onCancel={() => setCropModalOpen(false)}
         width={480}

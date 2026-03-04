@@ -542,23 +542,29 @@ export default function ProductDetail() {
       if (replyingTo) {
         payload.parentId = replyingTo.id;
       }
-      await commentApi.create(product.id, payload);
-      message.success(t('productDetail.commentSubmitted'));
+      const response = await commentApi.create(product.id, payload);
+      const commentStatus = response?.data?.status;
+      if (commentStatus === 'PUBLISHED') {
+        message.success(t('productDetail.commentSuccess'));
+      } else {
+        message.success(t('productDetail.commentSubmitted'));
+      }
       form.resetFields();
       setReplyingTo(null);
       loadComments(product.id, 1);
+      if (values.rating && !replyingTo) {
+        loadRatingStats(product.id);
+      }
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } }; message?: string };
       const errorMsg = err.response?.data?.message || err.message || '';
       if (errorMsg.includes('频繁') || errorMsg.includes('rate') || errorMsg.includes('RATE_LIMIT')) {
         message.error(t('productDetail.rateLimitExceeded'));
       } else if (errorMsg) {
-        // 显示后端返回的具体错误信息
         message.error(errorMsg);
       } else {
         message.error(t('productDetail.commentFailed'));
       }
-      // 不要在失败时添加评论到列表
     } finally { setSubmitting(false); }
   };
 
@@ -852,7 +858,7 @@ export default function ProductDetail() {
 
           {/* Sidebar Column */}
           <div className="space-y-8">
-            <Card title={t('rating.title')} variant="borderless" className="shadow-sm dark:bg-slate-900 dark:border-slate-800">
+            <Card title={<span className="text-slate-900 dark:text-white">{t('rating.title')}</span>} variant="borderless" className="shadow-sm dark:bg-slate-900 dark:border-slate-800">
               {ratingStats ? (
                 <div className="space-y-4">
                   <RatingStats
@@ -886,7 +892,7 @@ export default function ProductDetail() {
                 </div>
               )}
             </Card>
-            <Card title={t('productDetail.information')} variant="borderless" className="shadow-sm dark:bg-slate-900 dark:border-slate-800 sticky top-20">
+            <Card title={<span className="text-slate-900 dark:text-white">{t('productDetail.information')}</span>} variant="borderless" className="shadow-sm dark:bg-slate-900 dark:border-slate-800 sticky top-20">
               <div className="space-y-4">
                 <div className="flex justify-between py-3 border-b border-slate-100 dark:border-slate-800">
                   <span className="text-slate-500 flex items-center gap-2"><Shield size={16}/> {t('productDetail.license')}</span>

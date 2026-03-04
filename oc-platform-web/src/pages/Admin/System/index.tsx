@@ -241,7 +241,7 @@ export default function AdminSystem() {
         title={
           <div className="flex items-center gap-2">
             <Image size={18} className="text-blue-600" />
-            <span>{t('logo.editLogo')}</span>
+            <span className="text-slate-900 dark:text-white">{t('logo.editLogo')}</span>
           </div>
         }
         className="border-slate-200 dark:border-slate-800 dark:bg-slate-900 shadow-sm"
@@ -258,7 +258,7 @@ export default function AdminSystem() {
         title={
           <div className="flex items-center gap-2">
             <Image size={18} className="text-purple-600" />
-            <span>{t('logo.faviconTitle')}</span>
+            <span className="text-slate-900 dark:text-white">{t('logo.faviconTitle')}</span>
           </div>
         }
         className="border-slate-200 dark:border-slate-800 dark:bg-slate-900 shadow-sm"
@@ -276,7 +276,7 @@ export default function AdminSystem() {
         title={
           <div className="flex items-center gap-2">
             <FileText size={18} className="text-emerald-600" />
-            <span>{t('adminSystem.footerConfig')}</span>
+            <span className="text-slate-900 dark:text-white">{t('adminSystem.footerConfig')}</span>
           </div>
         }
         className="border-slate-200 dark:border-slate-800 dark:bg-slate-900 shadow-sm"
@@ -442,7 +442,7 @@ export default function AdminSystem() {
         title={
           <div className="flex items-center gap-2">
             <Globe size={18} className="text-blue-600" />
-            <span>{t('adminSystem.socialConfig')}</span>
+            <span className="text-slate-900 dark:text-white">{t('adminSystem.socialConfig')}</span>
           </div>
         }
         className="border-slate-200 dark:border-slate-800 dark:bg-slate-900 shadow-sm"

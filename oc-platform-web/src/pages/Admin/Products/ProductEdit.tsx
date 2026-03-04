@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Form, Input, Select, Button, Card, Upload, Spin, Tabs, Image, Modal, Table, Tag, Popconfirm, Space } from 'antd';
+import { Form, Input, Select, Button, Card, Upload, Spin, Tabs, Image, Modal, Table, Tag, Popconfirm, Space, Switch } from 'antd';
 import { message } from '@/utils/antdUtils';
 import { useTranslation } from 'react-i18next';
 import { adminApi, categoryApi, fileApi } from '@/utils/api';
@@ -738,6 +738,15 @@ export default function ProductEdit() {
                       </Select>
                     </Form.Item>
 
+                    <Form.Item 
+                      name="isFeatured" 
+                      label={t('admin.featured')}
+                      valuePropName="checked"
+                      tooltip={t('productEdit.featuredTooltip')}
+                    >
+                      <Switch checkedChildren={t('admin.yes')} unCheckedChildren={t('admin.no')} />
+                    </Form.Item>
+
                     <Form.Item name="license" label={t('productEdit.license')}>
                       <Input placeholder={t('productEdit.licensePlaceholder')} />
                     </Form.Item>
@@ -777,7 +786,7 @@ export default function ProductEdit() {
               children: (
                 <div className="space-y-6">
                   <Card 
-                    title={<span className="flex items-center gap-2"><ImageIcon size={16} /> {t('productEdit.iconBanner')}</span>}
+                    title={<span className="flex items-center gap-2 text-slate-900 dark:text-white"><ImageIcon size={16} /> {t('productEdit.iconBanner')}</span>}
                     className="border-slate-200 dark:border-slate-700 dark:bg-slate-900"
                   >
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -859,7 +868,7 @@ export default function ProductEdit() {
                   </Card>
 
                   <Card 
-                    title={<span className="flex items-center gap-2"><ImageIcon size={16} /> {t('productEdit.screenshots')}</span>}
+                    title={<span className="flex items-center gap-2 text-slate-900 dark:text-white"><ImageIcon size={16} /> {t('productEdit.screenshots')}</span>}
                     className="border-slate-200 dark:border-slate-700 dark:bg-slate-900"
                   >
                     <div className="space-y-4">
@@ -894,7 +903,7 @@ export default function ProductEdit() {
                   </Card>
 
                   <Card 
-                    title={<span className="flex items-center gap-2"><Film size={16} /> {t('productEdit.demoVideo')}</span>}
+                    title={<span className="flex items-center gap-2 text-slate-900 dark:text-white"><Film size={16} /> {t('productEdit.demoVideo')}</span>}
                     className="border-slate-200 dark:border-slate-700 dark:bg-slate-900"
                   >
                     <div className="space-y-4">
@@ -1137,7 +1146,7 @@ export default function ProductEdit() {
           versionForm.resetFields();
           setUploadedFile(null);
         }}
-        title={<span className="flex items-center gap-2"><Monitor size={18} /> {t('productEdit.addNewVersion')}</span>}
+        title={<span className="flex items-center gap-2 text-slate-900 dark:text-white"><Monitor size={18} /> {t('productEdit.addNewVersion')}</span>}
         footer={null}
         width={600}
         destroyOnHidden

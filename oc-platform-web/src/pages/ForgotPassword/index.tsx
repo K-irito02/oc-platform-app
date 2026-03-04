@@ -71,8 +71,8 @@ export default function ForgotPassword() {
                 <Input prefix={<MailOutlined style={{ color: 'var(--ink-lighter)' }} />} placeholder={t('auth.emailPlaceholder')} style={{ borderRadius: 'var(--radius-md)' }} />
               </Form.Item>
               <Form.Item>
-                <Button type="primary" block loading={codeSending} onClick={sendCode} style={{
-                  height: 44, fontWeight: 500, borderRadius: 'var(--radius-md)', background: 'var(--ink-dark)', border: 'none',
+                <Button type="primary" block loading={codeSending} onClick={sendCode} className="h-[44px] font-medium rounded-md dark:!bg-slate-700 dark:!text-slate-100" style={{
+                  borderRadius: 'var(--radius-md)',
                 }}>
                   {t('auth.sendCode')}
                 </Button>
@@ -108,8 +108,8 @@ export default function ForgotPassword() {
                 <Input.Password prefix={<LockOutlined style={{ color: 'var(--ink-lighter)' }} />} placeholder={t('auth.confirmPasswordPlaceholder')} style={{ borderRadius: 'var(--radius-md)' }} />
               </Form.Item>
               <Form.Item>
-                <Button type="primary" htmlType="submit" block loading={loading} style={{
-                  height: 44, fontWeight: 500, borderRadius: 'var(--radius-md)', background: 'var(--ink-dark)', border: 'none',
+                <Button type="primary" htmlType="submit" block loading={loading} className="h-[44px] font-medium rounded-md dark:!bg-slate-700 dark:!text-slate-100" style={{
+                  borderRadius: 'var(--radius-md)',
                 }}>
                   {t('auth.resetPasswordBtn')}
                 </Button>

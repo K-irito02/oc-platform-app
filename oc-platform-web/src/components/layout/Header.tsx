@@ -83,7 +83,7 @@ export const Header: React.FC = () => {
 
             <GlassButton variant="ghost" size="sm" className="relative">
               <Badge dot offset={[-2, 2]}>
-                <Bell size={20} className="text-slate-600" />
+                <Bell size={20} className="text-slate-600 dark:text-slate-300" />
               </Badge>
             </GlassButton>
 

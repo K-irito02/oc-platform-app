@@ -24,6 +24,24 @@ type UploadImageResponse = {
 
 const OUTPUT_SIZE = 512;
 
+const getBoundingBox = (path: { x: number; y: number }[]): { minX: number; maxX: number; minY: number; maxY: number; width: number; height: number } | null => {
+  if (path.length === 0) return null;
+  
+  let minX = path[0].x;
+  let maxX = path[0].x;
+  let minY = path[0].y;
+  let maxY = path[0].y;
+  
+  for (const point of path) {
+    minX = Math.min(minX, point.x);
+    maxX = Math.max(maxX, point.x);
+    minY = Math.min(minY, point.y);
+    maxY = Math.max(maxY, point.y);
+  }
+  
+  return { minX, maxX, minY, maxY, width: maxX - minX, height: maxY - minY };
+};
+
 const loadImage = (url: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {
     const image = new Image();
@@ -49,12 +67,6 @@ const createCroppedImage = async (
     throw new Error('No 2d context');
   }
 
-  canvas.width = OUTPUT_SIZE;
-  canvas.height = OUTPUT_SIZE;
-
-  ctx.fillStyle = 'white';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
   const centerX = OUTPUT_SIZE / 2;
   const centerY = OUTPUT_SIZE / 2;
 
@@ -64,17 +76,29 @@ const createCroppedImage = async (
   const imgDrawY = centerY - imgDrawHeight / 2 + offsetY;
 
   if (shape === 'free' && cropData?.path && cropData.path.length > 2) {
+    const bbox = getBoundingBox(cropData.path);
+    if (!bbox) throw new Error('Invalid crop path');
+    
+    canvas.width = Math.max(1, Math.round(bbox.width));
+    canvas.height = Math.max(1, Math.round(bbox.height));
+    
+    const pathOffsetX = -bbox.minX;
+    const pathOffsetY = -bbox.minY;
+    
     ctx.save();
     ctx.beginPath();
-    ctx.moveTo(cropData.path[0].x, cropData.path[0].y);
+    ctx.moveTo(cropData.path[0].x + pathOffsetX, cropData.path[0].y + pathOffsetY);
     for (let i = 1; i < cropData.path.length; i++) {
-      ctx.lineTo(cropData.path[i].x, cropData.path[i].y);
+      ctx.lineTo(cropData.path[i].x + pathOffsetX, cropData.path[i].y + pathOffsetY);
     }
     ctx.closePath();
     ctx.clip();
-    ctx.drawImage(image, imgDrawX, imgDrawY, imgDrawWidth, imgDrawHeight);
+    ctx.drawImage(image, imgDrawX + pathOffsetX, imgDrawY + pathOffsetY, imgDrawWidth, imgDrawHeight);
     ctx.restore();
   } else if (shape === 'circle') {
+    canvas.width = OUTPUT_SIZE;
+    canvas.height = OUTPUT_SIZE;
+    
     ctx.save();
     ctx.beginPath();
     ctx.arc(centerX, centerY, OUTPUT_SIZE / 2, 0, Math.PI * 2);
@@ -83,6 +107,9 @@ const createCroppedImage = async (
     ctx.drawImage(image, imgDrawX, imgDrawY, imgDrawWidth, imgDrawHeight);
     ctx.restore();
   } else {
+    canvas.width = OUTPUT_SIZE;
+    canvas.height = OUTPUT_SIZE;
+    
     ctx.drawImage(image, imgDrawX, imgDrawY, imgDrawWidth, imgDrawHeight);
   }
 
@@ -163,9 +190,6 @@ export const LogoCropUploader = ({ value, onChange, onSave, title }: LogoCropUpl
 
     canvas.width = OUTPUT_SIZE;
     canvas.height = OUTPUT_SIZE;
-
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     const centerX = OUTPUT_SIZE / 2;
     const centerY = OUTPUT_SIZE / 2;
@@ -447,7 +471,10 @@ export const LogoCropUploader = ({ value, onChange, onSave, title }: LogoCropUpl
                   ref={canvasRef}
                   className={`max-w-[380px] max-h-[380px] shadow-2xl transition-transform duration-150 ${cropShape === 'free' ? 'cursor-crosshair' : isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
                   style={{
-                    borderRadius: cropShape === 'circle' ? '50%' : '8px'
+                    borderRadius: cropShape === 'circle' ? '50%' : '8px',
+                    backgroundImage: 'linear-gradient(45deg, #e0e0e0 25%, transparent 25%), linear-gradient(-45deg, #e0e0e0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e0e0e0 75%), linear-gradient(-45deg, transparent 75%, #e0e0e0 75%)',
+                    backgroundSize: '20px 20px',
+                    backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
                   }}
                   onMouseDown={handleCanvasMouseDown}
                   onMouseMove={handleCanvasMouseMove}

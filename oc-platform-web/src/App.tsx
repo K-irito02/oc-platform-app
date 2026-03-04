@@ -4,7 +4,7 @@ import { ConfigProvider, App as AntdApp } from 'antd'
 import zhCN from 'antd/locale/zh_CN'
 import enUS from 'antd/locale/en_US'
 import router from '@/router'
-import theme from '@/theme/antdTheme'
+import { lightTheme, darkTheme } from '@/theme/antdTheme'
 import { useAppSelector, useAppDispatch } from '@/store/hooks'
 import { setUser, logout } from '@/store/slices/authSlice'
 import { fetchSiteConfig } from '@/store/slices/siteConfigSlice'
@@ -36,6 +36,7 @@ function App() {
   const dispatch = useAppDispatch()
   const { isAuthenticated, user } = useAppSelector((s) => s.auth)
   const { i18n } = useTranslation()
+  const { currentTheme } = useAppSelector((state) => state.theme)
   
   useFavicon()
 
@@ -49,7 +50,20 @@ function App() {
     }
   }, [i18n.language])
 
-  // 加载站点配置
+  const isDarkMode = useMemo(() => {
+    if (currentTheme.appearance.mode === 'dark') {
+      return true
+    }
+    if (currentTheme.appearance.mode === 'system') {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches
+    }
+    return false
+  }, [currentTheme.appearance.mode])
+
+  const antdTheme = useMemo(() => {
+    return isDarkMode ? darkTheme : lightTheme
+  }, [isDarkMode])
+
   useEffect(() => {
     dispatch(fetchSiteConfig())
   }, [dispatch])
@@ -66,7 +80,7 @@ function App() {
   }, [isAuthenticated, user, dispatch])
 
   return (
-    <ConfigProvider locale={antdLocale} theme={theme}>
+    <ConfigProvider locale={antdLocale} theme={antdTheme}>
       <AntdApp>
         <AntdInitializer />
         <ThemeProvider>

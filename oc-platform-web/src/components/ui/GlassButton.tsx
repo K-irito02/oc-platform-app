@@ -21,9 +21,9 @@ export const GlassButton = React.forwardRef<HTMLButtonElement, GlassButtonProps>
           
           // Variants
           variant === 'primary' && "bg-primary text-white shadow-lg shadow-primary/30 hover:bg-primary/90 hover:shadow-primary/40",
-          variant === 'secondary' && "bg-white/80 text-slate-800 shadow-sm hover:bg-white border border-white/20 backdrop-blur-sm",
+          variant === 'secondary' && "bg-white/80 dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm hover:bg-white dark:hover:bg-slate-600 border border-white/20 dark:border-slate-600 backdrop-blur-sm",
           variant === 'outline' && "border-2 border-primary text-primary bg-transparent hover:bg-primary/10",
-          variant === 'ghost' && "bg-transparent text-slate-700 hover:bg-white/20",
+          variant === 'ghost' && "bg-transparent text-slate-700 dark:text-slate-300 hover:bg-white/20 dark:hover:bg-slate-800",
 
           // Sizes
           size === 'sm' && "h-8 px-3 text-sm",
