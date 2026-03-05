@@ -66,6 +66,14 @@ public class AdminProductController {
         return ApiResponse.success();
     }
 
+    @PutMapping("/{id}/display-version")
+    public ApiResponse<Void> updateDisplayVersion(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        String platformKey = (String) body.get("platformKey");
+        Long versionId = body.get("versionId") != null ? Long.valueOf(body.get("versionId").toString()) : null;
+        productService.updateDisplayVersion(id, platformKey, versionId);
+        return ApiResponse.success();
+    }
+
     // --- Versions ---
 
     @GetMapping("/{id}/versions")
@@ -94,6 +102,12 @@ public class AdminProductController {
     @PutMapping("/versions/{vid}/audit")
     public ApiResponse<Void> auditVersion(@PathVariable Long vid, @RequestBody Map<String, String> body) {
         versionService.auditVersion(vid, body.get("status"));
+        return ApiResponse.success();
+    }
+
+    @PutMapping("/versions/{vid}/show-on-detail")
+    public ApiResponse<Void> updateVersionShowOnDetail(@PathVariable Long vid, @RequestBody Map<String, Boolean> body) {
+        versionService.updateShowOnDetail(vid, body.get("showOnDetail"));
         return ApiResponse.success();
     }
 

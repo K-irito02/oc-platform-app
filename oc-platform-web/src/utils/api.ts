@@ -201,6 +201,8 @@ export const adminApi = {
   deleteProduct: (id: number) => request.delete(`/admin/products/${id}`),
   auditProduct: (id: number, status: string) =>
     request.put(`/admin/products/${id}/audit`, { status }),
+  updateDisplayVersion: (productId: number, platformKey: string, versionId: number | null) =>
+    request.put(`/admin/products/${productId}/display-version`, { platformKey, versionId }),
   createVersion: (productId: number, data: Record<string, unknown>) =>
     request.post(`/admin/products/${productId}/versions`, data),
   updateVersion: (versionId: number, data: Record<string, unknown>) =>
@@ -209,6 +211,8 @@ export const adminApi = {
     request.delete(`/admin/products/versions/${versionId}`),
   publishVersion: (versionId: number) =>
     request.put(`/admin/products/versions/${versionId}/publish`),
+  updateVersionShowOnDetail: (versionId: number, showOnDetail: boolean) =>
+    request.put(`/admin/products/versions/${versionId}/show-on-detail`, { showOnDetail }),
   getVersions: (productId: number) =>
     request.get(`/admin/products/${productId}/versions`),
   // Comments

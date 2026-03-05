@@ -242,6 +242,7 @@ export default function AdminProducts() {
       render: (s: string) => <Tag color={statusColors[s] || 'default'}>{s}</Tag>,
     },
     { title: t('admin.downloads'), dataIndex: 'downloadCount', width: 110, sorter: (a, b) => a.downloadCount - b.downloadCount },
+    { title: t('admin.developerName'), dataIndex: 'developerName', width: 120, ellipsis: true },
     { title: t('admin.rating'), dataIndex: 'ratingAverage', width: 80, render: (v: number) => v?.toFixed(1) || '-' },
     { title: t('admin.createdAt'), dataIndex: 'createdAt', width: 170, render: (v: string) => v?.substring(0, 19).replace('T', ' ') },
     {
@@ -406,6 +407,7 @@ export default function AdminProducts() {
               { value: 'id', label: t('admin.productId') || 'Product ID' },
               { value: 'name', label: t('admin.productName') || 'Name' },
               { value: 'slug', label: t('admin.slug') || 'Slug' },
+              { value: 'developerName', label: t('admin.developerName') || 'Developer Name' },
             ]}
           />
           
@@ -414,7 +416,7 @@ export default function AdminProducts() {
             prefix={<Search size={14} className="text-slate-400 shrink-0" />}
             placeholder={t('admin.searchProduct')}
             allowClear 
-            className="w-48 md:w-64 h-8"
+            className="w-48 md:w-64 h-10"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             onPressEnter={() => { 

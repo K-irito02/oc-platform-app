@@ -25,7 +25,6 @@ public class ProductVO {
     private Long categoryId;
     private String categoryName;
     private Long developerId;
-    private String developerName;
     private String status;
     private String iconUrl;
     private String bannerUrl;
@@ -38,8 +37,14 @@ public class ProductVO {
     private BigDecimal ratingAverage;
     private Integer ratingCount;
     private Map<String, Integer> ratingDistribution;
+    private BigDecimal experienceRatingAverage;
+    private Integer experienceRatingCount;
     private Long viewCount;
     private Boolean isFeatured;
+    private String developerName;
+    private String latestVersionStr;
+    private Map<String, Long> displayVersions;
+    private Map<String, ProductVersionVO> displayVersionMap;
     private List<String> tags;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;

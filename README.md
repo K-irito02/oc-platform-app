@@ -337,6 +337,9 @@ Get-Content sql/seed.sql | docker exec -i oc-dev-postgres psql -U oc_user -d oc_
 - [x] 验证码邮件模板升级（专业HTML设计、双语支持、系统配置同步）
 - [x] 社交链接配置管理（GitHub、Twitter、LinkedIn、微博、微信、邮箱）
 - [x] 系统配置扩展（官网URL、邮件发件人、版权信息、备案信息）
+- [x] 产品详情页版本发布说明展示（支持中英文切换）
+- [x] 产品详情页展示版本多选功能（按平台+架构设置）
+- [x] 版本管理按钮延迟优化（loading状态防止重复点击）
 - [ ] 文件上传/下载端到端测试
 - [ ] 单元测试编写（前端 Jest + 后端 JUnit 5）
 - [ ] 响应式设计优化（移动端适配）

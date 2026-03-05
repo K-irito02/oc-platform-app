@@ -5,6 +5,7 @@ import com.ocplatform.common.handler.JsonbTypeHandler;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
@@ -16,6 +17,7 @@ import java.util.Map;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
 @TableName(value = "products", autoResultMap = true)
 public class Product {
 
@@ -47,8 +49,19 @@ public class Product {
     @TableField(typeHandler = com.ocplatform.common.handler.JsonbMapTypeHandler.class)
     private Map<String, Integer> ratingDistribution;
 
+    private BigDecimal experienceRatingAverage;
+    private Integer experienceRatingCount;
+
+    @TableField(typeHandler = com.ocplatform.common.handler.JsonbMapTypeHandler.class)
+    private Map<String, Integer> experienceRatingDistribution;
+
     private Long viewCount;
     private Boolean isFeatured;
+    private String developerName;
+    private String latestVersion;
+
+    @TableField(typeHandler = com.ocplatform.common.handler.JsonbLongMapTypeHandler.class)
+    private Map<String, Long> displayVersions;
 
     @TableField(exist = false)
     private String[] tags;

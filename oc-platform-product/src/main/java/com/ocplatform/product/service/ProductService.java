@@ -18,7 +18,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.OffsetDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -29,6 +31,7 @@ public class ProductService {
     private final ProductMapper productMapper;
     private final ProductVersionMapper versionMapper;
     private final CategoryMapper categoryMapper;
+    private final VersionService versionService;
 
     public PageResponse<ProductVO> listProducts(int page, int size, Long categoryId,
                                                  String status, String sort, String keyword,
@@ -62,6 +65,9 @@ public class ProductService {
             } else if ("slug".equals(searchField)) {
                 // 仅按标识符搜索
                 wrapper.like(Product::getSlug, keyword);
+            } else if ("developerName".equals(searchField)) {
+                // 按开发者名称搜索
+                wrapper.like(Product::getDeveloperName, keyword);
             } else {
                 // 默认：支持ID搜索（纯数字）和产品名称/描述搜索
                 if (keyword.matches("\\d+")) {
@@ -178,6 +184,7 @@ public class ProductService {
                 .viewCount(0L)
                 .ratingCount(0)
                 .isFeatured(request.getIsFeatured() != null ? request.getIsFeatured() : false)
+                .developerName(StringUtils.hasText(request.getDeveloperName()) ? request.getDeveloperName() : "Official")
                 .build();
         productMapper.insert(product);
 
@@ -221,6 +228,8 @@ public class ProductService {
         if (request.getLicense() != null) product.setLicense(request.getLicense());
         if (request.getIsFeatured() != null) product.setIsFeatured(request.getIsFeatured());
         if (StringUtils.hasText(request.getStatus())) product.setStatus(request.getStatus());
+        if (StringUtils.hasText(request.getDeveloperName())) product.setDeveloperName(request.getDeveloperName());
+        if (request.getDisplayVersions() != null) product.setDisplayVersions(request.getDisplayVersions());
 
         productMapper.updateById(product);
         return toProductVO(product);
@@ -254,6 +263,29 @@ public class ProductService {
 
     public void incrementDownloadCount(Long productId) {
         productMapper.incrementDownloadCount(productId, 1L);
+    }
+
+    @Transactional
+    public void updateDisplayVersion(Long productId, String platformKey, Long versionId) {
+        Product product = productMapper.selectById(productId);
+        if (product == null) {
+            throw new BusinessException(ErrorCode.PRODUCT_NOT_FOUND);
+        }
+        
+        Map<String, Long> displayVersions = product.getDisplayVersions();
+        if (displayVersions == null) {
+            displayVersions = new HashMap<>();
+        }
+        
+        if (versionId == null) {
+            displayVersions.remove(platformKey);
+        } else {
+            displayVersions.put(platformKey, versionId);
+        }
+        
+        product.setDisplayVersions(displayVersions);
+        productMapper.updateById(product);
+        log.info("Product {} display version for {} updated to {}", productId, platformKey, versionId);
     }
 
     /**
@@ -340,6 +372,17 @@ public class ProductService {
             if (category != null) categoryName = category.getName();
         }
 
+        Map<String, ProductVersionVO> displayVersionMap = null;
+        if (product.getDisplayVersions() != null && !product.getDisplayVersions().isEmpty()) {
+            displayVersionMap = new HashMap<>();
+            for (Map.Entry<String, Long> entry : product.getDisplayVersions().entrySet()) {
+                ProductVersionVO version = versionService.getVersionById(entry.getValue());
+                if (version != null) {
+                    displayVersionMap.put(entry.getKey(), version);
+                }
+            }
+        }
+
         return ProductVO.builder()
                 .id(product.getId())
                 .name(product.getName())
@@ -362,8 +405,14 @@ public class ProductService {
                 .ratingAverage(product.getRatingAverage())
                 .ratingCount(product.getRatingCount())
                 .ratingDistribution(product.getRatingDistribution())
+                .experienceRatingAverage(product.getExperienceRatingAverage())
+                .experienceRatingCount(product.getExperienceRatingCount())
                 .viewCount(product.getViewCount())
                 .isFeatured(product.getIsFeatured())
+                .developerName(product.getDeveloperName())
+                .latestVersionStr(product.getLatestVersion())
+                .displayVersions(product.getDisplayVersions())
+                .displayVersionMap(displayVersionMap)
                 .createdAt(product.getCreatedAt())
                 .updatedAt(product.getUpdatedAt())
                 .publishedAt(product.getPublishedAt())

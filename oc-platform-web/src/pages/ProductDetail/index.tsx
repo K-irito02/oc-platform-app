@@ -36,9 +36,14 @@ type ProductItem = {
   ratingAverage?: number;
   ratingCount?: number;
   ratingDistribution?: Record<string, number>;
+  experienceRatingAverage?: number;
+  experienceRatingCount?: number;
   homepageUrl?: string;
   sourceUrl?: string;
-  username?: string;
+  developerName?: string;
+  latestVersionStr?: string;
+  displayVersions?: Record<string, number>;
+  displayVersionMap?: Record<string, VersionItem>;
   updatedAt?: string;
   demoVideoUrl?: string;
   bannerUrl?: string;
@@ -61,6 +66,8 @@ type VersionItem = {
   isLatest?: boolean;
   createdAt?: string;
   fileRecordId?: number;
+  releaseNotes?: string;
+  releaseNotesEn?: string;
 };
 
 type CommentUser = {
@@ -313,7 +320,10 @@ const CommentItem = ({ comment, isAuthenticated, handleLikeComment, handleReplyC
               {comment.username || 'User'}
             </span>
             {comment.rating && (
-              <Rate disabled defaultValue={comment.rating} className="text-xs" style={{ fontSize: 10 }} />
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-slate-500">{t('productDetail.experienceRating')}:</span>
+                <Rate disabled defaultValue={comment.rating} className="text-xs" style={{ fontSize: 10 }} />
+              </div>
             )}
           </div>
           
@@ -720,24 +730,40 @@ export default function ProductDetail() {
                   label: `${t('productDetail.versions')} (${versions.length})`,
                   children: (
                     <div className="mt-4 space-y-3">
-                      {versions.map((v) => (
-                        <div key={v.id} className="flex items-center justify-between p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-700 transition-colors bg-slate-50 dark:bg-slate-900/50">
-                          <div>
-                            <div className="flex items-center gap-3">
-                              <span className="font-bold text-lg text-slate-900 dark:text-white">{v.versionNumber}</span>
-                              {v.isLatest && <Tag color="green" className="rounded-full px-2">{t('productDetail.latest')}</Tag>}
+                      {versions.map((v) => {
+                        const releaseNotes = (isEnglish && v.releaseNotesEn) ? v.releaseNotesEn : v.releaseNotes;
+                        return (
+                          <div key={v.id} className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-700 transition-colors bg-slate-50 dark:bg-slate-900/50">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <div className="flex items-center gap-3">
+                                  <span className="font-bold text-lg text-slate-900 dark:text-white">{v.versionNumber}</span>
+                                  {v.isLatest && <Tag color="green" className="rounded-full px-2">{t('productDetail.latest')}</Tag>}
+                                </div>
+                                <div className="text-sm text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-3">
+                                  <span className="flex items-center gap-1"><Terminal size={12}/> {v.platform}</span>
+                                  <span>•</span>
+                                  <span>{v.createdAt?.substring(0, 10)}</span>
+                                </div>
+                              </div>
+                              <Button type="primary" ghost icon={<DownloadIcon size={16} />} onClick={() => handleDownload(v.id, v.fileRecordId)}>
+                                {formatSize(v.fileSize)}
+                              </Button>
                             </div>
-                            <div className="text-sm text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-3">
-                              <span className="flex items-center gap-1"><Terminal size={12}/> {v.platform}</span>
-                              <span>•</span>
-                              <span>{v.createdAt?.substring(0, 10)}</span>
-                            </div>
+                            {releaseNotes && (
+                              <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
+                                <div className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('productDetail.releaseNotes')}</div>
+                                <div className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{releaseNotes}</div>
+                              </div>
+                            )}
+                            {!releaseNotes && (
+                              <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
+                                <div className="text-sm text-slate-400 dark:text-slate-500 italic">{t('productDetail.noReleaseNotes')}</div>
+                              </div>
+                            )}
                           </div>
-                          <Button type="primary" ghost icon={<DownloadIcon size={16} />} onClick={() => handleDownload(v.id, v.fileRecordId)}>
-                            {formatSize(v.fileSize)}
-                          </Button>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )
                 },
@@ -758,7 +784,7 @@ export default function ProductDetail() {
                           </div>
                           <Form form={form} onFinish={handleComment} layout="vertical">
                             {!replyingTo && (
-                              <Form.Item name="rating" label={t('productDetail.rating')} initialValue={5}>
+                              <Form.Item name="rating" label={t('productDetail.experienceRating')} initialValue={5}>
                                 <Rate />
                               </Form.Item>
                             )}
@@ -858,10 +884,11 @@ export default function ProductDetail() {
 
           {/* Sidebar Column */}
           <div className="space-y-8">
-            <Card title={<span className="text-slate-900 dark:text-white">{t('rating.title')}</span>} variant="borderless" className="shadow-sm dark:bg-slate-900 dark:border-slate-800">
+            <Card title={<span className="text-slate-900 dark:text-white">{t('productDetail.productRating')}</span>} variant="borderless" className="shadow-sm dark:bg-slate-900 dark:border-slate-800">
               {ratingStats ? (
                 <div className="space-y-4">
                   <RatingStats
+                    type="product"
                     averageRating={ratingStats.averageRating}
                     totalRatings={ratingStats.totalRatings}
                     distribution={ratingStats.distribution}
@@ -904,11 +931,16 @@ export default function ProductDetail() {
                 </div>
                 <div className="flex justify-between py-3 border-b border-slate-100 dark:border-slate-800">
                   <span className="text-slate-500 flex items-center gap-2"><CheckCircle size={16}/> {t('productDetail.version')}</span>
-                  <span className="font-medium dark:text-slate-200">{latestVersion?.versionNumber || '-'}</span>
+                  <span className="font-medium dark:text-slate-200">{
+                    (product.displayVersionMap && Object.values(product.displayVersionMap)[0]?.versionNumber) ||
+                    product.latestVersionStr ||
+                    latestVersion?.versionNumber ||
+                    '-'
+                  }</span>
                 </div>
                 <div className="flex justify-between py-3 border-b border-slate-100 dark:border-slate-800">
                   <span className="text-slate-500 flex items-center gap-2"><User size={16} /> {t('productDetail.developer')}</span>
-                  <span className="font-medium dark:text-slate-200">{product.username || 'Official'}</span>
+                  <span className="font-medium dark:text-slate-200">{product.developerName || 'Official'}</span>
                 </div>
               </div>
             </Card>

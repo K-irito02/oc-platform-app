@@ -6,7 +6,9 @@ import com.ocplatform.common.response.ErrorCode;
 import com.ocplatform.common.util.SemanticVersion;
 import com.ocplatform.product.dto.CreateVersionRequest;
 import com.ocplatform.product.dto.ProductVersionVO;
+import com.ocplatform.product.entity.Product;
 import com.ocplatform.product.entity.ProductVersion;
+import com.ocplatform.product.repository.ProductMapper;
 import com.ocplatform.product.repository.ProductVersionMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,11 +25,13 @@ import java.util.stream.Collectors;
 public class VersionService {
 
     private final ProductVersionMapper versionMapper;
+    private final ProductMapper productMapper;
 
     public List<ProductVersionVO> getVersionsByProduct(Long productId) {
         LambdaQueryWrapper<ProductVersion> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(ProductVersion::getProductId, productId)
                 .eq(ProductVersion::getStatus, "PUBLISHED")
+                .eq(ProductVersion::getShowOnDetail, true)
                 .orderByDesc(ProductVersion::getVersionCode);
         return versionMapper.selectList(wrapper).stream()
                 .map(this::toVO).collect(Collectors.toList());
@@ -70,6 +74,14 @@ public class VersionService {
                 .orElse(null);
     }
 
+    public ProductVersionVO getVersionById(Long versionId) {
+        ProductVersion version = versionMapper.selectById(versionId);
+        if (version == null) {
+            return null;
+        }
+        return toVO(version);
+    }
+
     @Transactional
     public ProductVersionVO createVersion(Long productId, CreateVersionRequest request) {
         if (!SemanticVersion.isValid(request.getVersionNumber())) {
@@ -103,12 +115,18 @@ public class VersionService {
                 .downloadCount(0L)
                 .isMandatory(request.getIsMandatory() != null ? request.getIsMandatory() : false)
                 .isLatest(true)
+                .showOnDetail(request.getShowOnDetail() != null ? request.getShowOnDetail() : true)
                 .status(request.getStatus() != null ? request.getStatus() : "DRAFT")
                 .rolloutPercentage(request.getRolloutPercentage() != null ? request.getRolloutPercentage() : 100)
                 .releaseNotes(request.getReleaseNotes())
                 .releaseNotesEn(request.getReleaseNotesEn())
                 .build();
         versionMapper.insert(version);
+
+        // 如果创建的版本状态是 PUBLISHED，更新产品的 latestVersion 字段
+        if ("PUBLISHED".equals(version.getStatus())) {
+            updateProductLatestVersion(version.getProductId(), version.getVersionNumber());
+        }
 
         log.info("Version {} created for product {}", request.getVersionNumber(), productId);
         return toVO(version);
@@ -123,6 +141,10 @@ public class VersionService {
         version.setStatus("PUBLISHED");
         version.setPublishedAt(OffsetDateTime.now());
         versionMapper.updateById(version);
+
+        // 更新产品的 latestVersion 字段
+        updateProductLatestVersion(version.getProductId(), version.getVersionNumber());
+
         log.info("Version {} published", versionId);
     }
 
@@ -156,6 +178,16 @@ public class VersionService {
         versionMapper.updateById(version);
     }
 
+    public void updateShowOnDetail(Long versionId, Boolean showOnDetail) {
+        ProductVersion version = versionMapper.selectById(versionId);
+        if (version == null) {
+            throw new BusinessException(ErrorCode.VERSION_NOT_FOUND);
+        }
+        version.setShowOnDetail(showOnDetail);
+        versionMapper.updateById(version);
+        log.info("Version {} showOnDetail updated to {}", versionId, showOnDetail);
+    }
+
     public void incrementDownloadCount(Long versionId) {
         versionMapper.incrementDownloadCount(versionId);
     }
@@ -177,6 +209,7 @@ public class VersionService {
                 .downloadCount(v.getDownloadCount())
                 .isMandatory(v.getIsMandatory())
                 .isLatest(v.getIsLatest())
+                .showOnDetail(v.getShowOnDetail())
                 .releaseNotes(v.getReleaseNotes())
                 .releaseNotesEn(v.getReleaseNotesEn())
                 .status(v.getStatus())
@@ -184,5 +217,17 @@ public class VersionService {
                 .createdAt(v.getCreatedAt())
                 .publishedAt(v.getPublishedAt())
                 .build();
+    }
+
+    /**
+     * 更新产品的 latestVersion 字段
+     */
+    private void updateProductLatestVersion(Long productId, String versionNumber) {
+        Product product = productMapper.selectById(productId);
+        if (product != null) {
+            product.setLatestVersion(versionNumber);
+            productMapper.updateById(product);
+            log.info("Product {} latestVersion updated to {}", productId, versionNumber);
+        }
     }
 }

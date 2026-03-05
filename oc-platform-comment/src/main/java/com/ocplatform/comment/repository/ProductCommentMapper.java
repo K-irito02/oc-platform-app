@@ -45,6 +45,9 @@ public interface ProductCommentMapper extends BaseMapper<ProductComment> {
     @Update("UPDATE products SET rating_average = #{avg}, rating_count = #{count}, rating_distribution = #{distribution}::jsonb WHERE id = #{productId}")
     void updateProductRatingStats(@Param("productId") Long productId, @Param("avg") double avg, @Param("count") int count, @Param("distribution") String distribution);
 
+    @Update("UPDATE products SET experience_rating_average = #{avg}, experience_rating_count = #{count}, experience_rating_distribution = #{distribution}::jsonb WHERE id = #{productId}")
+    void updateProductExperienceRatingStats(@Param("productId") Long productId, @Param("avg") double avg, @Param("count") int count, @Param("distribution") String distribution);
+
     @Select("<script>" +
             "SELECT c.* FROM product_comments c " +
             "LEFT JOIN users u ON c.user_id = u.id " +

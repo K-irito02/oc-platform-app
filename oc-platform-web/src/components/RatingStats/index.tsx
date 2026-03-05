@@ -3,6 +3,7 @@ import { Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 type RatingStatsProps = {
+  type?: 'product' | 'experience';
   averageRating: number;
   totalRatings: number;
   distribution: Record<number, number>;
@@ -13,6 +14,7 @@ type RatingStatsProps = {
 };
 
 export default function RatingStats({
+  type = 'product',
   averageRating,
   totalRatings,
   distribution,
@@ -22,6 +24,8 @@ export default function RatingStats({
   showInput = true,
 }: RatingStatsProps) {
   const { t } = useTranslation();
+
+  const prefix = type === 'product' ? 'rating' : 'experienceRating';
 
   const getPercentage = (count: number) => {
     if (totalRatings === 0) return 0;
@@ -39,7 +43,7 @@ export default function RatingStats({
             <Rate disabled allowHalf value={averageRating} className="text-sm" />
           </div>
           <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            {t('rating.ratings', { count: totalRatings })}
+            {t(`${prefix}.ratings`, { count: totalRatings })}
           </div>
         </div>
 
@@ -47,7 +51,7 @@ export default function RatingStats({
           {[5, 4, 3, 2, 1].map((star) => (
             <div key={star} className="flex items-center gap-2">
               <span className="text-sm text-slate-600 dark:text-slate-400 w-8">
-                {star} {t('rating.stars', { count: star }).split(' ')[1] || '星'}
+                {star} {t(`${prefix}.stars`, { count: star }).split(' ')[1] || '星'}
               </span>
               <Progress
                 percent={getPercentage(distribution[star] || 0)}
@@ -70,7 +74,7 @@ export default function RatingStats({
           {isAuthenticated ? (
             <div className="flex items-center gap-4">
               <span className="text-sm text-slate-600 dark:text-slate-400">
-                {userRating ? t('rating.myRating') : t('rating.submitRating')}:
+                {userRating ? t(`${prefix}.myRating`) : t(`${prefix}.submitRating`)}:
               </span>
               <Rate
                 value={userRating || 0}
@@ -79,14 +83,14 @@ export default function RatingStats({
               />
               {userRating && (
                 <span className="text-sm text-amber-500 font-medium">
-                  {userRating} {t('rating.stars', { count: userRating }).split(' ')[1] || '星'}
+                  {userRating} {t(`${prefix}.stars`, { count: userRating }).split(' ')[1] || '星'}
                 </span>
               )}
             </div>
           ) : (
             <div className="text-center text-sm text-slate-500 dark:text-slate-400">
               <Star size={14} className="inline mr-1 text-amber-400" />
-              {t('rating.loginToRate')}
+              {t(`${prefix}.loginToRate`)}
             </div>
           )}
         </div>

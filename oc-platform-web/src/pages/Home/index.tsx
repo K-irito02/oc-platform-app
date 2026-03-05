@@ -159,7 +159,7 @@ export default function Home() {
                     <div className="flex items-center gap-1">
                       <Download size={14} /> {product.downloadCount ?? 0}
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1" title={t('rating.title')}>
                       <Star size={14} className="text-amber-400 fill-amber-400" /> {(product.ratingAverage ?? 0).toFixed(1)}
                     </div>
                   </div>

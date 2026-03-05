@@ -32,4 +32,8 @@ public class CreateProductRequest {
     private List<String> tags;
     private String status;
     private Boolean isFeatured;
+
+    @NotBlank(message = "开发者名称不能为空")
+    @Size(max = 255, message = "开发者名称不能超过 255 个字符")
+    private String developerName;
 }

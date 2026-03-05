@@ -28,6 +28,7 @@ public class ProductVersionVO {
     private Long downloadCount;
     private Boolean isMandatory;
     private Boolean isLatest;
+    private Boolean showOnDetail;
     private String releaseNotes;
     private String releaseNotesEn;
     private String status;

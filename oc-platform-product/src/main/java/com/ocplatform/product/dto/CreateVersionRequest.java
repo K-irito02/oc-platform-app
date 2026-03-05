@@ -39,4 +39,5 @@ public class CreateVersionRequest {
     private String releaseNotes;
     private String releaseNotesEn;
     private String status; // DRAFT, PUBLISHED, etc.
+    private Boolean showOnDetail; // 是否在产品详情页显示
 }

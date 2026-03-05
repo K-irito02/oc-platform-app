@@ -28,6 +28,8 @@ interface ProductData {
   license?: string;
   tags?: string[];
   isFeatured?: boolean;
+  developerName?: string;
+  displayVersions?: Record<string, number>;
 }
 
 interface ProductVersion {
@@ -40,6 +42,7 @@ interface ProductVersion {
   fileRecordId?: number;
   status: string;
   isLatest?: boolean;
+  showOnDetail?: boolean;
   releaseNotes?: string;
   releaseNotesEn?: string;
   createdAt?: string;
@@ -105,6 +108,7 @@ interface ProductFormValues {
   license?: string;
   tags?: string;
   isFeatured?: boolean;
+  developerName?: string;
 }
 
 interface UploadedFileData {
@@ -224,6 +228,7 @@ export default function ProductEdit() {
         license: data.license,
         tags: data.tags?.join(', '),
         isFeatured: data.isFeatured,
+        developerName: data.developerName,
       });
       setIconUrl(data.iconUrl || '');
       setBannerUrl(data.bannerUrl || '');
@@ -360,6 +365,60 @@ export default function ProductEdit() {
     } catch {
       message.error(t('productEdit.deleteFailed'));
     }
+  };
+
+  // 更新版本显示状态（带 loading 状态防止重复点击）
+  const [updatingShowOnDetail, setUpdatingShowOnDetail] = useState<number | null>(null);
+  
+  const handleUpdateVersionShowOnDetail = async (versionId: number, showOnDetail: boolean) => {
+    if (updatingShowOnDetail === versionId) return; // 防止重复点击
+    setUpdatingShowOnDetail(versionId);
+    try {
+      await adminApi.updateVersionShowOnDetail(versionId, showOnDetail);
+      message.success(showOnDetail ? t('productEdit.versionShowOnDetailEnabled') : t('productEdit.versionShowOnDetailDisabled'));
+      if (product?.id) loadVersions(product.id);
+    } catch {
+      message.error(t('productEdit.updateFailed'));
+    } finally {
+      setUpdatingShowOnDetail(null);
+    }
+  };
+
+  // 设置展示版本（按平台+架构）
+  const [updatingDisplayVersion, setUpdatingDisplayVersion] = useState<number | null>(null);
+  
+  const handleSetDisplayVersion = async (version: ProductVersion) => {
+    if (!product?.id || updatingDisplayVersion === version.id) return;
+    const platformKey = `${version.platform}_${version.architecture || 'x64'}`;
+    const isCurrentDisplay = product.displayVersions?.[platformKey] === version.id;
+    
+    setUpdatingDisplayVersion(version.id);
+    try {
+      await adminApi.updateDisplayVersion(product.id, platformKey, isCurrentDisplay ? null : version.id);
+      message.success(t('productEdit.displayVersionUpdated'));
+      // 更新本地状态
+      setProduct(prev => {
+        if (!prev) return prev;
+        const newDisplayVersions = { ...(prev.displayVersions || {}) };
+        if (isCurrentDisplay) {
+          delete newDisplayVersions[platformKey];
+        } else {
+          newDisplayVersions[platformKey] = version.id;
+        }
+        return { ...prev, displayVersions: newDisplayVersions };
+      });
+    } catch {
+      message.error(t('productEdit.updateFailed'));
+    } finally {
+      setUpdatingDisplayVersion(null);
+    }
+  };
+
+  // 检查版本是否为当前展示版本
+  const isDisplayVersion = (version: ProductVersion) => {
+    if (!product?.displayVersions) return false;
+    const platformKey = `${version.platform}_${version.architecture || 'x64'}`;
+    return product.displayVersions[platformKey] === version.id;
   };
 
   // 格式化文件大小
@@ -759,6 +818,14 @@ export default function ProductEdit() {
                       <Input placeholder={t('productEdit.sourcePlaceholder')} />
                     </Form.Item>
 
+                    <Form.Item
+                      name="developerName"
+                      label={t('productEdit.developerName')}
+                      rules={[{ required: true, message: t('productEdit.developerNameRequired') }]}
+                    >
+                      <Input placeholder={t('productEdit.developerNamePlaceholder')} />
+                    </Form.Item>
+
                                       </div>
 
                   <Form.Item
@@ -1074,6 +1141,32 @@ export default function ProductEdit() {
                             <Tag color={s === 'PUBLISHED' ? 'green' : s === 'DRAFT' ? 'default' : 'orange'}>
                               {s}
                             </Tag>
+                          )
+                        },
+                        { 
+                          title: t('productEdit.showOnDetail'), 
+                          dataIndex: 'showOnDetail',
+                          render: (showOnDetail: boolean, record: ProductVersion) => (
+                            <Switch 
+                              size="small"
+                              checked={showOnDetail !== false}
+                              loading={updatingShowOnDetail === record.id}
+                              onChange={(checked) => handleUpdateVersionShowOnDetail(record.id, checked)}
+                            />
+                          )
+                        },
+                        { 
+                          title: t('productEdit.displayVersion'), 
+                          render: (_: unknown, record: ProductVersion) => (
+                            <Button 
+                              size="small"
+                              type={isDisplayVersion(record) ? 'primary' : 'default'}
+                              loading={updatingDisplayVersion === record.id}
+                              onClick={() => handleSetDisplayVersion(record)}
+                              disabled={record.status !== 'PUBLISHED'}
+                            >
+                              {isDisplayVersion(record) ? t('productEdit.currentDisplay') : t('productEdit.setAsDisplay')}
+                            </Button>
                           )
                         },
                         {

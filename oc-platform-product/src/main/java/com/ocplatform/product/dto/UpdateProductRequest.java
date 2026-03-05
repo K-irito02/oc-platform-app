@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.util.List;
+import java.util.Map;
 
 @Data
 public class UpdateProductRequest {
@@ -25,4 +26,8 @@ public class UpdateProductRequest {
     private List<String> tags;
     private Boolean isFeatured;
     private String status;
+
+    @Size(max = 255, message = "开发者名称不能超过 255 个字符")
+    private String developerName;
+    private Map<String, Long> displayVersions;
 }

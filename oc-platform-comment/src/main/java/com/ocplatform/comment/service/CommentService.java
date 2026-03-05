@@ -124,7 +124,7 @@ public class CommentService {
         }
 
         if (request.getRating() != null && request.getParentId() == null && "PUBLISHED".equals(status)) {
-            updateProductRatingStats(productId);
+            updateProductExperienceRatingStats(productId);
         }
 
         log.info("Comment created: id={}, product={}, user={}, admin={}, rating={}", 
@@ -168,7 +168,7 @@ public class CommentService {
         }
         
         if (rating != null && parentId == null && wasPublished) {
-            updateProductRatingStats(productId);
+            updateProductExperienceRatingStats(productId);
         }
     }
 
@@ -209,7 +209,7 @@ public class CommentService {
                 shouldUpdateStats = true;
             }
             if (shouldUpdateStats) {
-                updateProductRatingStats(comment.getProductId());
+                updateProductExperienceRatingStats(comment.getProductId());
             }
         }
         
@@ -317,7 +317,7 @@ public class CommentService {
                 .build();
     }
 
-    private void updateProductRatingStats(Long productId) {
+    private void updateProductExperienceRatingStats(Long productId) {
         Double avgRating = commentMapper.getAverageRating(productId);
         int totalCount = commentMapper.getRatingCount(productId);
         List<Map<String, Object>> distributionList = commentMapper.getRatingDistribution(productId);
@@ -336,13 +336,13 @@ public class CommentService {
         try {
             distributionJson = objectMapper.writeValueAsString(distribution);
         } catch (JsonProcessingException e) {
-            log.error("Failed to serialize rating distribution", e);
+            log.error("Failed to serialize experience rating distribution", e);
             distributionJson = "{\"1\":0,\"2\":0,\"3\":0,\"4\":0,\"5\":0}";
         }
 
         double avg = avgRating != null ? BigDecimal.valueOf(avgRating).setScale(1, RoundingMode.HALF_UP).doubleValue() : 0.0;
-        commentMapper.updateProductRatingStats(productId, avg, totalCount, distributionJson);
+        commentMapper.updateProductExperienceRatingStats(productId, avg, totalCount, distributionJson);
 
-        log.info("Product rating stats updated from comments: productId={}, avg={}, count={}", productId, avg, totalCount);
+        log.info("Product experience rating stats updated from comments: productId={}, avg={}, count={}", productId, avg, totalCount);
     }
 }
