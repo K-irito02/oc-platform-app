@@ -132,6 +132,7 @@ CREATE TABLE products (
     description_en  TEXT,
     category_id     BIGINT REFERENCES categories(id),
     developer_id    BIGINT NOT NULL REFERENCES users(id),
+    developer_name  VARCHAR(255) NOT NULL DEFAULT 'Official',
     status          VARCHAR(20) DEFAULT 'DRAFT'
                     CHECK (status IN ('DRAFT', 'PENDING', 'PUBLISHED', 'SUSPENDED', 'ARCHIVED')),
     icon_url        VARCHAR(500),
@@ -145,6 +146,11 @@ CREATE TABLE products (
     rating_average  DECIMAL(2,1) DEFAULT 0.0,
     rating_count    INTEGER DEFAULT 0,
     rating_distribution JSONB DEFAULT '{"1":0,"2":0,"3":0,"4":0,"5":0}',
+    experience_rating_average DECIMAL(2,1) DEFAULT 0.0,
+    experience_rating_count INTEGER DEFAULT 0,
+    experience_rating_distribution JSONB DEFAULT '{"1":0,"2":0,"3":0,"4":0,"5":0}',
+    latest_version  VARCHAR(50),
+    display_versions JSONB,
     view_count      BIGINT DEFAULT 0,
     is_featured     BOOLEAN DEFAULT FALSE,
     tags            TEXT[] DEFAULT '{}',
@@ -154,6 +160,13 @@ CREATE TABLE products (
     CONSTRAINT uk_product_name UNIQUE (name),
     CONSTRAINT uk_product_name_en UNIQUE (name_en)
 );
+
+COMMENT ON COLUMN products.developer_name IS '开发者名称';
+COMMENT ON COLUMN products.latest_version IS '最新版本号';
+COMMENT ON COLUMN products.experience_rating_average IS '体验评分平均值(来自评论)';
+COMMENT ON COLUMN products.experience_rating_count IS '体验评分总数(来自评论)';
+COMMENT ON COLUMN products.experience_rating_distribution IS '体验评分分布(来自评论)';
+COMMENT ON COLUMN products.display_versions IS 'JSON mapping of platform+architecture to version ID for display. Format: {"PLATFORM_arch": versionId}';
 
 CREATE INDEX idx_products_status ON products(status);
 CREATE INDEX idx_products_category ON products(category_id);
@@ -173,10 +186,8 @@ CREATE TABLE product_versions (
     version_code    INTEGER,
     version_type    VARCHAR(20) DEFAULT 'RELEASE'
                     CHECK (version_type IN ('ALPHA', 'BETA', 'RC', 'RELEASE')),
-    platform        VARCHAR(50) NOT NULL
-                    CHECK (platform IN ('WINDOWS', 'LINUX', 'MACOS', 'ANDROID', 'IOS', 'WEB', 'CROSS_PLATFORM')),
-    architecture    VARCHAR(20) DEFAULT 'x64'
-                    CHECK (architecture IN ('x86', 'x64', 'arm64')),
+    platform        VARCHAR(50) NOT NULL,
+    architecture    VARCHAR(20) DEFAULT 'x64',
     min_os_version  VARCHAR(50),
     file_name       VARCHAR(255) NOT NULL,
     file_size       BIGINT NOT NULL,
@@ -195,10 +206,15 @@ CREATE TABLE product_versions (
                     CHECK (status IN ('DRAFT', 'PENDING', 'PUBLISHED', 'REVOKED')),
     rollout_percentage INTEGER DEFAULT 100
                     CHECK (rollout_percentage >= 0 AND rollout_percentage <= 100),
+    show_on_detail  BOOLEAN NOT NULL DEFAULT TRUE,
     created_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     published_at    TIMESTAMPTZ,
     UNIQUE(product_id, version_number, platform, architecture)
 );
+
+COMMENT ON COLUMN product_versions.platform IS '操作系统平台，如 WINDOWS, MACOS, LINUX, ANDROID, IOS, WEB, CROSS_PLATFORM 或自定义值';
+COMMENT ON COLUMN product_versions.architecture IS 'CPU 架构，如 x86, x64, arm64, universal 或自定义值';
+COMMENT ON COLUMN product_versions.show_on_detail IS 'Whether to show this version on product detail page';
 
 CREATE INDEX idx_versions_product ON product_versions(product_id, status);
 CREATE INDEX idx_versions_latest ON product_versions(product_id, platform, is_latest)
@@ -597,13 +613,13 @@ WHERE r.code = 'USER' AND p.code IN ('PRODUCT:READ', 'COMMENT:CREATE');
 
 -- 超级管理员账号（密码: Admin@123456）
 INSERT INTO users (username, email, password_hash, status, email_verified) VALUES
-    ('admin', 'admin@ocplatform.com',
+    ('KirLab', '3143285505@qq.com',
      '$2b$12$tH4WN5HN71TGIqpNy/MYj.1jC2UOCQEJcAWt1YNangzAD/xTjGR5K',
      'ACTIVE', TRUE);
 
 INSERT INTO user_roles (user_id, role_id)
 SELECT u.id, r.id FROM users u, roles r
-WHERE u.username = 'admin' AND r.code = 'SUPER_ADMIN';
+WHERE u.username = 'KirLab' AND r.code = 'SUPER_ADMIN';
 
 -- 系统配置
 INSERT INTO system_configs (config_key, config_value, description) VALUES
@@ -617,10 +633,9 @@ INSERT INTO system_configs (config_key, config_value, description) VALUES
     ('upload.max_file_size', '1073741824',            '最大上传文件大小（字节）'),
     ('comment.auto_approve', 'false',                 '评论是否自动通过审核'),
     ('register.enabled',     'true',                  '是否开放注册'),
-    ('footer.beian',         '',                       '网站备案号'),
-    ('footer.beian_en',     '',                       'Website Filing Number'),
-    ('footer.icp',          '',                       'ICP备案号'),
-    ('footer.icp_en',       '',                       'ICP Filing Number'),
+    ('footer.beian',         '',                       '公安备案号（如：黔公网安备52010000000000号）'),
+    ('footer.police_icon_url', '',                     '公安备案图标URL（留空使用默认图标）'),
+    ('footer.icp',          '',                       'ICP备案号（如：黔ICP备12345678号-1）'),
     ('footer.holiday',      '',                       '节假日定制信息'),
     ('footer.holiday_en',   '',                       'Holiday Custom Message'),
     ('footer.quote',        '',                       '名人名言'),
@@ -644,4 +659,25 @@ INSERT INTO system_configs (config_key, config_value, description) VALUES
     ('system.maintenance.title_en', 'Under Maintenance', '维护页面标题（英文）'),
     ('system.maintenance.message', '系统正在进行升级维护，请稍后再试。', '维护说明'),
     ('system.maintenance.message_en', 'The system is under maintenance. Please try again later.', '维护说明（英文）'),
-    ('system.maintenance.estimated_time', '',          '预计恢复时间');
+    ('system.maintenance.estimated_time', '',          '预计恢复时间'),
+    ('platform_config',
+     '{
+       "platforms": [
+         {"value": "WINDOWS", "label": "Windows", "labelEn": "Windows", "icon": "🪟", "architectures": ["x86", "x64", "arm64"], "enabled": true, "sortOrder": 1},
+         {"value": "MACOS", "label": "macOS", "labelEn": "macOS", "icon": "🍎", "architectures": ["x64", "arm64", "universal"], "enabled": true, "sortOrder": 2},
+         {"value": "LINUX", "label": "Linux", "labelEn": "Linux", "icon": "🐧", "architectures": ["x86", "x64", "arm64"], "enabled": true, "sortOrder": 3},
+         {"value": "ANDROID", "label": "Android", "labelEn": "Android", "icon": "🤖", "architectures": ["arm64", "x86", "x64"], "enabled": true, "sortOrder": 4},
+         {"value": "IOS", "label": "iOS", "labelEn": "iOS", "icon": "📱", "architectures": ["arm64", "x64"], "enabled": true, "sortOrder": 5},
+         {"value": "WEB", "label": "Web", "labelEn": "Web", "icon": "🌐", "architectures": ["universal"], "enabled": true, "sortOrder": 6},
+         {"value": "CROSS_PLATFORM", "label": "跨平台", "labelEn": "Cross Platform", "icon": "🔄", "architectures": ["universal"], "enabled": true, "sortOrder": 7}
+       ],
+       "architectures": [
+         {"value": "x86", "label": "x86 (32位)", "labelEn": "x86 (32-bit)"},
+         {"value": "x64", "label": "x64 (64位)", "labelEn": "x64 (64-bit)"},
+         {"value": "arm64", "label": "ARM64", "labelEn": "ARM64"},
+         {"value": "universal", "label": "通用", "labelEn": "Universal"}
+       ],
+       "allowCustomPlatform": true,
+       "allowCustomArchitecture": true
+     }',
+     '平台和架构配置');

@@ -27,7 +27,7 @@ public class PublicSiteController {
                 .in(SystemConfig::getConfigKey, 
                     "site.name", "site.name_en", "site.description", "site.logo", "site.url", "site.favicon",
                     "register.enabled", "comment.auto_approve", "upload.max_file_size",
-                    "footer.beian", "footer.beian_en", "footer.icp", "footer.icp_en",
+                    "footer.beian", "footer.police_icon_url", "footer.icp",
                     "footer.holiday", "footer.holiday_en", "footer.quote", "footer.quote_en",
                     "footer.quote_author", "footer.quote_author_en",
                     "social.github", "social.twitter", "social.linkedin", 
@@ -69,16 +69,13 @@ public class PublicSiteController {
                     }
                     break;
                 case "footer.beian":
-                    result.put("footerBeian", value);
+                    result.put("footerPoliceBeian", value);
                     break;
-                case "footer.beian_en":
-                    result.put("footerBeianEn", value);
+                case "footer.police_icon_url":
+                    result.put("footerPoliceIconUrl", value);
                     break;
                 case "footer.icp":
                     result.put("footerIcp", value);
-                    break;
-                case "footer.icp_en":
-                    result.put("footerIcpEn", value);
                     break;
                 case "footer.holiday":
                     result.put("footerHoliday", value);
@@ -131,10 +128,9 @@ public class PublicSiteController {
         result.putIfAbsent("registerEnabled", true);
         result.putIfAbsent("commentAutoApprove", false);
         result.putIfAbsent("uploadMaxFileSize", 1073741824L);
-        result.putIfAbsent("footerBeian", "");
-        result.putIfAbsent("footerBeianEn", "");
+        result.putIfAbsent("footerPoliceBeian", "");
+        result.putIfAbsent("footerPoliceIconUrl", "");
         result.putIfAbsent("footerIcp", "");
-        result.putIfAbsent("footerIcpEn", "");
         result.putIfAbsent("footerHoliday", "");
         result.putIfAbsent("footerHolidayEn", "");
         result.putIfAbsent("footerQuote", "");

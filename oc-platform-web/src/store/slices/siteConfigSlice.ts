@@ -11,10 +11,9 @@ export interface SiteConfig {
   registerEnabled: boolean;
   commentAutoApprove: boolean;
   uploadMaxFileSize: number;
-  footerBeian: string;
-  footerBeianEn: string;
+  footerPoliceBeian: string;
+  footerPoliceIconUrl: string;
   footerIcp: string;
-  footerIcpEn: string;
   footerHoliday: string;
   footerHolidayEn: string;
   footerQuote: string;
@@ -46,10 +45,9 @@ const defaultConfig: SiteConfig = {
   registerEnabled: true,
   commentAutoApprove: false,
   uploadMaxFileSize: 1073741824,
-  footerBeian: '',
-  footerBeianEn: '',
+  footerPoliceBeian: '',
+  footerPoliceIconUrl: '',
   footerIcp: '',
-  footerIcpEn: '',
   footerHoliday: '',
   footerHolidayEn: '',
   footerQuote: '',

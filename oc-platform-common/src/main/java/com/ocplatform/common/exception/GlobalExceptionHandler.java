@@ -60,7 +60,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(NoResourceFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ApiResponse<Void> handleNoResourceFound(NoResourceFoundException e) {
+    public ApiResponse<Void> handleNoResourceFound(NoResourceFoundException e, HttpServletRequest request) {
+        log.warn("Resource not found: {} {}", request.getMethod(), request.getRequestURI());
         return ApiResponse.error(ErrorCode.RESOURCE_NOT_FOUND);
     }
 

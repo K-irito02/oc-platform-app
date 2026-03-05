@@ -3,6 +3,7 @@ package com.ocplatform.interceptor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ocplatform.common.dto.MaintenanceStatusDTO;
 import com.ocplatform.common.entity.SystemConfig;
+import com.ocplatform.common.event.MaintenanceCacheClearEvent;
 import com.ocplatform.common.repository.SystemConfigMapper;
 import com.ocplatform.common.response.ApiResponse;
 import com.ocplatform.common.response.ErrorCode;
@@ -10,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -131,6 +133,12 @@ public class MaintenanceInterceptor implements HandlerInterceptor {
 
     public void clearCache() {
         configCache.clear();
+    }
+
+    @EventListener
+    public void handleCacheClearEvent(MaintenanceCacheClearEvent event) {
+        clearCache();
+        log.info("Maintenance cache cleared via event");
     }
 
     private record CachedConfig(MaintenanceStatusDTO status, long timestamp) {}

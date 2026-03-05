@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Form, Input } from 'antd';
 import { message } from '@/utils/antdUtils';
-import { GithubOutlined, MailOutlined, LockOutlined } from '@ant-design/icons';
+import { MailOutlined, LockOutlined } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAppDispatch } from '@/store/hooks';
@@ -19,12 +19,6 @@ interface LoginResponse {
     };
     accessToken: string;
     refreshToken: string;
-  };
-}
-
-interface GithubUrlResponse {
-  data: {
-    url: string;
   };
 }
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -61,15 +55,6 @@ export default function Login() {
       }
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleGithubLogin = async () => {
-    try {
-      const res = await authApi.getGithubUrl() as GithubUrlResponse;
-      window.location.href = res.data.url;
-    } catch {
-      message.error('Failed to get GitHub auth URL');
     }
   };
 
@@ -147,26 +132,6 @@ export default function Login() {
           </Form.Item>
         </Form>
 
-        {/* Divider */}
-        <div className="relative flex items-center justify-center mb-6">
-            <div className="absolute inset-x-0 h-px bg-slate-300/50"></div>
-            <span className="relative z-10 bg-white/50 px-3 text-xs font-medium text-slate-500 uppercase rounded-full">
-                Or continue with
-            </span>
-        </div>
-
-        {/* Social Login */}
-        <div className="grid grid-cols-1 gap-4">
-            <GlassButton 
-                variant="secondary" 
-                onClick={handleGithubLogin}
-                className="w-full flex items-center justify-center gap-2"
-            >
-                <GithubOutlined className="text-xl" />
-                <span>GitHub</span>
-            </GlassButton>
-        </div>
-
         {/* Register Link */}
         <div className="mt-8 text-center text-sm text-slate-600">
             {t('auth.noAccount') || "Don't have an account?"} 
@@ -177,27 +142,6 @@ export default function Login() {
                 {t('auth.registerNow') || 'Sign up'}
             </Link>
         </div>
-
-        {/* Dev Helpers */}
-        {import.meta.env.DEV && (
-            <div className="mt-8 p-4 rounded-xl bg-slate-100/50 border border-slate-200/50 text-xs">
-                <p className="font-semibold text-slate-700 mb-2">Dev Quick Fill:</p>
-                <div className="flex justify-between gap-2">
-                    <button 
-                        onClick={() => form.setFieldsValue({ email: 'admin@ocplatform.com', password: 'Admin@123456' })}
-                        className="text-primary hover:underline cursor-pointer"
-                    >
-                        Admin
-                    </button>
-                    <button 
-                        onClick={() => form.setFieldsValue({ email: 'zhangsan@example.com', password: 'Test@123456' })}
-                        className="text-primary hover:underline cursor-pointer"
-                    >
-                        User
-                    </button>
-                </div>
-            </div>
-        )}
       </GlassCard>
     </div>
   );

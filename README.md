@@ -199,19 +199,8 @@ oc-platform/
 ├── scripts/
 │   └── init-minio.ps1             # MinIO 初始化脚本
 ├── sql/
-│   ├── migrations/                # 数据库迁移脚本
-│   │   ├── V2__add_minio_fields.sql
-│   │   ├── add_site_feedbacks.sql
-│   │   ├── add_site_logo.sql
-│   │   ├── add_footer_configs.sql
-│   │   ├── add_email_and_social_configs.sql
-│   │   └── upgrade_site_feedbacks.sql
-│   ├── V1.0.3__remove_nickname_column.sql
-│   ├── init.sql
-│   ├── pg_hba.conf
-│   ├── reset-products.sql
-│   ├── seed-products.sql
-│   └── seed.sql
+│   ├── init.sql                   # 数据库初始化脚本（表结构 + 初始数据）
+│   └── pg_hba.conf                # PostgreSQL 配置
 ├── docker-compose.dev.yml         # 开发环境依赖（PostgreSQL + Redis + MinIO）
 ├── docker-compose.yml             # 生产环境（全栈部署）
 ├── .env.example                   # 环境变量模板
@@ -246,14 +235,11 @@ oc-platform/
 
 ## 平台登录账号
 
-| 角色 | 邮箱 | 密码 | 来源 |
-|------|------|------|------|
-| 超级管理员 | admin@OcPlatform.com | Admin@123456 | init.sql 自动创建 |
-| 测试用户 | zhangsan@example.com | Test@123456 | seed.sql 手动导入 |
-| 测试用户 | lisi@example.com | Test@123456 | seed.sql 手动导入 |
-| 测试用户 | wangwu@example.com | Test@123456 | seed.sql 手动导入 |
-| 测试开发者 | chen@example.com | Test@123456 | seed.sql 手动导入 |
-| 封禁用户 | banned@example.com | Test@123456 | seed.sql（状态: BANNED）|
+| 角色 | 用户名 | 邮箱 | 密码 | 来源 |
+|------|--------|------|------|------|
+| 超级管理员 | KirLab | 3143285505@qq.com | — | init.sql 自动创建 |
+
+> **注**: 测试用户数据已移除，如需测试请自行创建账号。
 
 ---
 
@@ -274,8 +260,7 @@ oc-platform/
 # 停止并删除数据卷，然后重新创建
 docker compose -f docker-compose.dev.yml down -v
 docker compose -f docker-compose.dev.yml up -d
-# 等待 PostgreSQL healthy 后重新导入种子数据
-Get-Content sql/seed.sql | docker exec -i oc-dev-postgres psql -U oc_user -d oc_platform
+# 等待 PostgreSQL healthy 后，init.sql 会自动执行建表和初始化数据
 ```
 
 ---
@@ -342,6 +327,10 @@ Get-Content sql/seed.sql | docker exec -i oc-dev-postgres psql -U oc_user -d oc_
 - [x] 产品详情页版本发布说明展示（支持中英文切换）
 - [x] 产品详情页展示版本多选功能（按平台+架构设置）
 - [x] 版本管理按钮延迟优化（loading状态防止重复点击）
+- [x] ICP备案+公安备案功能（邮箱验证、前端管理、Footer显示）
+- [x] 时区配置（Docker容器、PostgreSQL、后端Jackson统一Asia/Shanghai）
+- [x] 登录页面简化（移除GitHub登录和测试区域）
+- [x] SQL文件整理（合并迁移脚本、删除种子数据文件）
 - [ ] 文件上传/下载端到端测试
 - [ ] 单元测试编写（前端 Jest + 后端 JUnit 5）
 - [ ] 响应式设计优化（移动端适配）

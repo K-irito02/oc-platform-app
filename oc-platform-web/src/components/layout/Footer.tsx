@@ -3,17 +3,28 @@ import { Github, Twitter, Linkedin, Quote, Calendar, Shield, Mail } from 'lucide
 import { SiteLogo } from '@/components/SiteLogo';
 import { useAppSelector } from '@/store/hooks';
 
+const extractPoliceCode = (policeBeian: string): string | null => {
+  if (!policeBeian) return null;
+  const match = policeBeian.match(/\d+/);
+  return match ? match[0] : null;
+};
+
 export const Footer = () => {
   const { t, i18n } = useTranslation();
   const siteConfig = useAppSelector((state) => state.siteConfig.config);
   const isEn = i18n.language === 'en-US' || i18n.language === 'en';
 
-  // 根据语言获取配置
-  const beian = isEn ? siteConfig.footerBeianEn : siteConfig.footerBeian;
-  const icp = isEn ? siteConfig.footerIcpEn : siteConfig.footerIcp;
+  const policeBeian = siteConfig.footerPoliceBeian;
+  const policeIconUrl = siteConfig.footerPoliceIconUrl;
+  const icp = siteConfig.footerIcp;
   const holiday = isEn ? siteConfig.footerHolidayEn : siteConfig.footerHoliday;
   const quote = isEn ? siteConfig.footerQuoteEn : siteConfig.footerQuote;
   const quoteAuthor = isEn ? siteConfig.footerQuoteAuthorEn : siteConfig.footerQuoteAuthor;
+
+  const policeCode = extractPoliceCode(policeBeian);
+  const policeBeianUrl = policeCode 
+    ? `https://beian.gov.cn/portal/registerSystemInfo?recordcode=${policeCode}` 
+    : null;
 
   // 社交链接配置
   const socialLinks = {
@@ -157,37 +168,44 @@ export const Footer = () => {
             </div>
           )}
 
-          {/* 版权和备案信息 */}
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-slate-500 dark:text-slate-400 text-sm">
+          {/* 备案信息和版权 - 备案始终居中 */}
+          <div className="relative flex items-center justify-center py-4 min-h-[48px]">
+            {/* 版权信息 - 绝对定位在左侧 */}
+            <p className="absolute left-0 text-slate-500 dark:text-slate-400 text-sm">
               {t('footer.copyright')}
             </p>
             
-            {/* 备案和ICP信息 */}
-            <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-slate-400 dark:text-slate-500">
-              {beian && (
-                <a 
-                  href="https://beian.miit.gov.cn/" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-                >
-                  <Shield size={12} />
-                  <span>{beian}</span>
-                </a>
-              )}
-              {icp && (
-                <a 
-                  href="https://beian.miit.gov.cn/" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-                >
-                  <Shield size={12} />
-                  <span>{icp}</span>
-                </a>
-              )}
-            </div>
+            {/* 备案信息 - 始终居中，不受主题影响 */}
+            {(policeBeian || icp) && (
+              <div className="flex flex-wrap items-center justify-center gap-4">
+                {policeBeian && policeBeianUrl && (
+                  <a 
+                    href={policeBeianUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-gray-300 transition-all duration-200"
+                  >
+                    {policeIconUrl ? (
+                      <img src={policeIconUrl} alt="公安备案" className="w-5 h-5" />
+                    ) : (
+                      <Shield size={18} className="text-red-500" />
+                    )}
+                    <span className="text-sm text-gray-700 font-medium">{policeBeian}</span>
+                  </a>
+                )}
+                {icp && (
+                  <a 
+                    href="https://beian.miit.gov.cn/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-gray-300 transition-all duration-200"
+                  >
+                    <Shield size={18} className="text-blue-500" />
+                    <span className="text-sm text-gray-700 font-medium">{icp}</span>
+                  </a>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Table, Button, Input, Card, Space, Switch, DatePicker, Alert } from 'antd';
+import { Table, Button, Input, Card, Space, Switch, DatePicker, Alert, Modal } from 'antd';
 import { message } from '@/utils/antdUtils';
 import { adminApi } from '@/utils/api';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
-import { Save, X, Edit, Image, FileText, Quote, Calendar, Shield, Globe, Link, Mail, Github, Twitter, Wrench, AlertTriangle } from 'lucide-react';
+import { Save, X, Edit, Image, FileText, Quote, Calendar, Shield, Globe, Link, Mail, Github, Twitter, Wrench, AlertTriangle, MailCheck } from 'lucide-react';
 import { LogoCropUploader } from '@/components/LogoCropUploader';
 import { useAppDispatch } from '@/store/hooks';
 import { fetchSiteConfig } from '@/store/slices/siteConfigSlice';
@@ -30,10 +30,9 @@ export default function AdminSystem() {
   const [logoUrl, setLogoUrl] = useState('');
   const [faviconUrl, setFaviconUrl] = useState('');
   const [footerConfig, setFooterConfig] = useState({
-    beian: '',
-    beianEn: '',
+    policeBeian: '',
+    policeIconUrl: '',
     icp: '',
-    icpEn: '',
     holiday: '',
     holidayEn: '',
     quote: '',
@@ -42,6 +41,12 @@ export default function AdminSystem() {
     quoteAuthorEn: '',
   });
   const [footerSaving, setFooterSaving] = useState(false);
+  
+  const [filingModalVisible, setFilingModalVisible] = useState(false);
+  const [filingVerificationCode, setFilingVerificationCode] = useState('');
+  const [filingCodeSending, setFilingCodeSending] = useState(false);
+  const [filingCountdown, setFilingCountdown] = useState(0);
+  const [superAdminEmail, setSuperAdminEmail] = useState('');
   
   // 官网URL和社交链接配置
   const [siteUrlConfig, setSiteUrlConfig] = useState({
@@ -89,10 +94,9 @@ export default function AdminSystem() {
         const newFooterConfig = { ...footerConfig };
         footerConfigs.forEach((c: SystemConfig) => {
           switch (c.configKey) {
-            case 'footer.beian': newFooterConfig.beian = c.configValue || ''; break;
-            case 'footer.beian_en': newFooterConfig.beianEn = c.configValue || ''; break;
+            case 'footer.beian': newFooterConfig.policeBeian = c.configValue || ''; break;
+            case 'footer.police_icon_url': newFooterConfig.policeIconUrl = c.configValue || ''; break;
             case 'footer.icp': newFooterConfig.icp = c.configValue || ''; break;
-            case 'footer.icp_en': newFooterConfig.icpEn = c.configValue || ''; break;
             case 'footer.holiday': newFooterConfig.holiday = c.configValue || ''; break;
             case 'footer.holiday_en': newFooterConfig.holidayEn = c.configValue || ''; break;
             case 'footer.quote': newFooterConfig.quote = c.configValue || ''; break;
@@ -103,6 +107,13 @@ export default function AdminSystem() {
         });
         setFooterConfig(newFooterConfig);
       }
+      
+      try {
+        const filingRes = await adminApi.getFilingConfig() as ApiResponse<{ superAdminEmail: string }>;
+        if (filingRes.data?.superAdminEmail) {
+          setSuperAdminEmail(filingRes.data.superAdminEmail);
+        }
+      } catch { /* ignore */ }
       // 获取官网URL配置
       const siteUrlConfigData = res.data?.find((c: SystemConfig) => c.configKey === 'site.url');
       if (siteUrlConfigData) {
@@ -190,10 +201,6 @@ export default function AdminSystem() {
     setFooterSaving(true);
     try {
       await Promise.all([
-        adminApi.updateSystemConfig('footer.beian', footerConfig.beian),
-        adminApi.updateSystemConfig('footer.beian_en', footerConfig.beianEn),
-        adminApi.updateSystemConfig('footer.icp', footerConfig.icp),
-        adminApi.updateSystemConfig('footer.icp_en', footerConfig.icpEn),
         adminApi.updateSystemConfig('footer.holiday', footerConfig.holiday),
         adminApi.updateSystemConfig('footer.holiday_en', footerConfig.holidayEn),
         adminApi.updateSystemConfig('footer.quote', footerConfig.quote),
@@ -202,6 +209,53 @@ export default function AdminSystem() {
         adminApi.updateSystemConfig('footer.quote_author_en', footerConfig.quoteAuthorEn),
       ]);
       message.success(t('admin.saveSuccess'));
+      dispatch(fetchSiteConfig());
+      loadData();
+    } catch { /* handled */ } finally {
+      setFooterSaving(false);
+    }
+  };
+
+  const handleFilingSaveClick = () => {
+    setFilingModalVisible(true);
+    setFilingVerificationCode('');
+  };
+
+  const handleSendFilingCode = async () => {
+    setFilingCodeSending(true);
+    try {
+      await adminApi.sendFilingCode();
+      message.success(t('adminSystem.filingCodeSent'));
+      setFilingCountdown(60);
+      const timer = setInterval(() => {
+        setFilingCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } catch { /* handled */ } finally {
+      setFilingCodeSending(false);
+    }
+  };
+
+  const handleFilingConfirm = async () => {
+    if (!filingVerificationCode) {
+      message.error(t('adminSystem.filingCodeRequired'));
+      return;
+    }
+    setFooterSaving(true);
+    try {
+      await adminApi.updateFilingConfig({
+        verificationCode: filingVerificationCode,
+        icp: footerConfig.icp,
+        policeBeian: footerConfig.policeBeian,
+        policeIconUrl: footerConfig.policeIconUrl,
+      });
+      message.success(t('admin.saveSuccess'));
+      setFilingModalVisible(false);
       dispatch(fetchSiteConfig());
       loadData();
     } catch { /* handled */ } finally {
@@ -340,39 +394,41 @@ export default function AdminSystem() {
         className="border-slate-200 dark:border-slate-800 dark:bg-slate-900 shadow-sm"
       >
         <div className="space-y-6">
-          {/* 备案信息 */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <Alert
+            type="info"
+            message={t('adminSystem.filingNote')}
+            showIcon
+            className="mb-4"
+          />
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
-                <Shield size={14} className="text-blue-500" />
-                {t('adminSystem.beian')}
+                <Shield size={14} className="text-red-500" />
+                {t('adminSystem.policeBeian')}
               </label>
               <Input
-                value={footerConfig.beian}
-                onChange={(e) => setFooterConfig({ ...footerConfig, beian: e.target.value })}
-                placeholder={t('adminSystem.beianPlaceholder')}
+                value={footerConfig.policeBeian}
+                onChange={(e) => setFooterConfig({ ...footerConfig, policeBeian: e.target.value })}
+                placeholder={t('adminSystem.policeBeianPlaceholder')}
+                className="h-10"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                <Image size={14} className="text-orange-500" />
+                {t('adminSystem.policeIconUrl')}
+              </label>
+              <Input
+                value={footerConfig.policeIconUrl}
+                onChange={(e) => setFooterConfig({ ...footerConfig, policeIconUrl: e.target.value })}
+                placeholder={t('adminSystem.policeIconUrlPlaceholder')}
                 className="h-10"
               />
             </div>
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
                 <Shield size={14} className="text-blue-500" />
-                {t('adminSystem.beianEn')}
-              </label>
-              <Input
-                value={footerConfig.beianEn}
-                onChange={(e) => setFooterConfig({ ...footerConfig, beianEn: e.target.value })}
-                placeholder={t('adminSystem.beianEnPlaceholder')}
-                className="h-10"
-              />
-            </div>
-          </div>
-
-          {/* ICP 信息 */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
-                <Shield size={14} className="text-indigo-500" />
                 {t('adminSystem.icp')}
               </label>
               <Input
@@ -382,20 +438,92 @@ export default function AdminSystem() {
                 className="h-10"
               />
             </div>
-            <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
-                <Shield size={14} className="text-indigo-500" />
-                {t('adminSystem.icpEn')}
-              </label>
-              <Input
-                value={footerConfig.icpEn}
-                onChange={(e) => setFooterConfig({ ...footerConfig, icpEn: e.target.value })}
-                placeholder={t('adminSystem.icpEnPlaceholder')}
-                className="h-10"
-              />
-            </div>
           </div>
 
+          {/* 备案信息保存按钮 */}
+          <div className="flex justify-end pt-4 border-t border-slate-200 dark:border-slate-700">
+            <Button
+              type="primary"
+              icon={<Save size={14} />}
+              loading={footerSaving}
+              onClick={handleFilingSaveClick}
+              className="flex items-center gap-2"
+            >
+              {t('adminSystem.saveFiling')}
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      <Modal
+        title={
+          <div className="flex items-center gap-2">
+            <MailCheck size={18} className="text-blue-500" />
+            <span>{t('adminSystem.filingVerifyTitle')}</span>
+          </div>
+        }
+        open={filingModalVisible}
+        onCancel={() => setFilingModalVisible(false)}
+        footer={null}
+        className="filing-verify-modal"
+      >
+        <div className="space-y-4 py-4">
+          <p className="text-slate-600 dark:text-slate-300">
+            {t('adminSystem.filingVerifyDesc')} <span className="font-medium text-blue-600">{superAdminEmail}</span>
+          </p>
+          
+          <div className="flex gap-2">
+            <Button
+              onClick={handleSendFilingCode}
+              loading={filingCodeSending}
+              disabled={filingCountdown > 0}
+            >
+              {filingCountdown > 0 
+                ? `${filingCountdown}s ${t('adminSystem.resendAfter')}` 
+                : t('adminSystem.sendCode')}
+            </Button>
+          </div>
+          
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+              {t('adminSystem.verificationCode')}
+            </label>
+            <Input
+              value={filingVerificationCode}
+              onChange={(e) => setFilingVerificationCode(e.target.value)}
+              placeholder={t('adminSystem.verificationCodePlaceholder')}
+              className="h-10"
+              maxLength={6}
+            />
+          </div>
+          
+          <div className="flex justify-end gap-2 pt-4">
+            <Button onClick={() => setFilingModalVisible(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button
+              type="primary"
+              loading={footerSaving}
+              onClick={handleFilingConfirm}
+              icon={<Save size={14} />}
+            >
+              {t('adminSystem.confirmSave')}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* 节假日和名人名言配置卡片 */}
+      <Card
+        title={
+          <div className="flex items-center gap-2">
+            <FileText size={18} className="text-emerald-600" />
+            <span className="text-slate-900 dark:text-white">{t('adminSystem.holidayQuoteConfig')}</span>
+          </div>
+        }
+        className="border-slate-200 dark:border-slate-800 dark:bg-slate-900 shadow-sm"
+      >
+        <div className="space-y-6">
           {/* 节假日定制信息 */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -480,16 +608,184 @@ export default function AdminSystem() {
             </div>
           </div>
 
-          {/* 保存按钮 */}
+          {/* 节假日和名人名言保存按钮 */}
           <div className="flex justify-end pt-4 border-t border-slate-200 dark:border-slate-700">
             <Button
-              type="primary"
+              type="default"
               icon={<Save size={14} />}
               loading={footerSaving}
               onClick={handleFooterSave}
               className="flex items-center gap-2"
             >
-              {t('common.save')}
+              {t('adminSystem.saveHolidayQuote')}
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      <Modal
+        title={
+          <div className="flex items-center gap-2">
+            <MailCheck size={18} className="text-blue-500" />
+            <span>{t('adminSystem.filingVerifyTitle')}</span>
+          </div>
+        }
+        open={filingModalVisible}
+        onCancel={() => setFilingModalVisible(false)}
+        footer={null}
+        className="filing-verify-modal"
+      >
+        <div className="space-y-4 py-4">
+          <p className="text-slate-600 dark:text-slate-300">
+            {t('adminSystem.filingVerifyDesc')} <span className="font-medium text-blue-600">{superAdminEmail}</span>
+          </p>
+          
+          <div className="flex gap-2">
+            <Button
+              onClick={handleSendFilingCode}
+              loading={filingCodeSending}
+              disabled={filingCountdown > 0}
+            >
+              {filingCountdown > 0 
+                ? `${filingCountdown}s ${t('adminSystem.resendAfter')}` 
+                : t('adminSystem.sendCode')}
+            </Button>
+          </div>
+          
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+              {t('adminSystem.verificationCode')}
+            </label>
+            <Input
+              value={filingVerificationCode}
+              onChange={(e) => setFilingVerificationCode(e.target.value)}
+              placeholder={t('adminSystem.verificationCodePlaceholder')}
+              className="h-10"
+              maxLength={6}
+            />
+          </div>
+          
+          <div className="flex justify-end gap-2 pt-4">
+            <Button onClick={() => setFilingModalVisible(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button
+              type="primary"
+              loading={footerSaving}
+              onClick={handleFilingConfirm}
+              icon={<Save size={14} />}
+            >
+              {t('adminSystem.confirmSave')}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* 节假日和名人名言配置卡片 */}
+      <Card
+        title={
+          <div className="flex items-center gap-2">
+            <Calendar size={18} className="text-emerald-600" />
+            <span className="text-slate-900 dark:text-white">{t('adminSystem.holidayQuoteConfig')}</span>
+          </div>
+        }
+        className="border-slate-200 dark:border-slate-800 dark:bg-slate-900 shadow-sm"
+      >
+        <div className="space-y-6">
+          {/* 节假日定制信息 */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                <Calendar size={14} className="text-rose-500" />
+                {t('adminSystem.holiday')}
+              </label>
+              <Input.TextArea
+                value={footerConfig.holiday}
+                onChange={(e) => setFooterConfig({ ...footerConfig, holiday: e.target.value })}
+                placeholder={t('adminSystem.holidayPlaceholder')}
+                autoSize={{ minRows: 2, maxRows: 4 }}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                <Calendar size={14} className="text-rose-500" />
+                {t('adminSystem.holidayEn')}
+              </label>
+              <Input.TextArea
+                value={footerConfig.holidayEn}
+                onChange={(e) => setFooterConfig({ ...footerConfig, holidayEn: e.target.value })}
+                placeholder={t('adminSystem.holidayEnPlaceholder')}
+                autoSize={{ minRows: 2, maxRows: 4 }}
+              />
+            </div>
+          </div>
+
+          {/* 名人名言 */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                <Quote size={14} className="text-amber-500" />
+                {t('adminSystem.quote')}
+              </label>
+              <Input.TextArea
+                value={footerConfig.quote}
+                onChange={(e) => setFooterConfig({ ...footerConfig, quote: e.target.value })}
+                placeholder={t('adminSystem.quotePlaceholder')}
+                autoSize={{ minRows: 2, maxRows: 4 }}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                <Quote size={14} className="text-amber-500" />
+                {t('adminSystem.quoteEn')}
+              </label>
+              <Input.TextArea
+                value={footerConfig.quoteEn}
+                onChange={(e) => setFooterConfig({ ...footerConfig, quoteEn: e.target.value })}
+                placeholder={t('adminSystem.quoteEnPlaceholder')}
+                autoSize={{ minRows: 2, maxRows: 4 }}
+              />
+            </div>
+          </div>
+
+          {/* 名言作者 */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                <Quote size={14} className="text-amber-600" />
+                {t('adminSystem.quoteAuthor')}
+              </label>
+              <Input
+                value={footerConfig.quoteAuthor}
+                onChange={(e) => setFooterConfig({ ...footerConfig, quoteAuthor: e.target.value })}
+                placeholder={t('adminSystem.quoteAuthorPlaceholder')}
+                className="h-10"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                <Quote size={14} className="text-amber-600" />
+                {t('adminSystem.quoteAuthorEn')}
+              </label>
+              <Input
+                value={footerConfig.quoteAuthorEn}
+                onChange={(e) => setFooterConfig({ ...footerConfig, quoteAuthorEn: e.target.value })}
+                placeholder={t('adminSystem.quoteAuthorEnPlaceholder')}
+                className="h-10"
+              />
+            </div>
+          </div>
+
+          {/* 节假日和名人名言保存按钮 */}
+          <div className="flex justify-end pt-4 border-t border-slate-200 dark:border-slate-700">
+            <Button
+              type="default"
+              icon={<Save size={14} />}
+              loading={footerSaving}
+              onClick={handleFooterSave}
+              className="flex items-center gap-2"
+            >
+              {t('adminSystem.saveHolidayQuote')}
             </Button>
           </div>
         </div>

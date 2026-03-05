@@ -283,4 +283,13 @@ export const adminApi = {
     messageEn: string;
     estimatedTime?: string | null;
   }) => request.put('/admin/system/maintenance', data),
+  // Filing Config
+  sendFilingCode: () => request.post('/admin/system/filing/send-code'),
+  getFilingConfig: () => request.get('/admin/system/filing'),
+  updateFilingConfig: (data: {
+    verificationCode: string;
+    icp: string;
+    policeBeian: string;
+    policeIconUrl?: string;
+  }) => request.put('/admin/system/filing', data),
 };
