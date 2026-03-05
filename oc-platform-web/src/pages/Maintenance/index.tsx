@@ -18,8 +18,18 @@ export default function Maintenance() {
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<MaintenanceStatus | null>(null);
   const [countdown, setCountdown] = useState<string | null>(null);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   const isEnglish = i18n.language === 'en-US';
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setPrefersReducedMotion(mediaQuery.matches);
+    
+    const handler = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
+    mediaQuery.addEventListener('change', handler);
+    return () => mediaQuery.removeEventListener('change', handler);
+  }, []);
 
   useEffect(() => {
     fetchMaintenanceStatus();
@@ -91,7 +101,7 @@ export default function Maintenance() {
             <Wrench 
               size={48} 
               strokeWidth={1.5}
-              className="animate-pulse"
+              className={prefersReducedMotion ? '' : 'animate-pulse'}
             />
           </div>
         </div>

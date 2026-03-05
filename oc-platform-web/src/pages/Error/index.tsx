@@ -2,6 +2,7 @@ import { Button } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { FileQuestion, ServerCrash, ShieldX, WifiOff, Home, ArrowLeft, RefreshCw, LogIn } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 type ErrorType = '404' | '500' | '403' | 'network';
 
@@ -72,6 +73,16 @@ export default function ErrorPage({ type = '404' }: ErrorPageProps) {
   const { t } = useTranslation();
   const config = errorConfig[type];
   const IconComponent = config.icon;
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setPrefersReducedMotion(mediaQuery.matches);
+    
+    const handler = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
+    mediaQuery.addEventListener('change', handler);
+    return () => mediaQuery.removeEventListener('change', handler);
+  }, []);
 
   const handleAction = (action: 'home' | 'back' | 'refresh' | 'login') => {
     switch (action) {
@@ -98,7 +109,7 @@ export default function ErrorPage({ type = '404' }: ErrorPageProps) {
             <IconComponent 
               size={48} 
               strokeWidth={1.5}
-              className="animate-pulse"
+              className={prefersReducedMotion ? '' : 'animate-pulse'}
             />
           </div>
         </div>
