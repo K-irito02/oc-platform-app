@@ -1,5 +1,29 @@
 import request from './request';
 
+// ===== Types =====
+export interface PlatformOption {
+  value: string;
+  label: string;
+  labelEn: string;
+  icon: string;
+  architectures: string[];
+  enabled: boolean;
+  sortOrder: number;
+}
+
+export interface ArchitectureOption {
+  value: string;
+  label: string;
+  labelEn: string;
+}
+
+export interface PlatformConfig {
+  platforms: PlatformOption[];
+  architectures: ArchitectureOption[];
+  allowCustomPlatform: boolean;
+  allowCustomArchitecture: boolean;
+}
+
 // ===== Auth API =====
 export const authApi = {
   login: (data: { email: string; password: string }) =>
@@ -54,6 +78,7 @@ export const productApi = {
   getLatestVersion: (id: number) => request.get(`/products/${id}/versions/latest`),
   incrementDownload: (id: number) => request.post(`/products/${id}/download`),
   incrementVersionDownload: (versionId: number) => request.post(`/products/versions/${versionId}/download`),
+  getPlatformConfig: () => request.get('/products/platform-config'),
 };
 
 // ===== Category API =====
@@ -245,4 +270,7 @@ export const adminApi = {
   updateFeedbackStatus: (id: number, status: string) =>
     request.put(`/feedbacks/admin/${id}/status`, null, { params: { status } }),
   deleteFeedback: (id: number) => request.delete(`/feedbacks/admin/${id}`),
+  // Platform Config
+  updatePlatformConfig: (config: PlatformConfig) =>
+    request.put('/products/platform-config', config),
 };

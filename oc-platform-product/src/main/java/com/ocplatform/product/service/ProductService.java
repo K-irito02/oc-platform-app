@@ -226,10 +226,25 @@ public class ProductService {
         if (request.getHomepageUrl() != null) product.setHomepageUrl(request.getHomepageUrl());
         if (request.getSourceUrl() != null) product.setSourceUrl(request.getSourceUrl());
         if (request.getLicense() != null) product.setLicense(request.getLicense());
-        if (request.getIsFeatured() != null) product.setIsFeatured(request.getIsFeatured());
-        if (StringUtils.hasText(request.getStatus())) product.setStatus(request.getStatus());
         if (StringUtils.hasText(request.getDeveloperName())) product.setDeveloperName(request.getDeveloperName());
         if (request.getDisplayVersions() != null) product.setDisplayVersions(request.getDisplayVersions());
+        
+        // 处理状态变更
+        if (StringUtils.hasText(request.getStatus()) && !request.getStatus().equals(product.getStatus())) {
+            product.setStatus(request.getStatus());
+            // 如果状态不是 PUBLISHED，自动取消精选属性
+            if (!"PUBLISHED".equals(request.getStatus())) {
+                product.setIsFeatured(false);
+            }
+        }
+        
+        // 只有在 PUBLISHED 状态下才能设置精选
+        if (request.getIsFeatured() != null) {
+            if (request.getIsFeatured() && !"PUBLISHED".equals(product.getStatus())) {
+                throw new BusinessException(ErrorCode.PARAM_INVALID, "只有已发布的产品才能设置为精选");
+            }
+            product.setIsFeatured(request.getIsFeatured());
+        }
 
         productMapper.updateById(product);
         return toProductVO(product);
@@ -317,10 +332,8 @@ public class ProductService {
                     if (publishedVersionCount == 0) {
                         throw new BusinessException(ErrorCode.NO_PUBLISHED_VERSION, "发布产品前，请先发布至少一个版本");
                     }
-                } else if (!"ARCHIVED".equals(targetStatus)) {
-                    throw new BusinessException(ErrorCode.INVALID_STATUS_TRANSITION, 
-                            "产品状态不能从 " + currentStatus + " 转换为 " + targetStatus);
                 }
+                // DRAFT 可以转换为任何状态
                 break;
                 
             case "PENDING":
@@ -328,34 +341,45 @@ public class ProductService {
                     if (publishedVersionCount == 0) {
                         throw new BusinessException(ErrorCode.NO_PUBLISHED_VERSION, "审核通过前，请先发布至少一个版本");
                     }
-                } else if (!"REJECTED".equals(targetStatus) && !"DRAFT".equals(targetStatus)) {
+                }
+                // PENDING 可以转换为 DRAFT, REJECTED, PUBLISHED
+                if (!"DRAFT".equals(targetStatus) && !"REJECTED".equals(targetStatus) && !"PUBLISHED".equals(targetStatus)) {
                     throw new BusinessException(ErrorCode.INVALID_STATUS_TRANSITION, 
                             "产品状态不能从 " + currentStatus + " 转换为 " + targetStatus);
                 }
                 break;
                 
             case "REJECTED":
-                if (!"PENDING".equals(targetStatus) && !"DRAFT".equals(targetStatus)) {
+                // REJECTED 可以转换为 DRAFT, PENDING
+                if (!"DRAFT".equals(targetStatus) && !"PENDING".equals(targetStatus)) {
                     throw new BusinessException(ErrorCode.INVALID_STATUS_TRANSITION, 
                             "产品状态不能从 " + currentStatus + " 转换为 " + targetStatus);
+                }
+                if ("PENDING".equals(targetStatus) && allVersionCount == 0) {
+                    throw new BusinessException(ErrorCode.NO_VERSION, "提交审核前，请先添加至少一个版本");
                 }
                 break;
                 
             case "PUBLISHED":
-                if (!"ARCHIVED".equals(targetStatus)) {
+                // PUBLISHED 可以转换为 DRAFT, PENDING, ARCHIVED
+                if (!"DRAFT".equals(targetStatus) && !"PENDING".equals(targetStatus) && !"ARCHIVED".equals(targetStatus)) {
                     throw new BusinessException(ErrorCode.INVALID_STATUS_TRANSITION, 
                             "产品状态不能从 " + currentStatus + " 转换为 " + targetStatus);
+                }
+                // 转换为 PENDING 需要版本
+                if ("PENDING".equals(targetStatus) && allVersionCount == 0) {
+                    throw new BusinessException(ErrorCode.NO_VERSION, "产品必须有至少一个版本才能设置为待审核状态");
                 }
                 break;
                 
             case "ARCHIVED":
-                if ("PUBLISHED".equals(targetStatus)) {
-                    if (publishedVersionCount == 0) {
-                        throw new BusinessException(ErrorCode.NO_PUBLISHED_VERSION, "发布产品前，请先发布至少一个版本");
-                    }
-                } else if (!"DRAFT".equals(targetStatus)) {
+                // ARCHIVED 可以转换为 DRAFT, PUBLISHED
+                if (!"DRAFT".equals(targetStatus) && !"PUBLISHED".equals(targetStatus)) {
                     throw new BusinessException(ErrorCode.INVALID_STATUS_TRANSITION, 
                             "产品状态不能从 " + currentStatus + " 转换为 " + targetStatus);
+                }
+                if ("PUBLISHED".equals(targetStatus) && publishedVersionCount == 0) {
+                    throw new BusinessException(ErrorCode.NO_PUBLISHED_VERSION, "发布产品前，请先发布至少一个版本");
                 }
                 break;
                 

@@ -80,13 +80,13 @@ export const fetchSiteConfig = createAsyncThunk(
   'siteConfig/fetch',
   async (_, { rejectWithValue }) => {
     try {
-      const res = await request.get('/public/site-config') as ApiResponse<any>;
+      const res = await request.get('/public/site-config') as ApiResponse<Record<string, unknown>>;
       if (res.data) {
         const config = {
           ...res.data,
           faviconLogo: res.data['siteFavicon'] || '',
         };
-        return config;
+        return config as SiteConfig;
       }
       return defaultConfig;
     } catch (error: unknown) {

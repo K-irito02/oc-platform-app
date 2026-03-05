@@ -51,6 +51,33 @@ public class VersionService {
         if (version == null) {
             throw new BusinessException(ErrorCode.VERSION_NOT_FOUND);
         }
+        
+        Product product = productMapper.selectById(version.getProductId());
+        
+        // 检查是否是最后一个已发布版本
+        if ("PUBLISHED".equals(version.getStatus())) {
+            long publishedCount = versionMapper.countPublishedVersions(version.getProductId());
+            if (publishedCount <= 1) {
+                // 如果产品状态为 PUBLISHED，自动改为 DRAFT 并取消精选
+                if (product != null && "PUBLISHED".equals(product.getStatus())) {
+                    product.setStatus("DRAFT");
+                    product.setIsFeatured(false);
+                    productMapper.updateById(product);
+                    log.info("Product {} status changed to DRAFT and isFeatured set to false due to last published version deletion", product.getId());
+                }
+            }
+        }
+        
+        // 如果删除后没有版本，且产品状态不是 PUBLISHED，确保 isFeatured 为 false
+        if (product != null && !"PUBLISHED".equals(product.getStatus())) {
+            long allCount = versionMapper.countAllVersions(version.getProductId());
+            if (allCount <= 1 && Boolean.TRUE.equals(product.getIsFeatured())) {
+                product.setIsFeatured(false);
+                productMapper.updateById(product);
+                log.info("Product {} isFeatured set to false because it has no versions and is not published", product.getId());
+            }
+        }
+        
         versionMapper.deleteById(versionId);
         log.info("Version {} deleted", versionId);
     }

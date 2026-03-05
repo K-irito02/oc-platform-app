@@ -3,6 +3,7 @@ package com.ocplatform.product.controller;
 import com.ocplatform.common.response.ApiResponse;
 import com.ocplatform.common.response.PageResponse;
 import com.ocplatform.product.dto.*;
+import com.ocplatform.product.service.PlatformConfigService;
 import com.ocplatform.product.service.ProductService;
 import com.ocplatform.product.service.VersionService;
 import jakarta.validation.Valid;
@@ -20,6 +21,7 @@ public class ProductController {
 
     private final ProductService productService;
     private final VersionService versionService;
+    private final PlatformConfigService platformConfigService;
 
     @GetMapping
     public ApiResponse<PageResponse<ProductVO>> listProducts(
@@ -136,6 +138,20 @@ public class ProductController {
     @PostMapping("/versions/{vid}/download")
     public ApiResponse<Void> incrementVersionDownloadCount(@PathVariable Long vid) {
         versionService.incrementDownloadCount(vid);
+        return ApiResponse.success();
+    }
+
+    // ===== Platform Config =====
+
+    @GetMapping("/platform-config")
+    public ApiResponse<PlatformConfigVO> getPlatformConfig() {
+        return ApiResponse.success(platformConfigService.getPlatformConfig());
+    }
+
+    @PutMapping("/platform-config")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public ApiResponse<Void> updatePlatformConfig(@RequestBody PlatformConfigVO config) {
+        platformConfigService.updatePlatformConfig(config);
         return ApiResponse.success();
     }
 }

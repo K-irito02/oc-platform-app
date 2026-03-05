@@ -1,9 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useBlocker } from 'react-router-dom';
 import { Form, Input, Select, Button, Card, Upload, Spin, Tabs, Image, Modal, Table, Tag, Popconfirm, Space, Switch } from 'antd';
 import { message } from '@/utils/antdUtils';
 import { useTranslation } from 'react-i18next';
+import { useSelector, useDispatch } from 'react-redux';
 import { adminApi, categoryApi, fileApi } from '@/utils/api';
+import { fetchPlatformConfig } from '@/store/slices/platformConfigSlice';
+import { RootState, AppDispatch } from '@/store';
 import { ArrowLeft, Upload as UploadIcon, Plus, Trash2, Play, Image as ImageIcon, Film, Package, HardDrive, Monitor, CheckCircle } from 'lucide-react';
 import type { UploadProps } from 'antd/es/upload/interface';
 import type { ColumnsType } from 'antd/es/table';
@@ -69,14 +72,6 @@ interface PendingVersion {
 }
 
 // 系统平台选项
-const PLATFORM_OPTIONS = [
-  { value: 'WINDOWS', label: 'Windows', icon: '🪟' },
-  { value: 'MACOS', label: 'macOS', icon: '🍎' },
-  { value: 'LINUX', label: 'Linux', icon: '🐧' },
-  { value: 'ANDROID', label: 'Android', icon: '🤖' },
-  { value: 'IOS', label: 'iOS', icon: '📱' },
-];
-
 interface Category {
   id: number;
   name: string;
@@ -123,8 +118,11 @@ interface UploadedFileData {
 
 export default function ProductEdit() {
   const { t } = useTranslation();
+  const { i18n } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
+  const { config: platformConfig, loading: platformConfigLoading } = useSelector((state: RootState) => state.platformConfig);
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -151,23 +149,130 @@ export default function ProductEdit() {
 
   useEffect(() => {
     loadCategories();
+    dispatch(fetchPlatformConfig());
     if (id) {
       loadProduct(parseInt(id));
       loadVersions(parseInt(id));
     }
   }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // 根据选择的平台获取可用架构
+  const getAvailableArchitectures = useCallback((platformValue: string) => {
+    if (!platformConfig) return [];
+    
+    const platform = platformConfig.platforms.find(p => p.value === platformValue);
+    if (!platform) return platformConfig.architectures;
+    
+    return platformConfig.architectures.filter(
+      arch => platform.architectures.includes(arch.value)
+    );
+  }, [platformConfig]);
+
+  // 平台选择变化时，重置架构
+  const handlePlatformChange = useCallback((value: string) => {
+    const availableArchs = getAvailableArchitectures(value);
+    if (availableArchs.length > 0) {
+      versionForm.setFieldsValue({ architecture: availableArchs[0].value });
+    } else {
+      versionForm.setFieldsValue({ architecture: undefined });
+    }
+  }, [getAvailableArchitectures, versionForm]);
+
+  // 验证产品状态一致性
+  const validateProductStatusConsistency = useCallback((): string | null => {
+    if (isNewProduct) {
+      // 新建产品模式
+      const status = form.getFieldValue('status');
+      const allCount = pendingVersions.length;
+      const publishedCount = pendingVersions.filter(v => v.status === 'PUBLISHED').length;
+      
+      if (status === 'PENDING' && allCount === 0) {
+        return t('productEdit.pendingButNoVersion');
+      }
+      
+      if (status === 'PUBLISHED' && publishedCount === 0) {
+        return t('productEdit.publishedButNoVersion');
+      }
+      
+      return null;
+    }
+    
+    // 编辑产品模式
+    const status = product?.status;
+    const allCount = versions.length;
+    const publishedCount = versions.filter(v => v.status === 'PUBLISHED').length;
+    
+    if (status === 'PENDING' && allCount === 0) {
+      return t('productEdit.pendingButNoVersion');
+    }
+    
+    if (status === 'PUBLISHED' && publishedCount === 0) {
+      return t('productEdit.publishedButNoVersion');
+    }
+    
+    return null;
+  }, [isNewProduct, product?.status, versions, pendingVersions, form, t]);
+
   // 监听页面离开事件
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (hasUnsavedChanges) {
+      const statusError = validateProductStatusConsistency();
+      if (hasUnsavedChanges || statusError) {
         e.preventDefault();
         e.returnValue = '';
       }
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [hasUnsavedChanges]);
+  }, [hasUnsavedChanges, validateProductStatusConsistency]);
+
+  // 使用 useBlocker 拦截所有导航行为
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) => {
+      // 只在编辑模式下拦截
+      if (isNewProduct) return false;
+      
+      // 如果目标路径相同，不拦截
+      if (currentLocation.pathname === nextLocation.pathname) return false;
+      
+      // 检查状态一致性
+      const statusError = validateProductStatusConsistency();
+      if (statusError) return true;
+      
+      // 检查未保存更改
+      if (hasUnsavedChanges) return true;
+      
+      return false;
+    }
+  );
+
+  // 处理 blocker 状态
+  useEffect(() => {
+    if (blocker.state === 'blocked') {
+      const statusError = validateProductStatusConsistency();
+      
+      if (statusError) {
+        Modal.warning({
+          title: t('productEdit.statusInconsistent'),
+          content: statusError,
+          okText: t('productEdit.goToFix'),
+          onOk: () => {
+            blocker.reset();
+            setActiveTab('versions');
+          }
+        });
+      } else if (hasUnsavedChanges) {
+        Modal.confirm({
+          title: t('productEdit.unsavedChanges'),
+          content: t('productEdit.unsavedChangesContent'),
+          okText: t('productEdit.leave'),
+          cancelText: t('productEdit.stay'),
+          onOk: () => blocker.proceed(),
+          onCancel: () => blocker.reset(),
+        });
+      }
+    }
+  }, [blocker, hasUnsavedChanges, validateProductStatusConsistency, t]);
 
   // 表单变化时标记为有未保存更改
   const handleFormChange = useCallback(() => {
@@ -176,8 +281,24 @@ export default function ProductEdit() {
     }
   }, [hasUnsavedChanges]);
 
-  // 安全导航（检查未保存更改）
+  // 安全导航（检查未保存更改和状态一致性）
   const safeNavigate = useCallback((path: string) => {
+    // 先检查状态一致性（仅编辑模式）
+    const statusError = validateProductStatusConsistency();
+    
+    if (statusError) {
+      Modal.warning({
+        title: t('productEdit.statusInconsistent'),
+        content: statusError,
+        okText: t('productEdit.goToFix'),
+        onOk: () => {
+          setActiveTab('versions');
+        }
+      });
+      return;
+    }
+    
+    // 原有的未保存更改检查
     if (hasUnsavedChanges) {
       Modal.confirm({
         title: t('productEdit.unsavedChanges'),
@@ -189,7 +310,7 @@ export default function ProductEdit() {
     } else {
       navigate(path);
     }
-  }, [hasUnsavedChanges, navigate, t]);
+  }, [hasUnsavedChanges, navigate, t, validateProductStatusConsistency]);
 
   const loadVersions = async (productId: number) => {
     try {
@@ -332,7 +453,60 @@ export default function ProductEdit() {
 
   // 删除临时版本
   const handleDeletePendingVersion = (tempId: string) => {
-    setPendingVersions(prev => prev.filter(v => v.tempId !== tempId));
+    const version = pendingVersions.find(v => v.tempId === tempId);
+    const remainingVersions = pendingVersions.filter(v => v.tempId !== tempId);
+    const currentStatus = form.getFieldValue('status');
+    
+    // 如果删除的是最后一个已发布版本，且产品状态为 PUBLISHED
+    if (version?.status === 'PUBLISHED' && pendingVersions.filter(v => v.status === 'PUBLISHED').length === 1 && currentStatus === 'PUBLISHED') {
+      Modal.confirm({
+        title: t('productEdit.deleteLastPublishedVersion'),
+        content: t('productEdit.deleteLastPublishedVersionAutoChange'),
+        okText: t('common.confirm'),
+        cancelText: t('common.cancel'),
+        onOk: () => {
+          setPendingVersions(remainingVersions);
+          form.setFieldsValue({ status: 'DRAFT' });
+          setHasUnsavedChanges(true);
+          message.info(t('productEdit.statusChangedToDraft'));
+        }
+      });
+      return;
+    }
+    
+    // 如果删除后没有版本，且产品状态为 PENDING
+    if (remainingVersions.length === 0 && currentStatus === 'PENDING') {
+      Modal.confirm({
+        title: t('productEdit.statusWillChange'),
+        content: t('productEdit.deleteLastVersionWarning', { status: t(`productStatus.${currentStatus}`) }),
+        okText: t('common.confirm'),
+        cancelText: t('common.cancel'),
+        onOk: () => {
+          setPendingVersions(remainingVersions);
+          form.setFieldsValue({ status: 'DRAFT' });
+          setHasUnsavedChanges(true);
+          message.info(t('productEdit.statusChangedToDraft'));
+        }
+      });
+      return;
+    }
+    
+    // 如果删除的是已发布版本，且是最后一个（产品状态不是 PUBLISHED）
+    if (version?.status === 'PUBLISHED' && pendingVersions.filter(v => v.status === 'PUBLISHED').length === 1) {
+      Modal.confirm({
+        title: t('productEdit.deleteLastPublishedVersion'),
+        content: t('productEdit.deleteLastPublishedVersionInfo'),
+        okText: t('common.confirm'),
+        cancelText: t('common.cancel'),
+        onOk: () => {
+          setPendingVersions(remainingVersions);
+          setHasUnsavedChanges(true);
+        }
+      });
+      return;
+    }
+    
+    setPendingVersions(remainingVersions);
     setHasUnsavedChanges(true);
   };
 
@@ -358,13 +532,77 @@ export default function ProductEdit() {
 
   // 删除版本
   const handleDeleteVersion = async (versionId: number) => {
-    try {
-      await adminApi.deleteVersion(versionId);
-      message.success(t('productEdit.versionDeleted'));
-      if (product?.id) loadVersions(product.id);
-    } catch {
-      message.error(t('productEdit.deleteFailed'));
+    const version = versions.find(v => v.id === versionId);
+    const remainingVersions = versions.filter(v => v.id !== versionId);
+    const productStatus = product?.status;
+    
+    // 如果删除的是最后一个已发布版本，且产品状态为 PUBLISHED，提示用户
+    if (version?.status === 'PUBLISHED' && versions.filter(v => v.status === 'PUBLISHED').length === 1 && productStatus === 'PUBLISHED') {
+      Modal.confirm({
+        title: t('productEdit.deleteLastPublishedVersion'),
+        content: t('productEdit.deleteLastPublishedVersionAutoChange'),
+        okText: t('common.confirm'),
+        cancelText: t('common.cancel'),
+        onOk: async () => {
+          try {
+            await adminApi.deleteVersion(versionId);
+            message.success(t('productEdit.versionDeleted'));
+            message.info(t('productEdit.statusChangedToDraft'));
+            if (product?.id) {
+              loadVersions(product.id);
+              loadProduct(product.id);
+            }
+          } catch {
+            message.error(t('productEdit.deleteFailed'));
+          }
+        }
+      });
+      return;
     }
+    
+    // 如果删除后没有版本，且产品状态为 PENDING，提示用户
+    if (remainingVersions.length === 0 && productStatus === 'PENDING') {
+      Modal.confirm({
+        title: t('productEdit.statusWillChange'),
+        content: t('productEdit.deleteLastVersionWarning', { status: t(`productStatus.${productStatus}`) }),
+        okText: t('common.confirm'),
+        cancelText: t('common.cancel'),
+        onOk: async () => {
+          try {
+            await adminApi.deleteVersion(versionId);
+            if (product?.id) {
+              await adminApi.updateProduct(product.id, { status: 'DRAFT' });
+            }
+            message.success(t('productEdit.versionDeleted'));
+            message.info(t('productEdit.statusChangedToDraft'));
+            if (product?.id) {
+              loadVersions(product.id);
+              loadProduct(product.id);
+            }
+          } catch {
+            message.error(t('productEdit.deleteFailed'));
+          }
+        }
+      });
+      return;
+    }
+    
+    // 普通删除
+    Modal.confirm({
+      title: t('productEdit.confirmDelete'),
+      content: t('productEdit.deleteVersionConfirm'),
+      okText: t('common.confirm'),
+      cancelText: t('common.cancel'),
+      onOk: async () => {
+        try {
+          await adminApi.deleteVersion(versionId);
+          message.success(t('productEdit.versionDeleted'));
+          if (product?.id) loadVersions(product.id);
+        } catch {
+          message.error(t('productEdit.deleteFailed'));
+        }
+      }
+    });
   };
 
   // 更新版本显示状态（带 loading 状态防止重复点击）
@@ -545,7 +783,7 @@ export default function ProductEdit() {
   };
 
   // 验证状态转换是否满足条件（公共函数）
-  const validatePublishStatus = (currentStatus: string, targetStatus: string, versionList: Array<{ status?: string }>): string | null => {
+  const validatePublishStatus = useCallback((currentStatus: string, targetStatus: string, versionList: Array<{ status?: string }>): string | null => {
     if (currentStatus === targetStatus) {
       return null;
     }
@@ -553,36 +791,130 @@ export default function ProductEdit() {
     const allCount = versionList.length;
     const publishedCount = versionList.filter(v => v.status === 'PUBLISHED').length;
     
-    switch (currentStatus) {
-      case 'DRAFT':
-        if (targetStatus === 'PENDING') {
-          if (allCount === 0) {
-            return t('productEdit.pendingNeedsVersion') || '提交审核前，请先添加至少一个版本';
-          }
-        } else if (targetStatus === 'PUBLISHED') {
-          if (publishedCount === 0) {
-            return t('productEdit.publishedVersionRequired');
-          }
-        }
-        break;
-      case 'PENDING':
-        if (targetStatus === 'PUBLISHED') {
-          if (publishedCount === 0) {
-            return t('productEdit.publishedVersionRequired');
-          }
-        }
-        break;
-      case 'ARCHIVED':
-        if (targetStatus === 'PUBLISHED') {
-          if (publishedCount === 0) {
-            return t('productEdit.publishedVersionRequired');
-          }
-        }
-        break;
+    // 从 DRAFT 转换
+    if (currentStatus === 'DRAFT') {
+      if (targetStatus === 'PENDING' && allCount === 0) {
+        return t('productEdit.pendingNeedsVersion');
+      }
+      if (targetStatus === 'PUBLISHED' && publishedCount === 0) {
+        return t('productEdit.publishedVersionRequired');
+      }
+      return null;
+    }
+    
+    // 从 PENDING 转换
+    if (currentStatus === 'PENDING') {
+      if (targetStatus === 'PUBLISHED' && publishedCount === 0) {
+        return t('productEdit.publishedVersionRequired');
+      }
+      // PENDING 可以转换为 DRAFT, REJECTED, PUBLISHED
+      if (!['DRAFT', 'REJECTED', 'PUBLISHED'].includes(targetStatus)) {
+        return t('productEdit.invalidStatusTransition', { from: currentStatus, to: targetStatus });
+      }
+      return null;
+    }
+    
+    // 从 REJECTED 转换
+    if (currentStatus === 'REJECTED') {
+      if (targetStatus === 'PENDING' && allCount === 0) {
+        return t('productEdit.pendingNeedsVersion');
+      }
+      // REJECTED 可以转换为 DRAFT, PENDING
+      if (!['DRAFT', 'PENDING'].includes(targetStatus)) {
+        return t('productEdit.invalidStatusTransition', { from: currentStatus, to: targetStatus });
+      }
+      return null;
+    }
+    
+    // 从 PUBLISHED 转换
+    if (currentStatus === 'PUBLISHED') {
+      if (targetStatus === 'PENDING' && allCount === 0) {
+        return t('productEdit.pendingNeedsVersion');
+      }
+      // PUBLISHED 可以转换为 DRAFT, PENDING, ARCHIVED
+      if (!['DRAFT', 'PENDING', 'ARCHIVED'].includes(targetStatus)) {
+        return t('productEdit.invalidStatusTransition', { from: currentStatus, to: targetStatus });
+      }
+      return null;
+    }
+    
+    // 从 ARCHIVED 转换
+    if (currentStatus === 'ARCHIVED') {
+      if (targetStatus === 'PUBLISHED' && publishedCount === 0) {
+        return t('productEdit.publishedVersionRequired');
+      }
+      // ARCHIVED 可以转换为 DRAFT, PUBLISHED
+      if (!['DRAFT', 'PUBLISHED'].includes(targetStatus)) {
+        return t('productEdit.invalidStatusTransition', { from: currentStatus, to: targetStatus });
+      }
+      return null;
     }
     
     return null;
-  };
+  }, [t]);
+
+  // 检查是否需要状态转换确认
+  const needsStatusChangeConfirmation = useCallback((currentStatus: string, targetStatus: string): { needed: boolean; message?: string } => {
+    if (currentStatus === 'PUBLISHED') {
+      if (targetStatus === 'DRAFT') {
+        return { needed: true, message: t('productEdit.publishedToDraftWarning') };
+      }
+      if (targetStatus === 'PENDING') {
+        return { needed: true, message: t('productEdit.publishedToPendingWarning') };
+      }
+    }
+    return { needed: false };
+  }, [t]);
+
+  // 状态选择时的验证
+  const handleStatusSelect = useCallback((value: string) => {
+    const currentStatus = product?.status || 'DRAFT';
+    const versionList = isNewProduct ? pendingVersions : versions;
+    const error = validatePublishStatus(currentStatus, value, versionList);
+    
+    if (error) {
+      Modal.warning({
+        title: t('productEdit.statusChangeWarning'),
+        content: error,
+      });
+      setTimeout(() => {
+        form.setFieldsValue({ status: currentStatus });
+      }, 0);
+      return;
+    }
+    
+    // 检查是否需要确认
+    const confirmation = needsStatusChangeConfirmation(currentStatus, value);
+    if (confirmation.needed && confirmation.message) {
+      Modal.confirm({
+        title: t('productEdit.confirmStatusChange'),
+        content: confirmation.message,
+        okText: t('common.confirm'),
+        cancelText: t('common.cancel'),
+        onOk: () => {
+          form.setFieldsValue({ status: value });
+          // 如果状态不是 PUBLISHED，自动取消精选
+          if (value !== 'PUBLISHED') {
+            form.setFieldsValue({ isFeatured: false });
+          }
+          setHasUnsavedChanges(true);
+        },
+        onCancel: () => {
+          setTimeout(() => {
+            form.setFieldsValue({ status: currentStatus });
+          }, 0);
+        }
+      });
+      return;
+    }
+    
+    // 如果状态不是 PUBLISHED，自动取消精选
+    if (value !== 'PUBLISHED') {
+      form.setFieldsValue({ isFeatured: false });
+    }
+    
+    setHasUnsavedChanges(true);
+  }, [product?.status, isNewProduct, pendingVersions, versions, form, t, validatePublishStatus, needsStatusChangeConfirmation]);
 
   // 保存产品（编辑模式）
   const handleSave = async (values: ProductFormValues) => {
@@ -600,12 +932,22 @@ export default function ProductEdit() {
     setSaving(true);
     try {
       const payload = {
-        ...values,
+        name: values.name,
+        nameEn: values.nameEn,
+        description: values.description,
+        descriptionEn: values.descriptionEn,
+        categoryId: values.categoryId,
+        status: values.status,
+        homepageUrl: values.homepageUrl,
+        sourceUrl: values.sourceUrl,
+        license: values.license,
+        tags: values.tags ? values.tags.split(',').map((tag: string) => tag.trim()).filter(Boolean) : [],
+        isFeatured: values.isFeatured,
+        developerName: values.developerName,
         iconUrl,
         bannerUrl,
         screenshots,
         demoVideoUrl,
-        tags: values.tags ? values.tags.split(',').map((tag: string) => tag.trim()).filter(Boolean) : [],
       };
       
       if (id) {
@@ -789,7 +1131,7 @@ export default function ProductEdit() {
                       label={t('admin.status')}
                       rules={[{ required: true, message: t('productEdit.statusRequired') }]}
                     >
-                      <Select>
+                      <Select onSelect={handleStatusSelect}>
                         <Select.Option value="DRAFT">{t('admin.draft')}</Select.Option>
                         <Select.Option value="PENDING">{t('admin.pending')}</Select.Option>
                         <Select.Option value="PUBLISHED">{t('admin.published')}</Select.Option>
@@ -1061,8 +1403,8 @@ export default function ProductEdit() {
                             title: t('productEdit.platform'), 
                             dataIndex: 'platform',
                             render: (p: string) => {
-                              const platform = PLATFORM_OPTIONS.find(opt => opt.value === p);
-                              return platform ? `${platform.icon} ${platform.label}` : p;
+                              const platform = platformConfig?.platforms.find(opt => opt.value === p);
+                              return platform ? `${platform.icon} ${i18n.language === 'zh-CN' ? platform.label : platform.labelEn}` : p;
                             }
                           },
                           { 
@@ -1125,8 +1467,8 @@ export default function ProductEdit() {
                           title: t('productEdit.platform'), 
                           dataIndex: 'platform',
                           render: (p: string) => {
-                            const platform = PLATFORM_OPTIONS.find(opt => opt.value === p);
-                            return platform ? `${platform.icon} ${platform.label}` : p;
+                            const platform = platformConfig?.platforms.find(opt => opt.value === p);
+                            return platform ? `${platform.icon} ${i18n.language === 'zh-CN' ? platform.label : platform.labelEn}` : p;
                           }
                         },
                         { 
@@ -1259,12 +1601,21 @@ export default function ProductEdit() {
               label={t('productEdit.platform')}
               rules={[{ required: true, message: t('productEdit.platformRequired') }]}
             >
-              <Select placeholder={t('productEdit.selectPlatform')}>
-                {PLATFORM_OPTIONS.map(p => (
-                  <Select.Option key={p.value} value={p.value}>
-                    {p.icon} {p.label}
-                  </Select.Option>
-                ))}
+              <Select 
+                placeholder={t('productEdit.selectPlatform')}
+                onChange={handlePlatformChange}
+                loading={platformConfigLoading}
+                notFoundContent={platformConfig ? null : t('productEdit.platformConfigLoading')}
+              >
+                {platformConfig?.platforms
+                  .filter(p => p.enabled)
+                  .sort((a, b) => a.sortOrder - b.sortOrder)
+                  .map(p => (
+                    <Select.Option key={p.value} value={p.value}>
+                      {p.icon} {i18n.language === 'zh-CN' ? p.label : p.labelEn}
+                    </Select.Option>
+                  ))
+                }
               </Select>
             </Form.Item>
           </div>
@@ -1275,10 +1626,11 @@ export default function ProductEdit() {
             initialValue="x64"
           >
             <Select>
-              <Select.Option value="x86">{t('productEdit.architectures.x86')}</Select.Option>
-              <Select.Option value="x64">{t('productEdit.architectures.x64')}</Select.Option>
-              <Select.Option value="arm64">{t('productEdit.architectures.arm64')}</Select.Option>
-              <Select.Option value="universal">{t('productEdit.architectures.universal')}</Select.Option>
+              {getAvailableArchitectures(versionForm.getFieldValue('platform')).map(arch => (
+                <Select.Option key={arch.value} value={arch.value}>
+                  {i18n.language === 'zh-CN' ? arch.label : arch.labelEn}
+                </Select.Option>
+              ))}
             </Select>
           </Form.Item>
 
