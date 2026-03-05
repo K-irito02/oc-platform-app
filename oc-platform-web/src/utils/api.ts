@@ -273,4 +273,14 @@ export const adminApi = {
   // Platform Config
   updatePlatformConfig: (config: PlatformConfig) =>
     request.put('/products/platform-config', config),
+  // Maintenance Mode
+  getMaintenanceConfig: () => request.get('/admin/system/maintenance'),
+  updateMaintenanceConfig: (data: {
+    enabled: boolean;
+    title: string;
+    titleEn: string;
+    message: string;
+    messageEn: string;
+    estimatedTime?: string | null;
+  }) => request.put('/admin/system/maintenance', data),
 };

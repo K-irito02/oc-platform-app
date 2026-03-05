@@ -10,7 +10,6 @@ const lazyLoad = (Component: React.LazyExoticComponent<ComponentType<unknown>>) 
   </Suspense>
 );
 
-// 懒加载页面
 const Home = lazy(() => import('@/pages/Home'));
 const Products = lazy(() => import('@/pages/Products'));
 const ProductDetail = lazy(() => import('@/pages/ProductDetail'));
@@ -23,7 +22,10 @@ const NotFound = lazy(() => import('@/pages/NotFound'));
 const ComingSoon = lazy(() => import('@/pages/ComingSoon'));
 const InfoPage = lazy(() => import('@/pages/InfoPage'));
 
-// Admin pages
+const Error500 = lazy(() => import('@/pages/Error').then(m => ({ default: m.Error500 })));
+const Error403 = lazy(() => import('@/pages/Error').then(m => ({ default: m.Error403 })));
+const Maintenance = lazy(() => import('@/pages/Maintenance'));
+
 const AdminDashboard = lazy(() => import('@/pages/Admin/Dashboard'));
 const AdminUsers = lazy(() => import('@/pages/Admin/Users'));
 const AdminProducts = lazy(() => import('@/pages/Admin/Products'));
@@ -35,7 +37,6 @@ const AdminTheme = lazy(() => import('@/pages/Admin/Theme'));
 const AdminSystem = lazy(() => import('@/pages/Admin/System'));
 
 const router = createBrowserRouter([
-  // Auth Routes (No Sidebar/Header, just Background)
   {
     path: '/login',
     element: lazyLoad(Login),
@@ -49,7 +50,19 @@ const router = createBrowserRouter([
     element: lazyLoad(ForgotPassword),
   },
   
-  // Main App Routes
+  {
+    path: '/maintenance',
+    element: lazyLoad(Maintenance),
+  },
+  {
+    path: '/500',
+    element: lazyLoad(Error500),
+  },
+  {
+    path: '/403',
+    element: lazyLoad(Error403),
+  },
+  
   {
     path: '/',
     element: <MainLayout />,
@@ -68,7 +81,6 @@ const router = createBrowserRouter([
     ],
   },
 
-  // Admin Routes
   {
     path: '/admin',
     element: <AdminLayout />,
@@ -86,7 +98,6 @@ const router = createBrowserRouter([
     ],
   },
 
-  // Fallback
   { path: '404', element: lazyLoad(NotFound) },
   { path: '*', element: <Navigate to="/404" replace /> },
 ]);

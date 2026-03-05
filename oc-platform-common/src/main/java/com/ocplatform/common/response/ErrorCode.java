@@ -64,7 +64,11 @@ public enum ErrorCode {
     COMMENT_ALREADY_LIKED(60002, "已经点赞过"),
     COMMENT_SELF_REPLY(60003, "不能回复自己的评论"),
     DUPLICATE_RATING(60004, "已经评分过该产品"),
-    RATE_LIMIT_EXCEEDED(60005, "评论发布过于频繁，请稍后再试");
+    RATE_LIMIT_EXCEEDED(60005, "评论发布过于频繁，请稍后再试"),
+
+    // 系统维护错误 5xxxx
+    SERVICE_UNAVAILABLE(50301, "服务暂时不可用"),
+    MAINTENANCE_MODE(50302, "系统维护中");
 
     private final int code;
     private final String message;

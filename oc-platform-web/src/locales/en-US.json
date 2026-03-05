@@ -881,6 +881,50 @@
     "wechatPlaceholder": "WeChat account name or link",
     "contactEmail": "Contact Email",
     "linkedin": "LinkedIn",
-    "email": "Email"
+    "email": "Email",
+    "maintenanceConfig": "Maintenance Mode Configuration",
+    "maintenanceEnabled": "Enable Maintenance Mode",
+    "maintenanceTitle": "Maintenance Title (Chinese)",
+    "maintenanceTitleEn": "Maintenance Title (English)",
+    "maintenanceMessage": "Maintenance Message (Chinese)",
+    "maintenanceMessageEn": "Maintenance Message (English)",
+    "maintenanceEstimatedTime": "Estimated Recovery Time",
+    "maintenanceTitlePlaceholder": "e.g. Under Maintenance",
+    "maintenanceTitleEnPlaceholder": "e.g. Under Maintenance",
+    "maintenanceMessagePlaceholder": "e.g. The system is under maintenance. Please try again later.",
+    "maintenanceMessageEnPlaceholder": "e.g. The system is under maintenance. Please try again later.",
+    "maintenanceEnabledWarning": "When enabled, regular users cannot access the site. Only admins can access the backend."
+  },
+  "error": {
+    "404": {
+      "title": "Page Not Found",
+      "description": "Sorry, the page you are looking for does not exist or has been removed.",
+      "backHome": "Back to Home",
+      "goBack": "Go Back"
+    },
+    "500": {
+      "title": "Server Error",
+      "description": "The server encountered a problem. Please try again later.",
+      "refresh": "Refresh Page",
+      "backHome": "Back to Home"
+    },
+    "403": {
+      "title": "Access Denied",
+      "description": "Sorry, you do not have permission to access this page.",
+      "login": "Login",
+      "backHome": "Back to Home"
+    },
+    "network": {
+      "title": "Network Error",
+      "description": "Network connection failed. Please check your network settings.",
+      "retry": "Retry"
+    }
+  },
+  "maintenance": {
+    "title": "Under Maintenance",
+    "description": "The system is under maintenance. Please try again later.",
+    "estimatedTime": "Estimated Recovery Time",
+    "contact": "For urgent matters, please contact us",
+    "checkAgain": "Check Again"
   }
 }

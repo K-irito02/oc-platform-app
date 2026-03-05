@@ -300,7 +300,9 @@ Get-Content sql/seed.sql | docker exec -i oc-dev-postgres psql -U oc_user -d oc_
 - [x] **玻璃拟态主题**: Tailwind CSS + CSS 变量实现的高级玻璃拟态效果（背景模糊、半透明、光影）、动态背景支持（图片/视频）
 - [x] **前台页面（11 个）**: Home、Products、ProductDetail、Login、Register、ForgotPassword、Profile、OAuthCallback、NotFound、ComingSoon、InfoPage
 - [x] **后台页面（8 个）**: Dashboard、Users、Products、Comments、Categories、System、Feedbacks、Theme
-- [x] **API 层**: Axios 封装（token 注入 + 401 刷新）、9 个 API 模块、Mock 数据拦截器
+- [x] **错误页面系统**: 404/403/500/网络错误页面（Lucide React 图标、深浅主题、国际化）
+- [x] **维护模式**: 维护页面、后端拦截器、管理后台配置（开关、标题、说明、预计恢复时间）
+- [x] **API 层**: Axios 封装（token 注入 + 401 刷新 + 错误页面跳转）、9 个 API 模块、Mock 数据拦截器
 - [x] **国际化**: 中文 / 英文完整翻译（支持邮件模板和系统配置）
 - [x] **代码质量**: ESLint + TypeScript 严格模式、代码风格统一、类型安全
 

@@ -1,13 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Table, Button, Input, Card, Space } from 'antd';
+import { Table, Button, Input, Card, Space, Switch, DatePicker, Alert } from 'antd';
 import { message } from '@/utils/antdUtils';
 import { adminApi } from '@/utils/api';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
-import { Save, X, Edit, Image, FileText, Quote, Calendar, Shield, Globe, Link, Mail, Github, Twitter } from 'lucide-react';
+import { Save, X, Edit, Image, FileText, Quote, Calendar, Shield, Globe, Link, Mail, Github, Twitter, Wrench, AlertTriangle } from 'lucide-react';
 import { LogoCropUploader } from '@/components/LogoCropUploader';
 import { useAppDispatch } from '@/store/hooks';
 import { fetchSiteConfig } from '@/store/slices/siteConfigSlice';
+import dayjs from 'dayjs';
 
 interface SystemConfig {
   configKey: string;
@@ -55,6 +56,17 @@ export default function AdminSystem() {
     email: '',
   });
   const [socialSaving, setSocialSaving] = useState(false);
+
+  // 维护模式配置
+  const [maintenanceConfig, setMaintenanceConfig] = useState({
+    enabled: false,
+    title: '',
+    titleEn: '',
+    message: '',
+    messageEn: '',
+    estimatedTime: null as string | null,
+  });
+  const [maintenanceSaving, setMaintenanceSaving] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -111,6 +123,34 @@ export default function AdminSystem() {
           }
         });
         setSocialConfig(newSocialConfig);
+      }
+      // 获取维护模式配置
+      const maintenanceConfigs = res.data?.filter((c: SystemConfig) => c.configKey.startsWith('system.maintenance.'));
+      if (maintenanceConfigs) {
+        const newMaintenanceConfig = { ...maintenanceConfig };
+        maintenanceConfigs.forEach((c: SystemConfig) => {
+          switch (c.configKey) {
+            case 'system.maintenance.enabled': 
+              newMaintenanceConfig.enabled = c.configValue === 'true'; 
+              break;
+            case 'system.maintenance.title': 
+              newMaintenanceConfig.title = c.configValue || ''; 
+              break;
+            case 'system.maintenance.title_en': 
+              newMaintenanceConfig.titleEn = c.configValue || ''; 
+              break;
+            case 'system.maintenance.message': 
+              newMaintenanceConfig.message = c.configValue || ''; 
+              break;
+            case 'system.maintenance.message_en': 
+              newMaintenanceConfig.messageEn = c.configValue || ''; 
+              break;
+            case 'system.maintenance.estimated_time': 
+              newMaintenanceConfig.estimatedTime = c.configValue || null; 
+              break;
+          }
+        });
+        setMaintenanceConfig(newMaintenanceConfig);
       }
     } catch { /* handled */ } finally { setLoading(false); }
   }, [dispatch, t]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -186,6 +226,24 @@ export default function AdminSystem() {
       loadData();
     } catch { /* handled */ } finally {
       setSocialSaving(false);
+    }
+  };
+
+  const handleMaintenanceSave = async () => {
+    setMaintenanceSaving(true);
+    try {
+      await adminApi.updateMaintenanceConfig({
+        enabled: maintenanceConfig.enabled,
+        title: maintenanceConfig.title,
+        titleEn: maintenanceConfig.titleEn,
+        message: maintenanceConfig.message,
+        messageEn: maintenanceConfig.messageEn,
+        estimatedTime: maintenanceConfig.estimatedTime,
+      });
+      message.success(t('admin.saveSuccess'));
+      loadData();
+    } catch { /* handled */ } finally {
+      setMaintenanceSaving(false);
     }
   };
 
@@ -560,11 +618,131 @@ export default function AdminSystem() {
         </div>
       </Card>
 
+      {/* 维护模式配置卡片 */}
+      <Card
+        title={
+          <div className="flex items-center gap-2">
+            <Wrench size={18} className="text-purple-600" />
+            <span className="text-slate-900 dark:text-white">{t('adminSystem.maintenanceConfig')}</span>
+          </div>
+        }
+        className="border-slate-200 dark:border-slate-800 dark:bg-slate-900 shadow-sm"
+      >
+        <div className="space-y-4">
+          {/* 维护模式开关 */}
+          <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-lg">
+            <div className="flex items-center gap-3">
+              <AlertTriangle size={20} className={maintenanceConfig.enabled ? 'text-orange-500' : 'text-slate-400'} />
+              <div>
+                <div className="font-medium text-slate-900 dark:text-white">{t('adminSystem.maintenanceEnabled')}</div>
+                <div className="text-sm text-slate-500 dark:text-slate-400">{t('adminSystem.maintenanceEnabledWarning')}</div>
+              </div>
+            </div>
+            <Switch
+              checked={maintenanceConfig.enabled}
+              onChange={(checked) => setMaintenanceConfig({ ...maintenanceConfig, enabled: checked })}
+              checkedChildren="ON"
+              unCheckedChildren="OFF"
+            />
+          </div>
+
+          {maintenanceConfig.enabled && (
+            <Alert
+              type="warning"
+              message={t('adminSystem.maintenanceEnabledWarning')}
+              showIcon
+              className="mb-4"
+            />
+          )}
+
+          {/* 维护标题 */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                {t('adminSystem.maintenanceTitle')}
+              </label>
+              <Input
+                value={maintenanceConfig.title}
+                onChange={(e) => setMaintenanceConfig({ ...maintenanceConfig, title: e.target.value })}
+                placeholder={t('adminSystem.maintenanceTitlePlaceholder')}
+                className="h-10"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                {t('adminSystem.maintenanceTitleEn')}
+              </label>
+              <Input
+                value={maintenanceConfig.titleEn}
+                onChange={(e) => setMaintenanceConfig({ ...maintenanceConfig, titleEn: e.target.value })}
+                placeholder={t('adminSystem.maintenanceTitleEnPlaceholder')}
+                className="h-10"
+              />
+            </div>
+          </div>
+
+          {/* 维护说明 */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                {t('adminSystem.maintenanceMessage')}
+              </label>
+              <Input.TextArea
+                value={maintenanceConfig.message}
+                onChange={(e) => setMaintenanceConfig({ ...maintenanceConfig, message: e.target.value })}
+                placeholder={t('adminSystem.maintenanceMessagePlaceholder')}
+                autoSize={{ minRows: 3, maxRows: 6 }}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                {t('adminSystem.maintenanceMessageEn')}
+              </label>
+              <Input.TextArea
+                value={maintenanceConfig.messageEn}
+                onChange={(e) => setMaintenanceConfig({ ...maintenanceConfig, messageEn: e.target.value })}
+                placeholder={t('adminSystem.maintenanceMessageEnPlaceholder')}
+                autoSize={{ minRows: 3, maxRows: 6 }}
+              />
+            </div>
+          </div>
+
+          {/* 预计恢复时间 */}
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+              <Calendar size={14} className="text-blue-500" />
+              {t('adminSystem.maintenanceEstimatedTime')}
+            </label>
+            <DatePicker
+              showTime
+              value={maintenanceConfig.estimatedTime ? dayjs(maintenanceConfig.estimatedTime) : null}
+              onChange={(date) => setMaintenanceConfig({ ...maintenanceConfig, estimatedTime: date ? date.toISOString() : null })}
+              placeholder={t('adminSystem.maintenanceEstimatedTime')}
+              className="w-full"
+              format="YYYY-MM-DD HH:mm:ss"
+            />
+          </div>
+
+          {/* 保存按钮 */}
+          <div className="flex justify-end pt-4 border-t border-slate-200 dark:border-slate-700">
+            <Button
+              type="primary"
+              icon={<Save size={14} />}
+              loading={maintenanceSaving}
+              onClick={handleMaintenanceSave}
+              className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700"
+            >
+              {t('common.save')}
+            </Button>
+          </div>
+        </div>
+      </Card>
+
       {/* 系统配置表格 */}
       <Card className="border-slate-200 dark:border-slate-800 dark:bg-slate-900 shadow-sm" styles={{ body: { padding: 0 } }}>
         <Table 
           columns={columns} 
-          dataSource={data.filter(d => d.configKey !== 'site.logo' && !d.configKey.startsWith('footer.') && !d.configKey.startsWith('social.') && d.configKey !== 'site.url')} 
+          dataSource={data.filter(d => d.configKey !== 'site.logo' && !d.configKey.startsWith('footer.') && !d.configKey.startsWith('social.') && d.configKey !== 'site.url' && !d.configKey.startsWith('system.maintenance.'))} 
           rowKey="configKey" 
           loading={loading} 
           pagination={false}

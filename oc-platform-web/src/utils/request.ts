@@ -50,7 +50,6 @@ request.interceptors.response.use(
       
       switch (status) {
         case 401:
-          // Prevent infinite loop if already on login page
           if (!window.location.pathname.endsWith('/login')) {
             localStorage.removeItem('access_token');
             localStorage.removeItem('refresh_token');
@@ -58,10 +57,22 @@ request.interceptors.response.use(
           }
           break;
         case 403:
-          if (!silentError) message.error('权限不足');
+          if (!window.location.pathname.startsWith('/403')) {
+            window.location.href = '/403';
+          }
           break;
         case 429:
           if (!silentError) message.error('请求过于频繁，请稍后再试');
+          break;
+        case 500:
+          if (!window.location.pathname.startsWith('/500')) {
+            window.location.href = '/500';
+          }
+          break;
+        case 503:
+          if (!window.location.pathname.startsWith('/maintenance') && !window.location.pathname.startsWith('/admin')) {
+            window.location.href = '/maintenance';
+          }
           break;
         default:
           if (!silentError) message.error(data?.message || '服务器错误');

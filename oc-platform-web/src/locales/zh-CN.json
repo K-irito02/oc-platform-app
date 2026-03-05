@@ -888,6 +888,50 @@
     "wechatPlaceholder": "微信公众号名称或链接",
     "contactEmail": "联系邮箱",
     "linkedin": "LinkedIn",
-    "email": "邮箱"
+    "email": "邮箱",
+    "maintenanceConfig": "维护模式配置",
+    "maintenanceEnabled": "启用维护模式",
+    "maintenanceTitle": "维护标题（中文）",
+    "maintenanceTitleEn": "维护标题（英文）",
+    "maintenanceMessage": "维护说明（中文）",
+    "maintenanceMessageEn": "维护说明（英文）",
+    "maintenanceEstimatedTime": "预计恢复时间",
+    "maintenanceTitlePlaceholder": "例如：系统维护中",
+    "maintenanceTitleEnPlaceholder": "e.g. Under Maintenance",
+    "maintenanceMessagePlaceholder": "例如：系统正在进行升级维护，请稍后再试。",
+    "maintenanceMessageEnPlaceholder": "e.g. The system is under maintenance. Please try again later.",
+    "maintenanceEnabledWarning": "启用后，普通用户将无法访问网站，仅管理员可访问后台"
+  },
+  "error": {
+    "404": {
+      "title": "页面未找到",
+      "description": "抱歉，您访问的页面不存在或已被移除。",
+      "backHome": "返回首页",
+      "goBack": "返回上页"
+    },
+    "500": {
+      "title": "服务器错误",
+      "description": "服务器遇到了问题，请稍后再试。",
+      "refresh": "刷新页面",
+      "backHome": "返回首页"
+    },
+    "403": {
+      "title": "访问受限",
+      "description": "抱歉，您没有权限访问此页面。",
+      "login": "登录账号",
+      "backHome": "返回首页"
+    },
+    "network": {
+      "title": "网络错误",
+      "description": "网络连接失败，请检查您的网络设置。",
+      "retry": "重试"
+    }
+  },
+  "maintenance": {
+    "title": "系统维护中",
+    "description": "系统正在进行升级维护，请稍后再试。",
+    "estimatedTime": "预计恢复时间",
+    "contact": "如有紧急需求，请联系我们",
+    "checkAgain": "重新检查"
   }
 }

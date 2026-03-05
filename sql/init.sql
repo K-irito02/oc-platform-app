@@ -638,4 +638,10 @@ INSERT INTO system_configs (config_key, config_value, description) VALUES
     ('social.linkedin',     '',                       'LinkedIn 链接'),
     ('social.weibo',        '',                       '微博链接'),
     ('social.wechat',       '',                       '微信公众号'),
-    ('social.email',        '',                       '联系邮箱');
+    ('social.email',        '',                       '联系邮箱'),
+    ('system.maintenance.enabled', 'false',           '系统维护模式开关'),
+    ('system.maintenance.title', '系统维护中',         '维护页面标题'),
+    ('system.maintenance.title_en', 'Under Maintenance', '维护页面标题（英文）'),
+    ('system.maintenance.message', '系统正在进行升级维护，请稍后再试。', '维护说明'),
+    ('system.maintenance.message_en', 'The system is under maintenance. Please try again later.', '维护说明（英文）'),
+    ('system.maintenance.estimated_time', '',          '预计恢复时间');
