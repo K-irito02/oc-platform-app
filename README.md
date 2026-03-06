@@ -12,13 +12,15 @@
 |------|------|------|
 | React | 18.3.1 | UI 框架 |
 | TypeScript | ~5.6.2 | 类型安全 |
-| Vite | 5.4.x | 构建工具 + HMR |
+| Vite | 5.4.10 | 构建工具 + HMR |
 | Tailwind CSS | 3.4.1 | 实用优先 CSS 框架 |
-| Ant Design | 6.3.x | UI 组件库（配合 Glassmorphism） |
-| Redux Toolkit | 2.11.x | 状态管理 |
-| React Router DOM | 7.13.x | 路由（懒加载） |
-| react-i18next | 16.5.x | 国际化（中/英） |
-| Axios | 1.13.x | HTTP 请求 |
+| Ant Design | 6.3.0 | UI 组件库（配合 Glassmorphism） |
+| Redux Toolkit | 2.11.2 | 状态管理 |
+| React Router DOM | 7.13.0 | 路由（懒加载） |
+| react-i18next | 16.5.4 | 国际化（中/英） |
+| Axios | 1.13.5 | HTTP 请求 |
+| Lucide React | 0.564.0 | 图标库 |
+| Swiper | 12.1.2 | 轮播组件 |
 
 ### 后端
 
@@ -26,12 +28,13 @@
 |------|------|------|
 | Spring Boot | 3.2.12 | 后端框架 |
 | Spring Security | 6.2.x | JWT + RBAC 认证授权 |
-| MyBatis-Plus | 3.5.x | ORM（复杂 SQL） |
-| Spring Data JPA | 3.2.x | ORM（简单 CRUD） |
+| MyBatis-Plus | 3.5.9 | ORM（复杂 SQL） |
+| jjwt | 0.12.6 | JWT Token 生成验证 |
+| SpringDoc OpenAPI | 2.6.0 | API 文档（Swagger UI） |
+| MapStruct | 1.6.3 | DTO/Entity 对象映射 |
 | PostgreSQL | 15.x | 主数据库（JSONB + 全文检索 + 表分区） |
 | Redis | 7.x | 缓存 + 限流（单机模式） |
 | MinIO | Latest | 对象存储（图片/视频上传） |
-| SpringDoc OpenAPI | 2.x | API 文档（Swagger UI） |
 
 ### 基础设施
 
@@ -40,7 +43,7 @@
 | Docker + Docker Compose | 容器化开发 + 生产部署 |
 | Nginx | 反向代理 + SSL 终止 + 静态资源 |
 | GitHub Actions | CI/CD 自动构建/测试/部署 |
-| Spring Boot Actuator + Prometheus | 基础监控 |
+| Spring Boot Actuator | 基础监控 |
 
 ---
 
@@ -89,21 +92,7 @@ docker compose -f docker-compose.dev.yml ps
 
 PostgreSQL 启动时会自动执行 `sql/init.sql` 建表和初始化管理员账号。
 
-### 4. 导入种子数据（可选，推荐）
-
-```powershell
-# Windows PowerShell:
-Get-Content sql/seed.sql | docker exec -i oc-dev-postgres psql -U oc_user -d oc_platform
-```
-
-```bash
-# Linux / macOS:
-docker exec -i oc-dev-postgres psql -U oc_user -d oc_platform < sql/seed.sql
-```
-
-导入内容：5 个测试用户 + 6 个分类 + 8 个产品 + 版本 + 评论。
-
-### 5. 启动后端
+### 4. 启动后端
 
 ```powershell
 # 方式一：Maven 直接运行（开发时推荐，支持热重载）
@@ -121,7 +110,7 @@ java -jar oc-platform-app/target/oc-platform-app-1.0.0-SNAPSHOT.jar --spring.pro
 
 > **注**: 后端端口为 **8081**（非默认 8080），因本机 Apache httpd 占用 8080。
 
-### 6. 启动前端
+### 5. 启动前端
 
 ```powershell
 cd oc-platform-web
@@ -133,7 +122,7 @@ npm run dev
 - **前端地址**: http://localhost:5173（如果端口被占用会自动切换到5174）
 - Vite 已配置代理 `/api` → `http://localhost:8081`
 
-### 7. 禁用 Mock 数据（可选）
+### 6. 禁用 Mock 数据（可选）
 
 前端默认启用 Mock 拦截器（后端未启动时提供模拟数据）。后端运行时，可创建 `.env.local` 禁用 Mock 以使用真实 API：
 
@@ -181,10 +170,12 @@ oc-platform/
 │       │   │   ├── Theme/
 │       │   │   └── Users/
 │       │   ├── ComingSoon/
+│       │   ├── Error/             # 错误页面（404/403/500/网络错误）
 │       │   ├── ForgotPassword/
 │       │   ├── Home/
 │       │   ├── InfoPage/
 │       │   ├── Login/
+│       │   ├── Maintenance/       # 维护页面
 │       │   ├── NotFound/
 │       │   ├── OAuthCallback/
 │       │   ├── ProductDetail/
@@ -193,7 +184,7 @@ oc-platform/
 │       │   └── Register/
 │       ├── router/                # 路由配置
 │       ├── store/                 # Redux（authSlice + themeSlice + siteConfigSlice）
-│       ├── locales/               # 国际化（zh-CN + en-US，支持邮件模板和系统配置）
+│       ├── locales/               # 国际化（zh-CN + en-US）
 │       ├── theme/                 # Ant Design 主题
 │       └── utils/                 # API 封装 + Axios 实例 + Mock
 ├── scripts/
@@ -267,31 +258,35 @@ docker compose -f docker-compose.dev.yml up -d
 
 ## 阶段一已完成功能（MVP）
 
-### 后端（Step 1-7）
+### 后端
 
 - [x] **公共模块**: 统一响应 `ApiResponse<T>` / `PageResponse<T>`、全局异常处理、JWT 工具、Redis/Jackson/MyBatis-Plus 配置
 - [x] **用户模块**: 邮箱注册/登录、GitHub OAuth、JWT 认证、邮箱验证码、密码找回/重置、个人信息管理、语言偏好、极简工业风邮件模板
-- [x] **产品模块**: 产品 CRUD、分类管理、产品列表（分页/筛选/排序）、产品详情、语义化版本管理、多平台支持、灰度发布、**状态过滤（产品中心仅显示PUBLISHED状态）**
+- [x] **产品模块**: 产品 CRUD、分类管理、产品列表（分页/筛选/排序）、产品详情、语义化版本管理、多平台支持、灰度发布、状态过滤
 - [x] **文件模块**: 文件上传/下载、断点续传、SHA256 校验、MinIO 对象存储
 - [x] **评论模块**: 评论 CRUD、评分（1-5 星）、评论点赞、树形回复、回复计数、限流
 - [x] **留言模块**: 留言 CRUD、点赞、回复、排序（时间/点赞/回复数）、频率限制、管理后台
 - [x] **通知/审计**: 站内通知、审计日志
-- [x] **管理后台**: 仪表盘统计、用户管理（封禁/角色）、产品审核、评论管理、分类管理、系统配置、社交链接管理、邮件配置管理、**UI优化（推出按钮、双语支持）**
+- [x] **管理后台**: 仪表盘统计、用户管理（封禁/角色）、产品审核、评论管理、分类管理、系统配置、社交链接管理、邮件配置管理、UI优化
 - [x] **安全体系**: Spring Security + JWT + RBAC（5 角色 17 权限）、登录限流、CORS
+- [x] **维护模式**: 维护页面、后端拦截器、管理后台配置
+- [x] **错误页面**: 404/403/500/网络错误页面
+- [x] **ICP备案**: 备案信息管理 + 邮箱验证 + Footer显示
+- [x] **时区配置**: 统一 Asia/Shanghai (UTC+8)
 
-### 前端（Step 8-9）
+### 前端
 
-- [x] **基础架构**: Vite + React + TypeScript + Redux Toolkit + React Router (懒加载) + i18n
+- [x] **基础架构**: Vite 5.4 + React 18.3 + TypeScript 5.6 + Redux Toolkit 2.11 + React Router 7.13 + i18n
 - [x] **玻璃拟态主题**: Tailwind CSS + CSS 变量实现的高级玻璃拟态效果（背景模糊、半透明、光影）、动态背景支持（图片/视频）
-- [x] **前台页面（11 个）**: Home、Products、ProductDetail、Login、Register、ForgotPassword、Profile、OAuthCallback、NotFound、ComingSoon、InfoPage
+- [x] **前台页面（11 个）**: Home、Products、ProductDetail、Login、Register、ForgotPassword、Profile、OAuthCallback、NotFound、ComingSoon、InfoPage、Error、Maintenance
 - [x] **后台页面（8 个）**: Dashboard、Users、Products、Comments、Categories、System、Feedbacks、Theme
 - [x] **错误页面系统**: 404/403/500/网络错误页面（Lucide React 图标、深浅主题、国际化）
-- [x] **维护模式**: 维护页面、后端拦截器、管理后台配置（开关、标题、说明、预计恢复时间）
-- [x] **API 层**: Axios 封装（token 注入 + 401 刷新 + 错误页面跳转）、9 个 API 模块、Mock 数据拦截器
-- [x] **国际化**: 中文 / 英文完整翻译（支持邮件模板和系统配置）
+- [x] **维护模式**: 维护页面、后端拦截器、管理后台配置
+- [x] **API 层**: Axios 封装（token 注入 + 401 刷新 + 错误页面跳转）、9 个 API 模块
+- [x] **国际化**: 中文 / 英文完整翻译
 - [x] **代码质量**: ESLint + TypeScript 严格模式、代码风格统一、类型安全
 
-### 部署（Step 10）
+### 部署
 
 - [x] **Docker**: 后端多阶段 Dockerfile、前端 Dockerfile + Nginx、docker-compose.yml（生产全栈）
 - [x] **CI/CD**: GitHub Actions 流水线（构建 + 测试 + Docker + 部署）
@@ -302,14 +297,14 @@ docker compose -f docker-compose.dev.yml up -d
 - [x] **28 张表**: 用户、角色、权限、OAuth 绑定、邮箱验证、产品、版本、增量更新、分类、评论、点赞、留言、留言点赞、订单（占位）、订阅（占位）、通知、下载记录（分区）、访问日志（分区）、系统配置、文件记录、审计日志、多语言、邮件配置、社交链接配置
 - [x] **索引**: GIN (tags)、部分索引 (is_latest)、复合索引
 - [x] **触发器**: updated_at 自动更新
-- [x] **种子数据**: 5 用户 + 6 分类 + 8 产品 + 版本 + 评论
+- [x] **初始化数据**: 超级管理员 KirLab
 
 ---
 
 ## 阶段一待完成内容
 
-- [x] 前后端联调（Mock → 真实 API 对接，可通过 VITE_ENABLE_MOCK=false 切换）
-- [x] 邮件服务配置（QQ邮箱SMTP真实发送、专业HTML邮件模板、系统配置集成）
+- [x] 前后端联调（Mock → 真实 API 对接）
+- [x] 邮件服务配置（QQ邮箱SMTP真实发送）
 - [x] 文件上传功能（支持多格式、圆形裁剪）
 - [x] 修改邮箱功能（验证码发送到新邮箱）
 - [x] 产品截图上传和显示功能
@@ -321,7 +316,7 @@ docker compose -f docker-compose.dev.yml up -d
 - [x] 留言板功能（首页留言、回复、点赞、排序、频率限制）
 - [x] 留言管理后台（分页、状态管理、搜索、删除）
 - [x] 站点Logo配置功能（上传、裁剪、显示）
-- [x] 验证码邮件模板升级（专业HTML设计、双语支持、系统配置同步）
+- [x] 验证码邮件模板升级（专业HTML设计、双语支持）
 - [x] 社交链接配置管理（GitHub、Twitter、LinkedIn、微博、微信、邮箱）
 - [x] 系统配置扩展（官网URL、邮件发件人、版权信息、备案信息）
 - [x] 产品详情页版本发布说明展示（支持中英文切换）
@@ -347,7 +342,7 @@ docker compose -f docker-compose.dev.yml up -d
 - 微信/QQ OAuth 登录
 - 微信/支付宝支付 + 订单系统
 - VIP 会员订阅
-- Spring Cloud 微服务拆分（文件服务 → 用户服务 → 支付服务 → 产品服务 → 通知服务 → 统计服务）
+- Spring Cloud 微服务拆分
 - Spring Cloud Gateway API 网关
 - Nacos 注册中心
 - Elasticsearch 全文搜索

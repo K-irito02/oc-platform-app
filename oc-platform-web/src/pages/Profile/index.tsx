@@ -7,6 +7,8 @@ import { useTranslation } from 'react-i18next';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { setUser, logout } from '@/store/slices/authSlice';
 import { userApi, authApi } from '@/utils/api';
+import { CloudflareTurnstile } from '@/components/CloudflareTurnstile';
+import { useCaptchaConfig } from '@/hooks/useCaptchaConfig';
 
 type UserProfile = {
   id: number;
@@ -20,12 +22,6 @@ type UserProfile = {
 type ProfileFormValues = {
   username?: string;
   bio?: string;
-};
-
-type PasswordFormValues = {
-  oldPassword: string;
-  newPassword: string;
-  confirmPassword?: string;
 };
 
 type EmailFormValues = {
@@ -42,7 +38,7 @@ type UploadAvatarResponse = {
 };
 
 export default function Profile() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { isAuthenticated, user } = useAppSelector((s) => s.auth);
@@ -52,6 +48,11 @@ export default function Profile() {
   const [loading, setLoading] = useState(false);
   const [emailCodeSending, setEmailCodeSending] = useState(false);
   const [emailCountdown, setEmailCountdown] = useState(0);
+  const [captchaToken, setCaptchaToken] = useState<string>('');
+  const [captchaVerified, setCaptchaVerified] = useState(false);
+  
+  // 使用 useCaptchaConfig Hook 获取验证码配置
+  const { config: captchaConfig } = useCaptchaConfig();
 
   const loadProfile = useCallback(async () => {
     try {
@@ -78,10 +79,26 @@ export default function Profile() {
     } catch { /* handled */ } finally { setLoading(false); }
   };
 
-  const onPasswordChange = async (values: PasswordFormValues) => {
+  const handleCaptchaVerify = (token: string) => {
+    setCaptchaToken(token);
+    setCaptchaVerified(true);
+  };
+
+  const onPasswordChange = async () => {
+    // 验证码检查
+    if (captchaConfig.enabled && !captchaVerified) {
+      message.error(t('profile.captchaRequired'));
+      return;
+    }
+    
     setLoading(true);
     try {
-      await authApi.changePassword({ oldPassword: values.oldPassword, newPassword: values.newPassword });
+      const values = passwordForm.getFieldsValue();
+      await authApi.changePassword({ 
+        oldPassword: values.oldPassword, 
+        newPassword: values.newPassword,
+        captchaToken: captchaToken
+      });
       message.success(t('profile.passwordChanged'));
       dispatch(logout());
       navigate('/login');
@@ -89,6 +106,12 @@ export default function Profile() {
   };
 
   const sendEmailCode = async () => {
+    // 验证码检查
+    if (captchaConfig.enabled && !captchaVerified) {
+      message.error(t('profile.captchaRequired'));
+      return;
+    }
+    
     // 先获取新邮箱值
     const newEmail = emailForm.getFieldValue('newEmail');
     if (!newEmail) {
@@ -98,7 +121,10 @@ export default function Profile() {
     
     setEmailCodeSending(true);
     try {
-      await authApi.sendChangeEmailCode({ newEmail });
+      await authApi.sendChangeEmailCode({ 
+        newEmail,
+        captchaToken: captchaToken
+      });
       message.success(t('profile.emailCodeSent'));
       setEmailCountdown(60);
       const timer = setInterval(() => {
@@ -230,7 +256,11 @@ export default function Profile() {
               <Form.Item label={t('profile.currentPassword')} name="oldPassword" rules={[{ required: true }]}>
                 <Input.Password size="large" prefix={<Lock size={16} className="text-slate-400" />} />
               </Form.Item>
-              <Form.Item label={t('profile.newPassword')} name="newPassword" rules={[{ required: true, min: 8 }]}>
+              <Form.Item label={t('profile.newPassword')} name="newPassword" rules={[
+                { required: true, message: t('auth.passwordRequired') },
+                { min: 8, max: 64, message: t('auth.passwordLength') },
+                { pattern: /^[a-zA-Z0-9]+$/, message: t('auth.passwordFormat') }
+              ]}>
                 <Input.Password size="large" prefix={<Lock size={16} className="text-slate-400" />} />
               </Form.Item>
               <Form.Item label={t('profile.confirmNewPassword')} name="confirmPassword" dependencies={['newPassword']} rules={[
@@ -244,6 +274,17 @@ export default function Profile() {
               ]}>
                 <Input.Password size="large" prefix={<Lock size={16} className="text-slate-400" />} />
               </Form.Item>
+              {/* 验证码组件 */}
+              {captchaConfig.enabled && captchaConfig.siteKey && (
+                <Form.Item label={t('profile.captcha')} required>
+                  <CloudflareTurnstile
+                    siteKey={captchaConfig.siteKey}
+                    onVerify={handleCaptchaVerify}
+                    theme="auto"
+                    lang={i18n.language}
+                  />
+                </Form.Item>
+              )}
               <Form.Item>
                 <Button type="primary" htmlType="submit" loading={loading} size="large" danger>
                   {t('profile.changePasswordBtn')}
@@ -280,6 +321,17 @@ export default function Profile() {
               >
                 <Input size="large" prefix={<Mail size={16} className="text-slate-400" />} placeholder={t('profile.newEmailPlaceholder')} />
               </Form.Item>
+              {/* 验证码组件 */}
+              {captchaConfig.enabled && captchaConfig.siteKey && (
+                <Form.Item label={t('profile.captcha')} required>
+                  <CloudflareTurnstile
+                    siteKey={captchaConfig.siteKey}
+                    onVerify={handleCaptchaVerify}
+                    theme="auto"
+                    lang={i18n.language}
+                  />
+                </Form.Item>
+              )}
               <Form.Item label={t('profile.verificationCode')} name="code" rules={[{ required: true, message: t('profile.codeRequired') }]}>
                 <div className="flex gap-3">
                   <Input size="large" prefix={<ShieldCheck size={16} className="text-slate-400" />} placeholder="123456" />

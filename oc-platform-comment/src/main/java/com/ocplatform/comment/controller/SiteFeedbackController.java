@@ -3,8 +3,12 @@ package com.ocplatform.comment.controller;
 import com.ocplatform.comment.dto.CreateFeedbackRequest;
 import com.ocplatform.comment.dto.FeedbackVO;
 import com.ocplatform.comment.service.SiteFeedbackService;
+import com.ocplatform.common.dto.CaptchaVerifyRequest;
+import com.ocplatform.common.dto.CaptchaVerifyResponse;
+import com.ocplatform.common.exception.BusinessException;
 import com.ocplatform.common.response.ApiResponse;
 import com.ocplatform.common.response.PageResponse;
+import com.ocplatform.common.service.CaptchaService;
 import com.ocplatform.common.util.IpUtil;
 import com.ocplatform.user.entity.User;
 import com.ocplatform.user.repository.UserMapper;
@@ -22,6 +26,7 @@ public class SiteFeedbackController {
 
     private final SiteFeedbackService feedbackService;
     private final UserMapper userMapper;
+    private final CaptchaService captchaService;
 
     @GetMapping
     public ApiResponse<PageResponse<FeedbackVO>> getFeedbacks(
@@ -49,12 +54,29 @@ public class SiteFeedbackController {
         if (userId == null) {
             return ApiResponse.error(40001, "请登录后再留言");
         }
+        
+        String ip = IpUtil.getClientIp(httpRequest);
+        
+        // 验证码校验
+        if (captchaService.isEnabled()) {
+            if (request.getCaptchaToken() == null) {
+                throw new BusinessException(400, "请完成验证码验证");
+            }
+            CaptchaVerifyRequest captchaRequest = CaptchaVerifyRequest.builder()
+                    .token(request.getCaptchaToken())
+                    .scene("FEEDBACK")
+                    .build();
+            CaptchaVerifyResponse captchaResponse = captchaService.verify(captchaRequest, ip, userId);
+            if (!captchaResponse.getSuccess()) {
+                throw new BusinessException(400, "验证码验证失败");
+            }
+        }
+        
         // 检查用户是否被锁定
         User user = userMapper.selectById(userId);
         if (user != null && "LOCKED".equals(user.getStatus())) {
             return ApiResponse.error(40003, "您的账户已被锁定，无法发表留言");
         }
-        String ip = IpUtil.getClientIp(httpRequest);
         return ApiResponse.success(feedbackService.createFeedback(request, userId, ip));
     }
 

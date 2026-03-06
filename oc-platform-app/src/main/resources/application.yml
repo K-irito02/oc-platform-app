@@ -166,6 +166,15 @@ rate-limit:
   upload:
     requests-per-hour: 50
 
+# 验证码配置
+captcha:
+  enabled: ${CAPTCHA_ENABLED:true}
+  cloudflare:
+    site-key: ${CLOUDFLARE_TURNSTILE_SITE_KEY:0x4AAAAAACnWLahpCdkdO4qv}
+    secret-key: ${CLOUDFLARE_TURNSTILE_SECRET_KEY:0x4AAAAAACnWLTxjQ17uu88EHQS_cL8ZF1M}
+    verify-url: https://challenges.cloudflare.com/turnstile/v0/siteverify
+    timeout: 5000
+
 # 日志级别
 logging:
   level:

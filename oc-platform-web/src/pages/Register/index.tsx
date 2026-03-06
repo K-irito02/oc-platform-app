@@ -7,6 +7,8 @@ import { User, Mail, Lock, ShieldCheck, ArrowRight } from 'lucide-react';
 import { authApi } from '@/utils/api';
 import { AuthPageToolbar } from '@/components/AuthPageToolbar';
 import { SiteLogo } from '@/components/SiteLogo';
+import { CloudflareTurnstile } from '@/components/CloudflareTurnstile';
+import { useCaptchaConfig } from '@/hooks/useCaptchaConfig';
 
 type RegisterFormValues = {
   username: string;
@@ -17,18 +19,29 @@ type RegisterFormValues = {
 };
 
 export default function Register() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [codeSending, setCodeSending] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [form] = Form.useForm();
+  const [captchaToken, setCaptchaToken] = useState<string>('');
+  const { config: captchaConfig } = useCaptchaConfig();
+
+  const handleCaptchaVerify = (token: string) => {
+    setCaptchaToken(token);
+  };
 
   const sendCode = async () => {
     try {
-      const email = await form.validateFields(['email']);
+      await form.validateFields(['email']);
       setCodeSending(true);
-      await authApi.sendCode({ email: email.email, type: 'REGISTER' });
+      const email = form.getFieldValue('email');
+      await authApi.sendCode({ 
+        email, 
+        type: 'REGISTER',
+        captchaToken: captchaToken
+      });
       message.success(t('auth.codeSent') || 'Verification code sent');
       setCountdown(60);
       const timer = setInterval(() => {
@@ -48,6 +61,12 @@ export default function Register() {
   };
 
   const onFinish = async (values: RegisterFormValues) => {
+    // 验证码启用但未完成验证时阻止提交
+    if (captchaConfig.enabled && !captchaToken) {
+      message.error(t('auth.captchaRequired') || '请完成验证码验证');
+      return;
+    }
+
     setLoading(true);
     try {
       await authApi.register({
@@ -89,7 +108,11 @@ export default function Register() {
               <Form.Item
                 label={t('auth.username')}
                 name="username"
-                rules={[{ required: true, message: t('auth.usernameRequired') }]}
+                rules={[
+                  { required: true, message: t('auth.usernameRequired') },
+                  { min: 3, max: 50, message: t('auth.usernameLength') },
+                  { pattern: /^[a-zA-Z0-9_-]+$/, message: t('auth.usernameFormat') }
+                ]}
               >
                 <Input prefix={<User size={18} className="text-slate-400 mr-2" />} placeholder="johndoe" />
               </Form.Item>
@@ -124,7 +147,11 @@ export default function Register() {
               <Form.Item
                 label={t('auth.password')}
                 name="password"
-                rules={[{ required: true, min: 8, message: t('auth.passwordMin8') }]}
+                rules={[
+                  { required: true, message: t('auth.passwordRequired') },
+                  { min: 8, max: 64, message: t('auth.passwordLength') },
+                  { pattern: /^[a-zA-Z0-9]+$/, message: t('auth.passwordFormat') }
+                ]}
               >
                 <Input.Password prefix={<Lock size={18} className="text-slate-400 mr-2" />} placeholder="••••••••" />
               </Form.Item>
@@ -146,6 +173,18 @@ export default function Register() {
                 <Input.Password prefix={<Lock size={18} className="text-slate-400 mr-2" />} placeholder="••••••••" />
               </Form.Item>
             </div>
+
+            {/* Cloudflare Turnstile 验证码 */}
+            {captchaConfig.enabled && captchaConfig.siteKey && (
+              <div className="flex justify-center my-6">
+                <CloudflareTurnstile
+                  siteKey={captchaConfig.siteKey}
+                  onVerify={handleCaptchaVerify}
+                  theme="auto"
+                  lang={i18n.language}
+                />
+              </div>
+            )}
 
             <Button
               type="primary"

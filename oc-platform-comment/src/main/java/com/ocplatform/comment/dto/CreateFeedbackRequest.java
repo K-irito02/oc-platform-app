@@ -20,4 +20,9 @@ public class CreateFeedbackRequest {
     private Long parentId;
 
     private Boolean isPublic = true;
+
+    /**
+     * 验证码令牌
+     */
+    private String captchaToken;
 }

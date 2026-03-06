@@ -3,8 +3,12 @@ package com.ocplatform.comment.controller;
 import com.ocplatform.comment.dto.CommentVO;
 import com.ocplatform.comment.dto.CreateCommentRequest;
 import com.ocplatform.comment.service.CommentService;
+import com.ocplatform.common.dto.CaptchaVerifyRequest;
+import com.ocplatform.common.dto.CaptchaVerifyResponse;
+import com.ocplatform.common.exception.BusinessException;
 import com.ocplatform.common.response.ApiResponse;
 import com.ocplatform.common.response.PageResponse;
+import com.ocplatform.common.service.CaptchaService;
 import com.ocplatform.common.util.IpUtil;
 import com.ocplatform.user.entity.User;
 import com.ocplatform.user.repository.UserMapper;
@@ -23,6 +27,7 @@ public class CommentController {
 
     private final CommentService commentService;
     private final UserMapper userMapper;
+    private final CaptchaService captchaService;
 
     @GetMapping("/product/{productId}")
     public ApiResponse<PageResponse<CommentVO>> getProductComments(
@@ -44,6 +49,22 @@ public class CommentController {
             HttpServletRequest httpRequest) {
         Long userId = (Long) authentication.getPrincipal();
         String ip = IpUtil.getClientIp(httpRequest);
+        
+        // 验证码校验
+        if (captchaService.isEnabled()) {
+            if (request.getCaptchaToken() == null) {
+                throw new BusinessException(400, "请完成验证码验证");
+            }
+            CaptchaVerifyRequest captchaRequest = CaptchaVerifyRequest.builder()
+                    .token(request.getCaptchaToken())
+                    .scene("COMMENT")
+                    .build();
+            CaptchaVerifyResponse captchaResponse = captchaService.verify(captchaRequest, ip, userId);
+            if (!captchaResponse.getSuccess()) {
+                throw new BusinessException(400, "验证码验证失败");
+            }
+        }
+        
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_SUPER_ADMIN"));
         // 获取用户状态以检查是否被锁定

@@ -1,15 +1,11 @@
 package com.ocplatform.admin.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.ocplatform.admin.service.FilingService;
-import com.ocplatform.common.dto.FilingConfigDTO;
 import com.ocplatform.common.dto.MaintenanceConfigDTO;
 import com.ocplatform.common.dto.MaintenanceStatusDTO;
 import com.ocplatform.common.entity.SystemConfig;
-import com.ocplatform.common.exception.BusinessException;
 import com.ocplatform.common.repository.SystemConfigMapper;
 import com.ocplatform.common.response.ApiResponse;
-import com.ocplatform.common.response.ErrorCode;
 import com.ocplatform.common.event.MaintenanceCacheClearEvent;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +15,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.OffsetDateTime;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -31,7 +26,6 @@ public class AdminSystemController {
 
     private final SystemConfigMapper systemConfigMapper;
     private final ApplicationEventPublisher eventPublisher;
-    private final FilingService filingService;
 
     private static final String CONFIG_ENABLED = "system.maintenance.enabled";
     private static final String CONFIG_TITLE = "system.maintenance.title";
@@ -123,48 +117,6 @@ public class AdminSystemController {
         eventPublisher.publishEvent(new MaintenanceCacheClearEvent(this));
 
         return ApiResponse.success();
-    }
-
-    @PostMapping("/filing/send-code")
-    public ApiResponse<Void> sendFilingCode() {
-        filingService.sendFilingVerificationCode();
-        return ApiResponse.success();
-    }
-
-    @GetMapping("/filing")
-    public ApiResponse<Map<String, String>> getFilingConfig() {
-        Map<String, String> result = new HashMap<>();
-        result.put("icp", getConfigValue("footer.icp", ""));
-        result.put("policeBeian", getConfigValue("footer.beian", ""));
-        result.put("policeIconUrl", getConfigValue("footer.police_icon_url", ""));
-        result.put("superAdminEmail", maskEmail(filingService.getSuperAdminEmail()));
-        return ApiResponse.success(result);
-    }
-
-    @PutMapping("/filing")
-    public ApiResponse<Void> updateFilingConfig(@Valid @RequestBody FilingConfigDTO dto,
-                                                 Authentication authentication) {
-        if (!filingService.verifyCode(dto.getVerificationCode())) {
-            throw new BusinessException(ErrorCode.VERIFICATION_CODE_INVALID, "验证码错误或已过期");
-        }
-        
-        Long userId = (Long) authentication.getPrincipal();
-        filingService.updateFilingConfig(dto.getIcp(), dto.getPoliceBeian(), dto.getPoliceIconUrl(), userId);
-        
-        return ApiResponse.success();
-    }
-
-    private String maskEmail(String email) {
-        if (email == null || !email.contains("@")) {
-            return email;
-        }
-        String[] parts = email.split("@");
-        String localPart = parts[0];
-        String domain = parts[1];
-        if (localPart.length() <= 3) {
-            return localPart.charAt(0) + "***@" + domain;
-        }
-        return localPart.substring(0, 3) + "***@" + domain;
     }
 
     private String getConfigValue(String key, String defaultValue) {

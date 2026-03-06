@@ -107,6 +107,42 @@ CREATE TABLE email_verifications (
 CREATE INDEX idx_email_verify ON email_verifications(email, type);
 
 -- ============================================================
+-- 验证码验证记录表
+-- ============================================================
+CREATE TABLE captcha_records (
+    id            BIGSERIAL PRIMARY KEY,
+    user_id       BIGINT,
+    ip_address    VARCHAR(45) NOT NULL,
+    scene         VARCHAR(50) NOT NULL,
+    ticket        VARCHAR(200),
+    verify_result BOOLEAN NOT NULL,
+    evil_level    INTEGER,
+    fail_reason   VARCHAR(200),
+    verify_service VARCHAR(50) NOT NULL DEFAULT 'cloudflare',
+    created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 验证码记录表索引
+CREATE INDEX idx_captcha_records_user ON captcha_records(user_id);
+CREATE INDEX idx_captcha_records_ip ON captcha_records(ip_address);
+CREATE INDEX idx_captcha_records_created ON captcha_records(created_at DESC);
+CREATE INDEX idx_captcha_records_scene ON captcha_records(scene);
+CREATE INDEX idx_captcha_records_verify_service ON captcha_records(verify_service);
+
+-- 验证码记录表注释
+COMMENT ON TABLE captcha_records IS '验证码验证记录表';
+COMMENT ON COLUMN captcha_records.id IS '主键ID';
+COMMENT ON COLUMN captcha_records.user_id IS '用户ID（可为空，未登录时为空）';
+COMMENT ON COLUMN captcha_records.ip_address IS '请求IP地址';
+COMMENT ON COLUMN captcha_records.scene IS '验证场景：LOGIN-登录, REGISTER-注册, RESET_PASSWORD-重置密码, CHANGE_PASSWORD-修改密码, CHANGE_EMAIL-修改邮箱, COMMENT-评论, FEEDBACK-反馈';
+COMMENT ON COLUMN captcha_records.ticket IS '验证票据';
+COMMENT ON COLUMN captcha_records.verify_result IS '验证结果：true-成功, false-失败';
+COMMENT ON COLUMN captcha_records.evil_level IS '恶意等级（由验证码服务返回）';
+COMMENT ON COLUMN captcha_records.fail_reason IS '失败原因';
+COMMENT ON COLUMN captcha_records.verify_service IS '验证服务提供商：cloudflare, tencent 等';
+COMMENT ON COLUMN captcha_records.created_at IS '创建时间';
+
+-- ============================================================
 -- 产品分类表
 -- ============================================================
 CREATE TABLE categories (
@@ -680,4 +716,7 @@ INSERT INTO system_configs (config_key, config_value, description) VALUES
        "allowCustomPlatform": true,
        "allowCustomArchitecture": true
      }',
-     '平台和架构配置');
+     '平台和架构配置'),
+    ('captcha.enabled', 'true', '验证码功能开关'),
+    ('captcha.cloudflare.site_key', '', 'Cloudflare Turnstile Site Key'),
+    ('captcha.cloudflare.secret_key', '', 'Cloudflare Turnstile Secret Key');

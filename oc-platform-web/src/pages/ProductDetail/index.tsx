@@ -9,6 +9,8 @@ import { Github, ExternalLink, Star, Clock, Eye, Download as DownloadIcon, Termi
 import { useTranslation } from 'react-i18next';
 import ScreenshotGallery from '@/components/ScreenshotGallery';
 import RatingStats from '@/components/RatingStats';
+import { CloudflareTurnstile } from '@/components/CloudflareTurnstile';
+import { useCaptchaConfig } from '@/hooks/useCaptchaConfig';
 import type { TFunction } from 'i18next';
 
 type ApiResponse<T> = {
@@ -405,6 +407,7 @@ export default function ProductDetail() {
   const { slug } = useParams<{ slug: string }>();
   const { isAuthenticated } = useAppSelector((s) => s.auth);
   const isEnglish = i18n.language === 'en-US' || i18n.language === 'en';
+  const { config: captchaConfig } = useCaptchaConfig();
 
   const [product, setProduct] = useState<ProductItem | null>(null);
   const [versions, setVersions] = useState<VersionItem[]>([]);
@@ -418,6 +421,7 @@ export default function ProductDetail() {
   const [replyingTo, setReplyingTo] = useState<{ id: number; name: string } | null>(null);
   const [ratingStats, setRatingStats] = useState<RatingStatsData | null>(null);
   const [userRatingId, setUserRatingId] = useState<number | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string>('');
 
   const loadVersions = useCallback(async (productId: number) => {
     try {
@@ -544,11 +548,26 @@ export default function ProductDetail() {
     form.setFieldsValue({ content: '' });
   };
 
+  const handleCaptchaVerify = (token: string) => {
+    setCaptchaToken(token);
+  };
+
   const handleComment = async (values: CommentFormValues) => {
     if (!product) return;
+    
+    // 验证码检查：如果验证码启用但用户未完成验证，阻止提交
+    if (captchaConfig.enabled && !captchaToken) {
+      message.error(t('productDetail.captchaRequired') || '请完成验证码验证');
+      return;
+    }
+    
     setSubmitting(true);
     try {
-      const payload: { content: string; rating?: number; parentId?: number } = { content: values.content, rating: values.rating };
+      const payload: { content: string; rating?: number; parentId?: number; captchaToken?: string } = { 
+        content: values.content, 
+        rating: values.rating,
+        captchaToken: captchaToken
+      };
       if (replyingTo) {
         payload.parentId = replyingTo.id;
       }
@@ -561,6 +580,7 @@ export default function ProductDetail() {
       }
       form.resetFields();
       setReplyingTo(null);
+      setCaptchaToken(''); // 重置验证码 token
       loadComments(product.id, 1);
       if (values.rating && !replyingTo) {
         loadRatingStats(product.id);
@@ -791,6 +811,17 @@ export default function ProductDetail() {
                             <Form.Item name="content" rules={[{ required: true, message: t('productDetail.commentPlaceholder') }]}>
                               <TextArea rows={4} placeholder={t('productDetail.commentPlaceholder')} className="rounded-xl resize-none" />
                             </Form.Item>
+                            {/* 验证码组件：仅在启用时显示 */}
+                            {captchaConfig.enabled && captchaConfig.siteKey && (
+                              <Form.Item>
+                                <CloudflareTurnstile
+                                  siteKey={captchaConfig.siteKey}
+                                  onVerify={handleCaptchaVerify}
+                                  theme="auto"
+                                  lang={i18n.language}
+                                />
+                              </Form.Item>
+                            )}
                             <div className="flex justify-end">
                               <Button type="primary" htmlType="submit" loading={submitting}>{t('productDetail.submitReview')}</Button>
                             </div>

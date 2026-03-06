@@ -10,14 +10,11 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class FilingConfigDTO {
+public class CaptchaVerifyRequest {
 
-    @NotBlank(message = "验证码不能为空")
-    private String verificationCode;
+    @NotBlank(message = "验证令牌不能为空")
+    private String token;
 
-    private String icp;
-
-    private String policeBeian;
-
-    private String policeIconUrl;
+    @NotBlank(message = "验证场景不能为空")
+    private String scene;
 }

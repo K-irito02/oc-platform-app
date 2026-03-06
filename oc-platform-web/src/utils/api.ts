@@ -26,24 +26,23 @@ export interface PlatformConfig {
 
 // ===== Auth API =====
 export const authApi = {
-  login: (data: { email: string; password: string }) =>
-    request.post('/auth/login', data, {
+  login: (data: { account: string; password: string; captchaToken?: string }) => request.post('/auth/login', data, {
       headers: { 'X-Silent-Error': 'true' }
     }),
-  register: (data: { username: string; email: string; password: string; verificationCode: string }) =>
+  register: (data: { username: string; email: string; password: string; verificationCode: string; captchaToken?: string }) =>
     request.post('/auth/register', data),
   logout: () => request.post('/auth/logout'),
   refresh: (refreshToken: string) =>
     request.post('/auth/refresh', { refreshToken }),
-  sendCode: (data: { email: string; type: string }) =>
+  sendCode: (data: { email: string; type: string; captchaToken?: string }) =>
     request.post('/auth/send-code', data),
   resetPassword: (data: { email: string; code: string; newPassword: string }) =>
     request.post('/auth/reset-password', data),
-  changePassword: (data: { oldPassword: string; newPassword: string }) =>
+  changePassword: (data: { oldPassword: string; newPassword: string; captchaToken?: string }) =>
     request.put('/auth/change-password', data),
-  sendChangeEmailCode: (data: { newEmail: string }) =>
+  sendChangeEmailCode: (data: { newEmail: string; captchaToken?: string }) =>
     request.post('/auth/send-change-email-code', data),
-  changeEmail: (data: { code: string; newEmail: string }) =>
+  changeEmail: (data: { code: string; newEmail: string; captchaToken?: string }) =>
     request.put('/auth/change-email', data),
   getGithubUrl: () => request.get('/auth/oauth/github'),
   githubCallback: (code: string) =>
@@ -91,7 +90,7 @@ export const categoryApi = {
 export const commentApi = {
   getProductComments: (productId: number, params: { page?: number; size?: number; sortBy?: string; sortOrder?: string }) =>
     request.get(`/comments/product/${productId}`, { params }),
-  create: (productId: number, data: { content: string; parentId?: number; rating?: number }) =>
+  create: (productId: number, data: { content: string; parentId?: number; rating?: number; captchaToken?: string }) =>
     request.post(`/comments/product/${productId}`, data, {
       headers: { 'X-Silent-Error': 'true' }
     }),
@@ -120,7 +119,7 @@ export const ratingApi = {
 
 // ===== Feedback API =====
 export const feedbackApi = {
-  create: (data: { content: string; email?: string; contact?: string; parentId?: number; isPublic?: boolean }) =>
+  create: (data: { content: string; email?: string; contact?: string; parentId?: number; isPublic?: boolean; captchaToken?: string }) =>
     request.post('/feedbacks', data, {
       headers: { 'X-Silent-Error': 'true' }
     }),
@@ -196,6 +195,17 @@ export const fileApi = {
 // ===== System API (Public) =====
 export const systemApi = {
   getGlobalTheme: () => request.get('/system/theme'),
+};
+
+// ===== Captcha API =====
+export const captchaApi = {
+  // 验证 Cloudflare Turnstile token
+  verify: (data: { token: string; scene: string }) =>
+    request.post('/captcha/verify', data),
+  
+  // 获取验证码配置
+  getConfig: () =>
+    request.get('/captcha/config'),
 };
 
 // ===== Update Check API =====
@@ -283,13 +293,4 @@ export const adminApi = {
     messageEn: string;
     estimatedTime?: string | null;
   }) => request.put('/admin/system/maintenance', data),
-  // Filing Config
-  sendFilingCode: () => request.post('/admin/system/filing/send-code'),
-  getFilingConfig: () => request.get('/admin/system/filing'),
-  updateFilingConfig: (data: {
-    verificationCode: string;
-    icp: string;
-    policeBeian: string;
-    policeIconUrl?: string;
-  }) => request.put('/admin/system/filing', data),
 };

@@ -7,11 +7,13 @@ import { useTranslation } from 'react-i18next';
 import { authApi } from '@/utils/api';
 import { AuthPageToolbar } from '@/components/AuthPageToolbar';
 import { SiteLogo } from '@/components/SiteLogo';
+import { CloudflareTurnstile } from '@/components/CloudflareTurnstile';
+import { useCaptchaConfig } from '@/hooks/useCaptchaConfig';
 
 const { Paragraph } = Typography;
 
 export default function ForgotPassword() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -19,13 +21,32 @@ export default function ForgotPassword() {
   const [countdown, setCountdown] = useState(0);
   const [email, setEmail] = useState('');
   const [form] = Form.useForm();
+  const [captchaToken, setCaptchaToken] = useState<string>('');
+
+  // 从后端动态获取验证码配置
+  const { config: captchaConfig } = useCaptchaConfig();
+
+  const handleCaptchaVerify = (token: string) => {
+    setCaptchaToken(token);
+  };
 
   const sendCode = async () => {
     const emailVal = form.getFieldValue('email');
     if (!emailVal) { message.warning(t('auth.emailRequired')); return; }
+    
+    // 如果验证码启用但用户未完成验证，阻止发送验证码
+    if (captchaConfig.enabled && !captchaToken) {
+      message.warning(t('auth.captchaRequired') || '请完成验证码验证');
+      return;
+    }
+    
     setCodeSending(true);
     try {
-      await authApi.sendCode({ email: emailVal, type: 'RESET_PASSWORD' });
+      await authApi.sendCode({ 
+        email: emailVal, 
+        type: 'RESET_PASSWORD',
+        captchaToken: captchaToken
+      });
       message.success(t('auth.codeSent'));
       setEmail(emailVal);
       setCountdown(60);
@@ -70,6 +91,17 @@ export default function ForgotPassword() {
               <Form.Item name="email" rules={[{ required: true, type: 'email', message: t('auth.emailRequired') }]}>
                 <Input prefix={<MailOutlined style={{ color: 'var(--ink-lighter)' }} />} placeholder={t('auth.emailPlaceholder')} style={{ borderRadius: 'var(--radius-md)' }} />
               </Form.Item>
+              {/* 验证码组件：当 config.enabled 为 true 时显示 */}
+              {captchaConfig.enabled && captchaConfig.siteKey && (
+                <Form.Item>
+                  <CloudflareTurnstile
+                    siteKey={captchaConfig.siteKey}
+                    onVerify={handleCaptchaVerify}
+                    theme="auto"
+                    lang={i18n.language}
+                  />
+                </Form.Item>
+              )}
               <Form.Item>
                 <Button type="primary" block loading={codeSending} onClick={sendCode} className="h-[44px] font-medium rounded-md dark:!bg-slate-700 dark:!text-slate-100" style={{
                   borderRadius: 'var(--radius-md)',

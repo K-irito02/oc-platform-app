@@ -18,4 +18,9 @@ public class CreateCommentRequest {
     @Min(value = 1, message = "评分最低为 1")
     @Max(value = 5, message = "评分最高为 5")
     private Integer rating;
+
+    /**
+     * 验证码令牌
+     */
+    private String captchaToken;
 }

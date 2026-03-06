@@ -13,4 +13,6 @@ public class SendCodeRequest {
 
     @NotBlank(message = "验证码类型不能为空")
     private String type; // REGISTER, RESET_PASSWORD, CHANGE_EMAIL
+
+    private String captchaToken;
 }

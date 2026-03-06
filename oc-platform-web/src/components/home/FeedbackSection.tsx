@@ -6,6 +6,8 @@ import { message } from '@/utils/antdUtils';
 import { Send, MessageSquare, ThumbsUp, MessageCircle } from 'lucide-react';
 import { feedbackApi } from '@/utils/api';
 import { useAppSelector } from '@/store/hooks';
+import { CloudflareTurnstile } from '@/components/CloudflareTurnstile';
+import { useCaptchaConfig } from '@/hooks/useCaptchaConfig';
 import dayjs from 'dayjs';
 import type { TFunction } from 'i18next';
 
@@ -212,8 +214,9 @@ const FeedbackItem = ({ feedback, isAuthenticated, handleLike, handleReply, t }:
 };
 
 export default function FeedbackSection() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { isAuthenticated } = useAppSelector((s) => s.auth);
+  const { config: captchaConfig } = useCaptchaConfig();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [feedbacks, setFeedbacks] = useState<FeedbackItemData[]>([]);
@@ -227,6 +230,8 @@ export default function FeedbackSection() {
     content: '',
     isPublic: true
   });
+  const [captchaToken, setCaptchaToken] = useState<string>('');
+  const [captchaError, setCaptchaError] = useState<string>('');
   
   // 1分钟评论限制常量
   const RATE_LIMIT_MS = 60 * 1000;
@@ -257,9 +262,21 @@ export default function FeedbackSection() {
     loadFeedbacks();
   }, [loadFeedbacks]);
 
+  const handleCaptchaVerify = (token: string) => {
+    setCaptchaToken(token);
+    setCaptchaError('');
+  };
+
   const handleSubmit = async () => {
     if (!form.content.trim()) {
       message.error(t('feedback.contentRequired'));
+      return;
+    }
+    
+    // 检查验证码验证
+    if (captchaConfig.enabled && !captchaToken) {
+      setCaptchaError(t('feedback.captchaRequired'));
+      message.error(t('feedback.captchaRequired'));
       return;
     }
     
@@ -276,12 +293,14 @@ export default function FeedbackSection() {
       await feedbackApi.create({
         content: form.content,
         isPublic: form.isPublic,
-        parentId: replyingTo?.id
+        parentId: replyingTo?.id,
+        captchaToken: captchaToken
       });
       message.success(t('feedback.success'));
       setForm({ content: '', isPublic: true });
       setReplyingTo(null);
       setLastSubmitTime(Date.now());
+      setCaptchaToken('');
       loadFeedbacks(false);
     } catch (error: unknown) {
       console.error('Feedback submission error:', error);
@@ -415,6 +434,19 @@ export default function FeedbackSection() {
                 </span>
               </Checkbox>
             </div>
+            {captchaConfig.enabled && captchaConfig.siteKey && (
+              <div className="flex flex-col gap-2">
+                <CloudflareTurnstile
+                  siteKey={captchaConfig.siteKey}
+                  onVerify={handleCaptchaVerify}
+                  theme="auto"
+                  lang={i18n.language}
+                />
+                {captchaError && (
+                  <div className="text-red-500 text-xs">{captchaError}</div>
+                )}
+              </div>
+            )}
             <Button 
               type="primary" 
               icon={<Send size={16} />} 

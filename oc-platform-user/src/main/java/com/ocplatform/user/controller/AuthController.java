@@ -90,7 +90,8 @@ public class AuthController {
     public ApiResponse<Void> changeEmail(Authentication authentication,
                                          @Valid @RequestBody ChangeEmailRequest request) {
         Long userId = (Long) authentication.getPrincipal();
-        authService.changeEmail(userId, request.getCode(), request.getNewEmail());
+        authService.changeEmail(userId, request.getCode(), request.getNewEmail(), 
+                               request.getCaptchaToken());
         return ApiResponse.success();
     }
 }

@@ -1,32 +1,17 @@
 import { useTranslation } from 'react-i18next';
-import { Github, Twitter, Linkedin, Quote, Calendar, Shield, Mail } from 'lucide-react';
+import { Github, Twitter, Linkedin, Quote, Calendar, Mail } from 'lucide-react';
 import { SiteLogo } from '@/components/SiteLogo';
 import { useAppSelector } from '@/store/hooks';
-
-const extractPoliceCode = (policeBeian: string): string | null => {
-  if (!policeBeian) return null;
-  const match = policeBeian.match(/\d+/);
-  return match ? match[0] : null;
-};
 
 export const Footer = () => {
   const { t, i18n } = useTranslation();
   const siteConfig = useAppSelector((state) => state.siteConfig.config);
   const isEn = i18n.language === 'en-US' || i18n.language === 'en';
 
-  const policeBeian = siteConfig.footerPoliceBeian;
-  const policeIconUrl = siteConfig.footerPoliceIconUrl;
-  const icp = siteConfig.footerIcp;
   const holiday = isEn ? siteConfig.footerHolidayEn : siteConfig.footerHoliday;
   const quote = isEn ? siteConfig.footerQuoteEn : siteConfig.footerQuote;
   const quoteAuthor = isEn ? siteConfig.footerQuoteAuthorEn : siteConfig.footerQuoteAuthor;
 
-  const policeCode = extractPoliceCode(policeBeian);
-  const policeBeianUrl = policeCode 
-    ? `https://beian.gov.cn/portal/registerSystemInfo?recordcode=${policeCode}` 
-    : null;
-
-  // 社交链接配置
   const socialLinks = {
     github: siteConfig.socialGithub,
     twitter: siteConfig.socialTwitter,
@@ -175,37 +160,38 @@ export const Footer = () => {
               {t('footer.copyright')}
             </p>
             
-            {/* 备案信息 - 始终居中，不受主题影响 */}
-            {(policeBeian || icp) && (
-              <div className="flex flex-wrap items-center justify-center gap-4">
-                {policeBeian && policeBeianUrl && (
-                  <a 
-                    href={policeBeianUrl} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-gray-300 transition-all duration-200"
-                  >
-                    {policeIconUrl ? (
-                      <img src={policeIconUrl} alt="公安备案" className="w-5 h-5" />
-                    ) : (
-                      <Shield size={18} className="text-red-500" />
-                    )}
-                    <span className="text-sm text-gray-700 font-medium">{policeBeian}</span>
-                  </a>
-                )}
-                {icp && (
-                  <a 
-                    href="https://beian.miit.gov.cn/" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-gray-300 transition-all duration-200"
-                  >
-                    <Shield size={18} className="text-blue-500" />
-                    <span className="text-sm text-gray-700 font-medium">{icp}</span>
-                  </a>
-                )}
-              </div>
-            )}
+            {/* 
+              备案信息 - 静态配置区域
+              请在下方直接修改备案信息，备案成功后填写：
+              1. ICP备案号（如：黔ICP备12345678号-1）
+              2. 公安备案号（如：黔公网安备52010000000000号）
+              3. 公安备案图标URL（可从公安机关备案网站下载）
+            */}
+            <div className="flex flex-wrap items-center justify-center gap-4">
+              {/* 公安备案 - 取消注释并填写您的备案信息
+              <a 
+                href="https://beian.gov.cn/portal/registerSystemInfo?recordcode=您的公安备案号（纯数字）" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-gray-300 transition-all duration-200"
+              >
+                <img src="您的公安备案图标URL" alt="公安备案" className="w-5 h-5" />
+                <span className="text-sm text-gray-700 font-medium">您的公安备案号</span>
+              </a>
+              */}
+              
+              {/* ICP备案 - 取消注释并填写您的备案信息
+              <a 
+                href="https://beian.miit.gov.cn/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-gray-300 transition-all duration-200"
+              >
+                <Shield size={18} className="text-blue-500" />
+                <span className="text-sm text-gray-700 font-medium">您的ICP备案号</span>
+              </a>
+              */}
+            </div>
           </div>
         </div>
       </div>

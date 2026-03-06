@@ -2,13 +2,13 @@
 FROM maven:3.9-eclipse-temurin-17-alpine AS builder
 WORKDIR /build
 COPY pom.xml .
-COPY qt-platform-common/pom.xml qt-platform-common/
-COPY qt-platform-user/pom.xml qt-platform-user/
-COPY qt-platform-product/pom.xml qt-platform-product/
-COPY qt-platform-comment/pom.xml qt-platform-comment/
-COPY qt-platform-file/pom.xml qt-platform-file/
-COPY qt-platform-admin/pom.xml qt-platform-admin/
-COPY qt-platform-app/pom.xml qt-platform-app/
+COPY oc-platform-common/pom.xml oc-platform-common/
+COPY oc-platform-user/pom.xml oc-platform-user/
+COPY oc-platform-product/pom.xml oc-platform-product/
+COPY oc-platform-comment/pom.xml oc-platform-comment/
+COPY oc-platform-file/pom.xml oc-platform-file/
+COPY oc-platform-admin/pom.xml oc-platform-admin/
+COPY oc-platform-app/pom.xml oc-platform-app/
 RUN mvn dependency:go-offline -B
 
 COPY . .
@@ -21,7 +21,7 @@ LABEL maintainer="qt-platform"
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 WORKDIR /app
 
-COPY --from=builder /build/qt-platform-app/target/*.jar app.jar
+COPY --from=builder /build/oc-platform-app/target/*.jar app.jar
 
 RUN mkdir -p /app/uploads /app/logs && chown -R appuser:appgroup /app
 USER appuser

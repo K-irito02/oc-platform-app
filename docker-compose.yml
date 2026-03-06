@@ -4,60 +4,93 @@ version: '3.8'
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: qt-postgres
+    container_name: oc-postgres
     restart: always
     environment:
       POSTGRES_DB: ${DB_NAME:-oc_platform}
       POSTGRES_USER: ${DB_USER:-oc_user}
       POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
-    ports:
-      - "${DB_PORT:-5432}:5432"
+      TZ: Asia/Shanghai
+    # 生产环境不暴露端口到宿主机，仅限容器内部访问
+    # ports:
+    #   - "${DB_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./sql/pg_hba.conf:/var/lib/postgresql/data/pg_hba.conf:ro
+    command: postgres -c timezone='Asia/Shanghai' -c password_encryption='scram-sha-256'
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-oc_user}"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - qt-net
+      - oc-net
 
   redis:
     image: redis:7-alpine
-    container_name: qt-redis
+    container_name: oc-redis
     restart: always
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis_secret} --maxmemory 256mb --maxmemory-policy allkeys-lru
-    ports:
-      - "${REDIS_PORT:-6379}:6379"
+    environment:
+      TZ: Asia/Shanghai
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD is required} --maxmemory 256mb --maxmemory-policy allkeys-lru
+    # 生产环境不暴露端口到宿主机
+    # ports:
+    #   - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_secret}", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 3
     networks:
-      - qt-net
+      - oc-net
+
+  minio:
+    image: minio/minio:latest
+    container_name: oc-minio
+    restart: always
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:?MINIO_SECRET_KEY is required}
+      TZ: Asia/Shanghai
+    # 生产环境不暴露端口到宿主机（通过后端访问）
+    # ports:
+    #   - "9000:9000"
+    #   - "9001:9001"
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - oc-net
 
   backend:
     build:
       context: .
       dockerfile: oc-platform-app/Dockerfile
-    container_name: qt-backend
+    container_name: oc-backend
     restart: always
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+      minio:
+        condition: service_healthy
     environment:
+      SPRING_PROFILES_ACTIVE: prod
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-oc_platform}
       SPRING_DATASOURCE_USERNAME: ${DB_USER:-oc_user}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
-      SPRING_REDIS_HOST: redis
-      SPRING_REDIS_PORT: 6379
-      SPRING_REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_secret}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       JWT_ACCESS_EXPIRATION: ${JWT_ACCESS_EXPIRATION:-7200000}
       JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-604800000}
@@ -65,38 +98,47 @@ services:
       SPRING_MAIL_PORT: ${MAIL_PORT:-465}
       SPRING_MAIL_USERNAME: ${MAIL_USERNAME:-}
       SPRING_MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:?MINIO_SECRET_KEY is required}
       OAUTH_GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
       OAUTH_GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
       OAUTH_GITHUB_REDIRECT_URI: ${GITHUB_REDIRECT_URI:-https://your-domain.com/oauth/github/callback}
+      CLOUDFLARE_TURNSTILE_SITE_KEY: ${CLOUDFLARE_TURNSTILE_SITE_KEY:-}
+      CLOUDFLARE_TURNSTILE_SECRET_KEY: ${CLOUDFLARE_TURNSTILE_SECRET_KEY:-}
       STORAGE_UPLOAD_PATH: /app/uploads
       JAVA_OPTS: "-Xms256m -Xmx512m"
+      TZ: Asia/Shanghai
     volumes:
       - upload_data:/app/uploads
       - app_logs:/app/logs
-    ports:
-      - "${BACKEND_PORT:-8081}:8081"
+    # 生产环境不暴露端口到宿主机（通过 Nginx 反向代理）
+    # ports:
+    #   - "${BACKEND_PORT:-8081}:8081"
     networks:
-      - qt-net
+      - oc-net
 
   frontend:
     build:
       context: ./oc-platform-web
       dockerfile: Dockerfile
-    container_name: qt-frontend
+    container_name: oc-frontend
     restart: always
     depends_on:
       - backend
     ports:
       - "${FRONTEND_PORT:-80}:80"
+      - "${FRONTEND_SSL_PORT:-443}:443"
     networks:
-      - qt-net
+      - oc-net
 
 volumes:
   postgres_data:
   redis_data:
+  minio_data:
   upload_data:
   app_logs:
 
 networks:
-  qt-net:
+  oc-net:
     driver: bridge

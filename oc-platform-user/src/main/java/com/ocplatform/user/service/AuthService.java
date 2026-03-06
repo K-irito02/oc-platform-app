@@ -1,8 +1,11 @@
 package com.ocplatform.user.service;
 
 import com.ocplatform.common.constant.RedisKeys;
+import com.ocplatform.common.dto.CaptchaVerifyRequest;
+import com.ocplatform.common.dto.CaptchaVerifyResponse;
 import com.ocplatform.common.exception.BusinessException;
 import com.ocplatform.common.response.ErrorCode;
+import com.ocplatform.common.service.CaptchaService;
 import com.ocplatform.common.util.JwtUtil;
 import com.ocplatform.user.dto.*;
 import com.ocplatform.user.entity.Role;
@@ -36,9 +39,24 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final StringRedisTemplate stringRedisTemplate;
+    private final CaptchaService captchaService;
 
     @Transactional
     public void register(RegisterRequest request) {
+        // 验证码校验
+        if (captchaService.isEnabled()) {
+            if (request.getCaptchaToken() == null) {
+                throw new BusinessException(400, "请完成验证码验证");
+            }
+            CaptchaVerifyRequest captchaRequest = new CaptchaVerifyRequest();
+            captchaRequest.setToken(request.getCaptchaToken());
+            captchaRequest.setScene("REGISTER");
+            CaptchaVerifyResponse captchaResponse = captchaService.verify(captchaRequest, null, null);
+            if (!captchaResponse.getSuccess()) {
+                throw new BusinessException(400, "验证码验证失败");
+            }
+        }
+
         // Verify code
         if (!emailService.verifyCode(request.getEmail(), request.getVerificationCode(), "REGISTER")) {
             throw new BusinessException(ErrorCode.VERIFICATION_CODE_INVALID);
@@ -75,7 +93,20 @@ public class AuthService {
     }
 
     public LoginResponse login(LoginRequest request, String clientIp) {
-        // Rate limiting
+        // 验证码校验
+        if (captchaService.isEnabled()) {
+            if (request.getCaptchaToken() == null) {
+                throw new BusinessException(400, "请完成验证码验证");
+            }
+            CaptchaVerifyRequest captchaRequest = new CaptchaVerifyRequest();
+            captchaRequest.setToken(request.getCaptchaToken());
+            captchaRequest.setScene("LOGIN");
+            CaptchaVerifyResponse captchaResponse = captchaService.verify(captchaRequest, clientIp, null);
+            if (!captchaResponse.getSuccess()) {
+                throw new BusinessException(400, "验证码验证失败");
+            }
+        }
+
         String limitKey = RedisKeys.LIMIT_LOGIN + clientIp;
         Long attempts = stringRedisTemplate.opsForValue().increment(limitKey);
         if (attempts != null && attempts == 1) {
@@ -85,8 +116,16 @@ public class AuthService {
             throw new BusinessException(ErrorCode.TOO_MANY_REQUESTS, "登录尝试过于频繁，请 15 分钟后再试");
         }
 
-        User user = userMapper.findByEmail(request.getEmail())
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_REGISTERED));
+        String account = request.getAccount();
+        User user;
+        
+        if (account.contains("@")) {
+            user = userMapper.findByEmail(account)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_REGISTERED));
+        } else {
+            user = userMapper.findByUsername(account)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_REGISTERED));
+        }
 
         if ("BANNED".equals(user.getStatus())) {
             throw new BusinessException(ErrorCode.ACCOUNT_DISABLED);
@@ -142,6 +181,21 @@ public class AuthService {
     }
 
     public void sendVerificationCode(SendCodeRequest request) {
+        // 验证码校验
+        if (captchaService.isEnabled()) {
+            if (request.getCaptchaToken() == null) {
+                throw new BusinessException(400, "请完成验证码验证");
+            }
+            String scene = "RESET_PASSWORD".equals(request.getType()) ? "RESET_PASSWORD" : "REGISTER";
+            CaptchaVerifyRequest captchaRequest = new CaptchaVerifyRequest();
+            captchaRequest.setToken(request.getCaptchaToken());
+            captchaRequest.setScene(scene);
+            CaptchaVerifyResponse captchaResponse = captchaService.verify(captchaRequest, null, null);
+            if (!captchaResponse.getSuccess()) {
+                throw new BusinessException(400, "验证码验证失败");
+            }
+        }
+
         if ("REGISTER".equals(request.getType())) {
             if (userMapper.existsByEmail(request.getEmail())) {
                 throw new BusinessException(ErrorCode.EMAIL_EXISTS);
@@ -182,7 +236,21 @@ public class AuthService {
     }
 
     @Transactional
-    public void changeEmail(Long userId, String code, String newEmail) {
+    public void changeEmail(Long userId, String code, String newEmail, String captchaToken) {
+        // 验证码校验
+        if (captchaService.isEnabled()) {
+            if (captchaToken == null) {
+                throw new BusinessException(400, "请完成验证码验证");
+            }
+            CaptchaVerifyRequest captchaRequest = new CaptchaVerifyRequest();
+            captchaRequest.setToken(captchaToken);
+            captchaRequest.setScene("CHANGE_EMAIL");
+            CaptchaVerifyResponse captchaResponse = captchaService.verify(captchaRequest, null, userId);
+            if (!captchaResponse.getSuccess()) {
+                throw new BusinessException(400, "验证码验证失败");
+            }
+        }
+
         User user = userMapper.selectById(userId);
         if (user == null) {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND);
@@ -208,6 +276,20 @@ public class AuthService {
     }
 
     public void changePassword(Long userId, ChangePasswordRequest request) {
+        // 验证码校验
+        if (captchaService.isEnabled()) {
+            if (request.getCaptchaToken() == null) {
+                throw new BusinessException(400, "请完成验证码验证");
+            }
+            CaptchaVerifyRequest captchaRequest = new CaptchaVerifyRequest();
+            captchaRequest.setToken(request.getCaptchaToken());
+            captchaRequest.setScene("CHANGE_PASSWORD");
+            CaptchaVerifyResponse captchaResponse = captchaService.verify(captchaRequest, null, userId);
+            if (!captchaResponse.getSuccess()) {
+                throw new BusinessException(400, "验证码验证失败");
+            }
+        }
+
         User user = userMapper.selectById(userId);
         if (user == null) {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND);
