@@ -7,9 +7,12 @@ import com.ocplatform.product.service.PlatformConfigService;
 import com.ocplatform.product.service.ProductService;
 import com.ocplatform.product.service.VersionService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,6 +20,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/products")
 @RequiredArgsConstructor
+@Validated
 public class ProductController {
 
     private final ProductService productService;
@@ -25,8 +29,8 @@ public class ProductController {
 
     @GetMapping
     public ApiResponse<PageResponse<ProductVO>> listProducts(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "1") @Min(1) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String sort,
             @RequestParam(required = false) String keyword) {
@@ -41,8 +45,8 @@ public class ProductController {
     @GetMapping("/search")
     public ApiResponse<PageResponse<ProductVO>> searchProducts(
             @RequestParam String q,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "1") @Min(1) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
         return ApiResponse.success(productService.searchProducts(q, page, size));
     }
 

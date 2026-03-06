@@ -720,3 +720,359 @@ INSERT INTO system_configs (config_key, config_value, description) VALUES
     ('captcha.enabled', 'true', '验证码功能开关'),
     ('captcha.cloudflare.site_key', '', 'Cloudflare Turnstile Site Key'),
     ('captcha.cloudflare.secret_key', '', 'Cloudflare Turnstile Secret Key');
+
+-- ============================================================
+-- 数据库优化修复（2026-03-07）
+-- ============================================================
+
+-- 修复时间戳类型不一致
+ALTER TABLE captcha_records 
+    ALTER COLUMN created_at TYPE TIMESTAMPTZ USING created_at AT TIME ZONE 'UTC';
+
+-- ============================================================
+-- 添加缺失的索引
+-- ============================================================
+
+-- 角色权限索引
+CREATE INDEX IF NOT EXISTS idx_role_permissions_role_id ON role_permissions(role_id);
+CREATE INDEX IF NOT EXISTS idx_role_permissions_permission_id ON role_permissions(permission_id);
+
+-- 邮箱验证码过期索引
+CREATE INDEX IF NOT EXISTS idx_email_verify_expires ON email_verifications(expires_at);
+
+-- 分类表索引
+CREATE INDEX IF NOT EXISTS idx_categories_parent ON categories(parent_id);
+CREATE INDEX IF NOT EXISTS idx_categories_sort ON categories(sort_order);
+
+-- 权限表索引
+CREATE INDEX IF NOT EXISTS idx_permissions_code ON permissions(code);
+
+-- 产品版本表复合索引
+CREATE INDEX IF NOT EXISTS idx_versions_product_number ON product_versions(product_id, version_number);
+
+-- 增量更新表索引
+CREATE INDEX IF NOT EXISTS idx_delta_updates_product ON delta_updates(product_id);
+
+-- 网站反馈表优化索引
+CREATE INDEX IF NOT EXISTS idx_feedbacks_list ON site_feedbacks(status, is_public, created_at DESC);
+
+-- 产品版本表 is_latest 唯一约束（部分索引）
+CREATE UNIQUE INDEX IF NOT EXISTS idx_versions_latest_unique ON product_versions(product_id, platform, architecture)
+    WHERE is_latest = TRUE;
+
+-- ============================================================
+-- 添加缺失的 updated_at 触发器
+-- ============================================================
+
+-- 为 user_oauth_bindings 表添加 updated_at 触发器
+CREATE TRIGGER trigger_oauth_bindings_updated_at
+    BEFORE UPDATE ON user_oauth_bindings
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- 为 site_feedbacks 表添加 updated_at 触发器
+CREATE TRIGGER trigger_site_feedbacks_updated_at
+    BEFORE UPDATE ON site_feedbacks
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================================
+-- 添加表和字段注释
+-- ============================================================
+
+-- 用户表注释
+COMMENT ON TABLE users IS '用户表';
+COMMENT ON COLUMN users.id IS '主键ID';
+COMMENT ON COLUMN users.username IS '用户名';
+COMMENT ON COLUMN users.email IS '邮箱地址';
+COMMENT ON COLUMN users.password_hash IS '密码哈希值';
+COMMENT ON COLUMN users.avatar_url IS '头像URL';
+COMMENT ON COLUMN users.bio IS '个人简介';
+COMMENT ON COLUMN users.status IS '用户状态：ACTIVE-活跃, INACTIVE-未激活, BANNED-已封禁, LOCKED-已锁定';
+COMMENT ON COLUMN users.language IS '语言偏好';
+COMMENT ON COLUMN users.email_verified IS '邮箱是否已验证';
+COMMENT ON COLUMN users.created_at IS '创建时间';
+COMMENT ON COLUMN users.updated_at IS '更新时间';
+COMMENT ON COLUMN users.last_login_at IS '最后登录时间';
+COMMENT ON COLUMN users.last_login_ip IS '最后登录IP';
+COMMENT ON COLUMN users.theme_config IS '主题配置JSON';
+
+-- 角色表注释
+COMMENT ON TABLE roles IS '角色表';
+COMMENT ON COLUMN roles.id IS '主键ID';
+COMMENT ON COLUMN roles.code IS '角色代码';
+COMMENT ON COLUMN roles.name IS '角色名称';
+COMMENT ON COLUMN roles.description IS '角色描述';
+COMMENT ON COLUMN roles.created_at IS '创建时间';
+
+-- 用户角色关联表注释
+COMMENT ON TABLE user_roles IS '用户角色关联表';
+COMMENT ON COLUMN user_roles.id IS '主键ID';
+COMMENT ON COLUMN user_roles.user_id IS '用户ID';
+COMMENT ON COLUMN user_roles.role_id IS '角色ID';
+
+-- 权限表注释
+COMMENT ON TABLE permissions IS '权限表';
+COMMENT ON COLUMN permissions.id IS '主键ID';
+COMMENT ON COLUMN permissions.code IS '权限代码';
+COMMENT ON COLUMN permissions.name IS '权限名称';
+COMMENT ON COLUMN permissions.description IS '权限描述';
+
+-- 角色权限关联表注释
+COMMENT ON TABLE role_permissions IS '角色权限关联表';
+COMMENT ON COLUMN role_permissions.id IS '主键ID';
+COMMENT ON COLUMN role_permissions.role_id IS '角色ID';
+COMMENT ON COLUMN role_permissions.permission_id IS '权限ID';
+
+-- 第三方登录绑定表注释
+COMMENT ON TABLE user_oauth_bindings IS '第三方登录绑定表';
+COMMENT ON COLUMN user_oauth_bindings.id IS '主键ID';
+COMMENT ON COLUMN user_oauth_bindings.user_id IS '用户ID';
+COMMENT ON COLUMN user_oauth_bindings.oauth_provider IS 'OAuth提供商：github, google, wechat等';
+COMMENT ON COLUMN user_oauth_bindings.oauth_id IS 'OAuth用户ID';
+COMMENT ON COLUMN user_oauth_bindings.oauth_username IS 'OAuth用户名';
+COMMENT ON COLUMN user_oauth_bindings.oauth_avatar IS 'OAuth头像URL';
+COMMENT ON COLUMN user_oauth_bindings.access_token IS '访问令牌';
+COMMENT ON COLUMN user_oauth_bindings.refresh_token IS '刷新令牌';
+COMMENT ON COLUMN user_oauth_bindings.expires_at IS '令牌过期时间';
+COMMENT ON COLUMN user_oauth_bindings.created_at IS '创建时间';
+COMMENT ON COLUMN user_oauth_bindings.updated_at IS '更新时间';
+
+-- 邮箱验证码表注释
+COMMENT ON TABLE email_verifications IS '邮箱验证码表';
+COMMENT ON COLUMN email_verifications.id IS '主键ID';
+COMMENT ON COLUMN email_verifications.email IS '邮箱地址';
+COMMENT ON COLUMN email_verifications.code IS '验证码';
+COMMENT ON COLUMN email_verifications.type IS '验证类型：REGISTER-注册, RESET_PASSWORD-重置密码, CHANGE_EMAIL-修改邮箱';
+COMMENT ON COLUMN email_verifications.is_used IS '是否已使用';
+COMMENT ON COLUMN email_verifications.expires_at IS '过期时间';
+COMMENT ON COLUMN email_verifications.created_at IS '创建时间';
+
+-- 产品分类表注释
+COMMENT ON TABLE categories IS '产品分类表';
+COMMENT ON COLUMN categories.id IS '主键ID';
+COMMENT ON COLUMN categories.name IS '分类名称（中文）';
+COMMENT ON COLUMN categories.name_en IS '分类名称（英文）';
+COMMENT ON COLUMN categories.slug IS 'URL友好标识';
+COMMENT ON COLUMN categories.parent_id IS '父分类ID';
+COMMENT ON COLUMN categories.sort_order IS '排序序号';
+COMMENT ON COLUMN categories.icon IS '分类图标';
+COMMENT ON COLUMN categories.created_at IS '创建时间';
+
+-- 产品表注释
+COMMENT ON TABLE products IS '产品表';
+COMMENT ON COLUMN products.id IS '主键ID';
+COMMENT ON COLUMN products.name IS '产品名称（中文）';
+COMMENT ON COLUMN products.name_en IS '产品名称（英文）';
+COMMENT ON COLUMN products.slug IS 'URL友好标识';
+COMMENT ON COLUMN products.description IS '产品描述（中文）';
+COMMENT ON COLUMN products.description_en IS '产品描述（英文）';
+COMMENT ON COLUMN products.category_id IS '分类ID';
+COMMENT ON COLUMN products.developer_id IS '开发者用户ID';
+COMMENT ON COLUMN products.status IS '产品状态：DRAFT-草稿, PENDING-待审核, PUBLISHED-已发布, SUSPENDED-已暂停, ARCHIVED-已归档';
+COMMENT ON COLUMN products.icon_url IS '产品图标URL';
+COMMENT ON COLUMN products.banner_url IS '产品横幅URL';
+COMMENT ON COLUMN products.screenshots IS '产品截图JSON数组';
+COMMENT ON COLUMN products.demo_video_url IS '演示视频URL';
+COMMENT ON COLUMN products.homepage_url IS '主页URL';
+COMMENT ON COLUMN products.source_url IS '源码URL';
+COMMENT ON COLUMN products.license IS '许可证类型';
+COMMENT ON COLUMN products.download_count IS '下载次数';
+COMMENT ON COLUMN products.rating_average IS '评分平均值';
+COMMENT ON COLUMN products.rating_count IS '评分总数';
+COMMENT ON COLUMN products.rating_distribution IS '评分分布JSON';
+COMMENT ON COLUMN products.view_count IS '浏览次数';
+COMMENT ON COLUMN products.is_featured IS '是否推荐';
+COMMENT ON COLUMN products.tags IS '标签数组';
+COMMENT ON COLUMN products.created_at IS '创建时间';
+COMMENT ON COLUMN products.updated_at IS '更新时间';
+COMMENT ON COLUMN products.published_at IS '发布时间';
+
+-- 产品版本表注释
+COMMENT ON TABLE product_versions IS '产品版本表';
+COMMENT ON COLUMN product_versions.id IS '主键ID';
+COMMENT ON COLUMN product_versions.product_id IS '产品ID';
+COMMENT ON COLUMN product_versions.version_number IS '版本号';
+COMMENT ON COLUMN product_versions.version_code IS '版本代码（数字）';
+COMMENT ON COLUMN product_versions.version_type IS '版本类型：ALPHA, BETA, RC, RELEASE';
+COMMENT ON COLUMN product_versions.min_os_version IS '最低操作系统版本';
+COMMENT ON COLUMN product_versions.file_name IS '文件名';
+COMMENT ON COLUMN product_versions.file_size IS '文件大小（字节）';
+COMMENT ON COLUMN product_versions.file_path IS '文件存储路径';
+COMMENT ON COLUMN product_versions.file_url IS '文件下载URL';
+COMMENT ON COLUMN product_versions.checksum_md5 IS 'MD5校验和';
+COMMENT ON COLUMN product_versions.checksum_sha256 IS 'SHA256校验和';
+COMMENT ON COLUMN product_versions.signature IS '数字签名';
+COMMENT ON COLUMN product_versions.file_record_id IS '文件记录ID';
+COMMENT ON COLUMN product_versions.download_count IS '下载次数';
+COMMENT ON COLUMN product_versions.is_mandatory IS '是否强制更新';
+COMMENT ON COLUMN product_versions.is_latest IS '是否最新版本';
+COMMENT ON COLUMN product_versions.release_notes IS '发布说明（中文）';
+COMMENT ON COLUMN product_versions.release_notes_en IS '发布说明（英文）';
+COMMENT ON COLUMN product_versions.status IS '版本状态：DRAFT-草稿, PENDING-待审核, PUBLISHED-已发布, REVOKED-已撤销';
+COMMENT ON COLUMN product_versions.rollout_percentage IS '灰度发布百分比（0-100）';
+COMMENT ON COLUMN product_versions.created_at IS '创建时间';
+COMMENT ON COLUMN product_versions.published_at IS '发布时间';
+
+-- 增量更新包表注释
+COMMENT ON TABLE delta_updates IS '增量更新包表';
+COMMENT ON COLUMN delta_updates.id IS '主键ID';
+COMMENT ON COLUMN delta_updates.product_id IS '产品ID';
+COMMENT ON COLUMN delta_updates.from_version_id IS '源版本ID';
+COMMENT ON COLUMN delta_updates.to_version_id IS '目标版本ID';
+COMMENT ON COLUMN delta_updates.platform IS '操作系统平台';
+COMMENT ON COLUMN delta_updates.architecture IS 'CPU架构';
+COMMENT ON COLUMN delta_updates.file_name IS '文件名';
+COMMENT ON COLUMN delta_updates.file_size IS '文件大小（字节）';
+COMMENT ON COLUMN delta_updates.file_path IS '文件存储路径';
+COMMENT ON COLUMN delta_updates.checksum_sha256 IS 'SHA256校验和';
+COMMENT ON COLUMN delta_updates.created_at IS '创建时间';
+
+-- 评论表注释
+COMMENT ON TABLE product_comments IS '产品评论表';
+COMMENT ON COLUMN product_comments.id IS '主键ID';
+COMMENT ON COLUMN product_comments.product_id IS '产品ID';
+COMMENT ON COLUMN product_comments.user_id IS '用户ID';
+COMMENT ON COLUMN product_comments.parent_id IS '父评论ID';
+COMMENT ON COLUMN product_comments.content IS '评论内容';
+COMMENT ON COLUMN product_comments.rating IS '评分（1-5）';
+COMMENT ON COLUMN product_comments.status IS '评论状态：PENDING-待审核, PUBLISHED-已发布, REJECTED-已拒绝, HIDDEN-已隐藏';
+COMMENT ON COLUMN product_comments.like_count IS '点赞数';
+COMMENT ON COLUMN product_comments.reply_count IS '回复数';
+COMMENT ON COLUMN product_comments.ip_address IS 'IP地址';
+COMMENT ON COLUMN product_comments.created_at IS '创建时间';
+COMMENT ON COLUMN product_comments.updated_at IS '更新时间';
+
+-- 评论点赞表注释
+COMMENT ON TABLE comment_likes IS '评论点赞表';
+COMMENT ON COLUMN comment_likes.id IS '主键ID';
+COMMENT ON COLUMN comment_likes.comment_id IS '评论ID';
+COMMENT ON COLUMN comment_likes.user_id IS '用户ID';
+COMMENT ON COLUMN comment_likes.created_at IS '创建时间';
+
+-- 系统通知表注释
+COMMENT ON TABLE notifications IS '系统通知表';
+COMMENT ON COLUMN notifications.id IS '主键ID';
+COMMENT ON COLUMN notifications.user_id IS '用户ID';
+COMMENT ON COLUMN notifications.type IS '通知类型';
+COMMENT ON COLUMN notifications.title IS '通知标题';
+COMMENT ON COLUMN notifications.content IS '通知内容';
+COMMENT ON COLUMN notifications.link IS '相关链接';
+COMMENT ON COLUMN notifications.is_read IS '是否已读';
+COMMENT ON COLUMN notifications.created_at IS '创建时间';
+
+-- 下载记录表注释
+COMMENT ON TABLE download_records IS '下载记录表（按月分区）';
+COMMENT ON COLUMN download_records.id IS '主键ID';
+COMMENT ON COLUMN download_records.product_id IS '产品ID';
+COMMENT ON COLUMN download_records.version_id IS '版本ID';
+COMMENT ON COLUMN download_records.user_id IS '用户ID';
+COMMENT ON COLUMN download_records.ip_address IS 'IP地址';
+COMMENT ON COLUMN download_records.user_agent IS '用户代理';
+COMMENT ON COLUMN download_records.country IS '国家代码';
+COMMENT ON COLUMN download_records.region IS '地区';
+COMMENT ON COLUMN download_records.download_at IS '下载时间';
+COMMENT ON COLUMN download_records.is_completed IS '是否完成下载';
+COMMENT ON COLUMN download_records.file_size IS '文件大小（字节）';
+
+-- 用户访问日志表注释
+COMMENT ON TABLE user_access_logs IS '用户访问日志表（按月分区）';
+COMMENT ON COLUMN user_access_logs.id IS '主键ID';
+COMMENT ON COLUMN user_access_logs.user_id IS '用户ID';
+COMMENT ON COLUMN user_access_logs.ip_address IS 'IP地址';
+COMMENT ON COLUMN user_access_logs.user_agent IS '用户代理';
+COMMENT ON COLUMN user_access_logs.request_method IS '请求方法';
+COMMENT ON COLUMN user_access_logs.request_path IS '请求路径';
+COMMENT ON COLUMN user_access_logs.query_string IS '查询字符串';
+COMMENT ON COLUMN user_access_logs.response_status IS '响应状态码';
+COMMENT ON COLUMN user_access_logs.response_time IS '响应时间（毫秒）';
+COMMENT ON COLUMN user_access_logs.country IS '国家代码';
+COMMENT ON COLUMN user_access_logs.referer IS '来源页面';
+COMMENT ON COLUMN user_access_logs.created_at IS '创建时间';
+
+-- 系统配置表注释
+COMMENT ON TABLE system_configs IS '系统配置表';
+COMMENT ON COLUMN system_configs.id IS '主键ID';
+COMMENT ON COLUMN system_configs.config_key IS '配置键';
+COMMENT ON COLUMN system_configs.config_value IS '配置值';
+COMMENT ON COLUMN system_configs.description IS '配置描述';
+COMMENT ON COLUMN system_configs.updated_by IS '更新者用户ID';
+COMMENT ON COLUMN system_configs.updated_at IS '更新时间';
+
+-- 文件管理表注释
+COMMENT ON TABLE file_records IS '文件管理表';
+COMMENT ON COLUMN file_records.id IS '主键ID';
+COMMENT ON COLUMN file_records.original_name IS '原始文件名';
+COMMENT ON COLUMN file_records.stored_name IS '存储文件名';
+COMMENT ON COLUMN file_records.file_path IS '文件存储路径';
+COMMENT ON COLUMN file_records.file_size IS '文件大小（字节）';
+COMMENT ON COLUMN file_records.mime_type IS 'MIME类型';
+COMMENT ON COLUMN file_records.checksum_sha256 IS 'SHA256校验和';
+COMMENT ON COLUMN file_records.storage_type IS '存储类型：LOCAL-本地, MINIO-MinIO, COS-腾讯云COS';
+COMMENT ON COLUMN file_records.bucket_name IS '存储桶名称';
+COMMENT ON COLUMN file_records.file_url IS '文件访问URL';
+COMMENT ON COLUMN file_records.uploaded_by IS '上传者用户ID';
+COMMENT ON COLUMN file_records.created_at IS '创建时间';
+
+-- 操作审计日志表注释
+COMMENT ON TABLE audit_logs IS '操作审计日志表';
+COMMENT ON COLUMN audit_logs.id IS '主键ID';
+COMMENT ON COLUMN audit_logs.user_id IS '用户ID';
+COMMENT ON COLUMN audit_logs.action IS '操作动作';
+COMMENT ON COLUMN audit_logs.target_type IS '目标类型';
+COMMENT ON COLUMN audit_logs.target_id IS '目标ID';
+COMMENT ON COLUMN audit_logs.detail IS '操作详情JSON';
+COMMENT ON COLUMN audit_logs.ip_address IS 'IP地址';
+COMMENT ON COLUMN audit_logs.created_at IS '创建时间';
+
+-- 多语言内容表注释
+COMMENT ON TABLE i18n_messages IS '多语言内容表';
+COMMENT ON COLUMN i18n_messages.id IS '主键ID';
+COMMENT ON COLUMN i18n_messages.language_code IS '语言代码';
+COMMENT ON COLUMN i18n_messages.message_key IS '消息键';
+COMMENT ON COLUMN i18n_messages.message_value IS '消息值';
+COMMENT ON COLUMN i18n_messages.module IS '所属模块';
+COMMENT ON COLUMN i18n_messages.created_at IS '创建时间';
+COMMENT ON COLUMN i18n_messages.updated_at IS '更新时间';
+
+-- 网站留言反馈表注释
+COMMENT ON TABLE site_feedbacks IS '网站留言反馈表';
+COMMENT ON COLUMN site_feedbacks.id IS '主键ID';
+COMMENT ON COLUMN site_feedbacks.user_id IS '用户ID';
+COMMENT ON COLUMN site_feedbacks.contact IS '联系方式';
+COMMENT ON COLUMN site_feedbacks.content IS '留言内容';
+COMMENT ON COLUMN site_feedbacks.status IS '状态：PENDING-待审核, PUBLISHED-已发布, REJECTED-已拒绝, HIDDEN-已隐藏';
+COMMENT ON COLUMN site_feedbacks.ip_address IS 'IP地址';
+COMMENT ON COLUMN site_feedbacks.is_public IS '是否公开显示';
+COMMENT ON COLUMN site_feedbacks.created_at IS '创建时间';
+COMMENT ON COLUMN site_feedbacks.updated_at IS '更新时间';
+
+-- 订单表注释
+COMMENT ON TABLE orders IS '订单表';
+COMMENT ON COLUMN orders.id IS '主键ID';
+COMMENT ON COLUMN orders.order_no IS '订单号';
+COMMENT ON COLUMN orders.user_id IS '用户ID';
+COMMENT ON COLUMN orders.product_id IS '产品ID';
+COMMENT ON COLUMN orders.order_type IS '订单类型：DONATION-捐赠, SUBSCRIPTION-订阅, PURCHASE-购买';
+COMMENT ON COLUMN orders.amount IS '订单金额';
+COMMENT ON COLUMN orders.currency IS '货币类型';
+COMMENT ON COLUMN orders.payment_method IS '支付方式';
+COMMENT ON COLUMN orders.payment_status IS '支付状态：PENDING-待支付, PAID-已支付, FAILED-支付失败, REFUNDED-已退款, EXPIRED-已过期';
+COMMENT ON COLUMN orders.trade_no IS '交易号';
+COMMENT ON COLUMN orders.payment_at IS '支付时间';
+COMMENT ON COLUMN orders.expires_at IS '过期时间';
+COMMENT ON COLUMN orders.refund_reason IS '退款原因';
+COMMENT ON COLUMN orders.remark IS '备注';
+COMMENT ON COLUMN orders.created_at IS '创建时间';
+COMMENT ON COLUMN orders.updated_at IS '更新时间';
+
+-- VIP会员订阅表注释
+COMMENT ON TABLE subscriptions IS 'VIP会员订阅表';
+COMMENT ON COLUMN subscriptions.id IS '主键ID';
+COMMENT ON COLUMN subscriptions.user_id IS '用户ID';
+COMMENT ON COLUMN subscriptions.plan_type IS '订阅类型：MONTHLY-月度, QUARTERLY-季度, YEARLY-年度';
+COMMENT ON COLUMN subscriptions.status IS '订阅状态：ACTIVE-有效, EXPIRED-已过期, CANCELLED-已取消';
+COMMENT ON COLUMN subscriptions.start_at IS '开始时间';
+COMMENT ON COLUMN subscriptions.expire_at IS '过期时间';
+COMMENT ON COLUMN subscriptions.auto_renew IS '是否自动续费';
+COMMENT ON COLUMN subscriptions.order_id IS '订单ID';
+COMMENT ON COLUMN subscriptions.created_at IS '创建时间';
+COMMENT ON COLUMN subscriptions.updated_at IS '更新时间';

@@ -9,6 +9,7 @@ import { AuthPageToolbar } from '@/components/AuthPageToolbar';
 import { SiteLogo } from '@/components/SiteLogo';
 import { CloudflareTurnstile } from '@/components/CloudflareTurnstile';
 import { useCaptchaConfig } from '@/hooks/useCaptchaConfig';
+import { useCountdown } from '@/hooks/useCountdown';
 
 type RegisterFormValues = {
   username: string;
@@ -23,10 +24,10 @@ export default function Register() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [codeSending, setCodeSending] = useState(false);
-  const [countdown, setCountdown] = useState(0);
   const [form] = Form.useForm();
   const [captchaToken, setCaptchaToken] = useState<string>('');
   const { config: captchaConfig } = useCaptchaConfig();
+  const { countdown, start: startCountdown } = useCountdown(60);
 
   const handleCaptchaVerify = (token: string) => {
     setCaptchaToken(token);
@@ -43,17 +44,9 @@ export default function Register() {
         captchaToken: captchaToken
       });
       message.success(t('auth.codeSent') || 'Verification code sent');
-      setCountdown(60);
-      const timer = setInterval(() => {
-        setCountdown((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } catch {
+      startCountdown();
+    } catch (error) {
+      console.error('Failed to send verification code:', error);
       message.error(t('auth.codeSendFailed') || 'Failed to send verification code');
     } finally {
       setCodeSending(false);

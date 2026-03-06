@@ -71,8 +71,8 @@ public class EmailService {
         // Set rate limit (1 minute cooldown)
         stringRedisTemplate.opsForValue().set(rateLimitKey, "1", 60, TimeUnit.SECONDS);
 
-        log.info("Verification code generated for {} (type: {}), code: {}", 
-                normalizedEmail.replaceAll("(?<=.{2}).(?=.*@)", "*"), type, code);
+        log.info("Verification code generated for {} (type: {})", 
+                normalizedEmail.replaceAll("(?<=.{2}).(?=.*@)", "*"), type);
 
         // Send email truly asynchronously using executor directly
         asyncExecutor.execute(() -> sendVerificationEmailInternal(normalizedEmail, code, type));

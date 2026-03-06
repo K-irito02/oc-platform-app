@@ -317,8 +317,6 @@ export default function FeedbackSection() {
         errorMsg = error;
       }
       
-      console.log('Extracted error message:', errorMsg);
-      
       if (errorMsg.includes('登录')) {
         message.error(t('feedback.loginRequired'));
       } else if (errorMsg.includes('频繁') || errorMsg.includes('rate')) {

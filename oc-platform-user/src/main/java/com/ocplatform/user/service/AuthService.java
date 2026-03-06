@@ -110,13 +110,13 @@ public class AuthService {
         String limitKey = RedisKeys.LIMIT_LOGIN + clientIp;
         Long attempts = stringRedisTemplate.opsForValue().increment(limitKey);
         if (attempts != null && attempts == 1) {
-            stringRedisTemplate.expire(limitKey, 1, TimeUnit.MINUTES);
+            stringRedisTemplate.expire(limitKey, 15, TimeUnit.MINUTES);
         }
         if (attempts != null && attempts > 5) {
             throw new BusinessException(ErrorCode.TOO_MANY_REQUESTS, "登录尝试过于频繁，请 15 分钟后再试");
         }
 
-        String account = request.getAccount();
+        String account = request.getAccount().trim();
         User user;
         
         if (account.contains("@")) {
@@ -127,7 +127,7 @@ public class AuthService {
                     .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_REGISTERED));
         }
 
-        if ("BANNED".equals(user.getStatus())) {
+        if ("BANNED".equals(user.getStatus()) || "LOCKED".equals(user.getStatus())) {
             throw new BusinessException(ErrorCode.ACCOUNT_DISABLED);
         }
 

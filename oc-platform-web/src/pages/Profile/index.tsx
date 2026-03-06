@@ -9,6 +9,7 @@ import { setUser, logout } from '@/store/slices/authSlice';
 import { userApi, authApi } from '@/utils/api';
 import { CloudflareTurnstile } from '@/components/CloudflareTurnstile';
 import { useCaptchaConfig } from '@/hooks/useCaptchaConfig';
+import { useCountdown } from '@/hooks/useCountdown';
 
 type UserProfile = {
   id: number;
@@ -47,12 +48,13 @@ export default function Profile() {
   const [emailForm] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [emailCodeSending, setEmailCodeSending] = useState(false);
-  const [emailCountdown, setEmailCountdown] = useState(0);
   const [captchaToken, setCaptchaToken] = useState<string>('');
   const [captchaVerified, setCaptchaVerified] = useState(false);
   
   // 使用 useCaptchaConfig Hook 获取验证码配置
   const { config: captchaConfig } = useCaptchaConfig();
+  // 使用 useCountdown Hook 管理邮箱验证码倒计时
+  const { countdown: emailCountdown, start: startEmailCountdown } = useCountdown(60);
 
   const loadProfile = useCallback(async () => {
     try {
@@ -62,7 +64,9 @@ export default function Profile() {
         profileForm.setFieldsValue({ username: u.username, bio: u.bio || '' });
         dispatch(setUser(u));
       }
-    } catch { /* handled */ }
+    } catch (error) {
+      console.error('Failed to load profile:', error);
+    }
   }, [dispatch, profileForm]);
 
   useEffect(() => {
@@ -76,7 +80,9 @@ export default function Profile() {
       const res = await userApi.updateProfile(values) as ApiResponse<UserProfile>;
       if (res.data) dispatch(setUser(res.data));
       message.success(t('profile.profileUpdated'));
-    } catch { /* handled */ } finally { setLoading(false); }
+    } catch (error) {
+      console.error('Failed to update profile:', error);
+    } finally { setLoading(false); }
   };
 
   const handleCaptchaVerify = (token: string) => {
@@ -102,7 +108,9 @@ export default function Profile() {
       message.success(t('profile.passwordChanged'));
       dispatch(logout());
       navigate('/login');
-    } catch { /* handled */ } finally { setLoading(false); }
+    } catch (error) {
+      console.error('Failed to change password:', error);
+    } finally { setLoading(false); }
   };
 
   const sendEmailCode = async () => {
@@ -126,17 +134,9 @@ export default function Profile() {
         captchaToken: captchaToken
       });
       message.success(t('profile.emailCodeSent'));
-      setEmailCountdown(60);
-      const timer = setInterval(() => {
-        setEmailCountdown(prev => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+      startEmailCountdown();
     } catch (error: unknown) {
+      console.error('Failed to send email verification code:', error);
       const err = error as { response?: { data?: { message?: string } } };
       message.error(err.response?.data?.message || t('profile.emailCodeSendFailed'));
     } finally {
@@ -151,7 +151,9 @@ export default function Profile() {
       message.success(t('profile.emailChanged'));
       dispatch(logout());
       navigate('/login');
-    } catch { /* handled */ } finally { setLoading(false); }
+    } catch (error) {
+      console.error('Failed to change email:', error);
+    } finally { setLoading(false); }
   };
 
   const handleAvatarUpload = async (file: File) => {

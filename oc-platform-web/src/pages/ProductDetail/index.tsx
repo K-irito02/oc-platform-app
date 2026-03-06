@@ -427,7 +427,9 @@ export default function ProductDetail() {
     try {
       const res = await productApi.getVersions(productId) as ApiResponse<VersionItem[]>;
       setVersions(res.data || []);
-    } catch { /* handled */ }
+    } catch (error) {
+      console.error('Failed to load versions:', error);
+    }
   }, []);
 
   const loadRatingStats = useCallback(async (productId: number) => {
@@ -438,7 +440,9 @@ export default function ProductDetail() {
         const myRatingRes = await ratingApi.getMyRating(productId) as ApiResponse<{ id: number; rating: number }>;
         setUserRatingId(myRatingRes.data?.id || null);
       }
-    } catch { /* handled */ }
+    } catch (error) {
+      console.error('Failed to load rating stats:', error);
+    }
   }, []);
 
   const handleRate = async (rating: number) => {
@@ -481,7 +485,9 @@ export default function ProductDetail() {
       }) as ApiResponse<PageResponse<CommentItemType>>;
       setComments(res.data.records || []);
       setCommentTotal(res.data.totalWithReplies || res.data.total || 0);
-    } catch { /* handled */ }
+    } catch (error) {
+      console.error('Failed to load comments:', error);
+    }
   }, []);
 
   const loadProduct = useCallback(async () => {
@@ -496,7 +502,9 @@ export default function ProductDetail() {
           loadComments(res.data.id, 1);
         }
       }
-    } catch { /* handled */ } finally { 
+    } catch (error) {
+      console.error('Failed to load product:', error);
+    } finally { 
       setLoading(false); 
     }
   }, [loadVersions, loadComments, loadRatingStats, slug]);

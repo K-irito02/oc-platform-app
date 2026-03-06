@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
@@ -12,30 +12,32 @@ export default function AdminLayout() {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   const [checking, setChecking] = useState(true);
   const [collapsed, setCollapsed] = useState(false);
+  const hasCheckedRef = useRef(false);
 
   useEffect(() => {
-    // Wait for auth state to be loaded from localStorage
-    const timer = setTimeout(() => {
-      if (!isAuthenticated) {
-        navigate('/login');
+    // 防止重复检查
+    if (hasCheckedRef.current) return;
+    
+    // 检查认证状态
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    
+    // 检查用户角色
+    if (user) {
+      const roles = user.roles || [];
+      const isAdmin = roles.some((r: string) => ['ADMIN', 'SUPER_ADMIN'].includes(r));
+      
+      if (!isAdmin) {
+        navigate('/');
         return;
       }
       
-      if (user) {
-        // Check roles. Handle case where roles might be undefined or empty
-        const roles = user.roles || [];
-        const isAdmin = roles.some((r: string) => ['ADMIN', 'SUPER_ADMIN'].includes(r));
-        
-        if (!isAdmin) {
-          navigate('/');
-          return;
-        }
-      }
-      
+      // 所有检查通过，标记为已检查并停止 loading
+      hasCheckedRef.current = true;
       setChecking(false);
-    }, 100); // Small delay to ensure auth state is loaded
-
-    return () => clearTimeout(timer);
+    }
   }, [user, isAuthenticated, navigate]);
 
   if (checking) {

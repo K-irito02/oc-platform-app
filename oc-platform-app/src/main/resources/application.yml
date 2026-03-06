@@ -65,8 +65,8 @@ spring:
   mail:
     host: ${MAIL_HOST:smtp.qq.com}
     port: ${MAIL_PORT:465}
-    username: ${MAIL_USERNAME:saokiritoasuna00@qq.com}
-    password: ${MAIL_PASSWORD:iraonttieyyvchbd}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
     default-encoding: UTF-8
     properties:
       mail:
@@ -170,8 +170,8 @@ rate-limit:
 captcha:
   enabled: ${CAPTCHA_ENABLED:true}
   cloudflare:
-    site-key: ${CLOUDFLARE_TURNSTILE_SITE_KEY:0x4AAAAAACnWLahpCdkdO4qv}
-    secret-key: ${CLOUDFLARE_TURNSTILE_SECRET_KEY:0x4AAAAAACnWLTxjQ17uu88EHQS_cL8ZF1M}
+    site-key: ${CLOUDFLARE_TURNSTILE_SITE_KEY:}
+    secret-key: ${CLOUDFLARE_TURNSTILE_SECRET_KEY:}
     verify-url: https://challenges.cloudflare.com/turnstile/v0/siteverify
     timeout: 5000
 

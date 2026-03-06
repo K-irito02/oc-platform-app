@@ -9,6 +9,7 @@ import { AuthPageToolbar } from '@/components/AuthPageToolbar';
 import { SiteLogo } from '@/components/SiteLogo';
 import { CloudflareTurnstile } from '@/components/CloudflareTurnstile';
 import { useCaptchaConfig } from '@/hooks/useCaptchaConfig';
+import { useCountdown } from '@/hooks/useCountdown';
 
 const { Paragraph } = Typography;
 
@@ -18,13 +19,14 @@ export default function ForgotPassword() {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [codeSending, setCodeSending] = useState(false);
-  const [countdown, setCountdown] = useState(0);
   const [email, setEmail] = useState('');
   const [form] = Form.useForm();
   const [captchaToken, setCaptchaToken] = useState<string>('');
 
   // 从后端动态获取验证码配置
   const { config: captchaConfig } = useCaptchaConfig();
+  // 使用 useCountdown Hook 管理倒计时
+  const { countdown, start: startCountdown } = useCountdown(60);
 
   const handleCaptchaVerify = (token: string) => {
     setCaptchaToken(token);
@@ -49,12 +51,11 @@ export default function ForgotPassword() {
       });
       message.success(t('auth.codeSent'));
       setEmail(emailVal);
-      setCountdown(60);
-      const timer = setInterval(() => {
-        setCountdown((p) => { if (p <= 1) { clearInterval(timer); return 0; } return p - 1; });
-      }, 1000);
+      startCountdown();
       setStep(1);
-    } catch { /* handled */ } finally { setCodeSending(false); }
+    } catch (error) {
+      console.error('Failed to send verification code:', error);
+    } finally { setCodeSending(false); }
   };
 
   const onFinish = async (values: { code: string; newPassword: string }) => {
@@ -63,7 +64,9 @@ export default function ForgotPassword() {
       await authApi.resetPassword({ email, code: values.code, newPassword: values.newPassword });
       message.success(t('auth.resetSuccess'));
       navigate('/login');
-    } catch { /* handled */ } finally { setLoading(false); }
+    } catch (error) {
+      console.error('Failed to reset password:', error);
+    } finally { setLoading(false); }
   };
 
   return (

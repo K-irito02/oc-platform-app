@@ -6,7 +6,8 @@ $ErrorActionPreference = "Stop"
 # MinIO 配置
 $MINIO_ENDPOINT = "http://localhost:9000"
 $MINIO_ACCESS_KEY = "minioadmin"
-$MINIO_SECRET_KEY = "3143285505"
+# 从环境变量读取密码，开发环境默认使用 oc_dev_password
+$MINIO_SECRET_KEY = if ($env:MINIO_SECRET_KEY) { $env:MINIO_SECRET_KEY } else { "oc_dev_password" }
 $MINIO_ALIAS = "qtminio"
 
 # 测试文件目录
@@ -81,7 +82,7 @@ if (Test-Path $appDir) {
 Write-Host "`n=== 上传完成 ===" -ForegroundColor Cyan
 Write-Host "访问 MinIO Console: http://localhost:9001" -ForegroundColor Yellow
 Write-Host "用户名: minioadmin" -ForegroundColor Yellow
-Write-Host "密码: 3143285505" -ForegroundColor Yellow
+Write-Host "密码: $MINIO_SECRET_KEY" -ForegroundColor Yellow
 
 Write-Host "`n文件列表:" -ForegroundColor Cyan
 foreach ($bucket in $buckets) {
