@@ -10,6 +10,7 @@ import { SiteLogo } from '@/components/SiteLogo';
 import { CloudflareTurnstile } from '@/components/CloudflareTurnstile';
 import { useCaptchaConfig } from '@/hooks/useCaptchaConfig';
 import { useCountdown } from '@/hooks/useCountdown';
+import { FilingInfo } from '@/components/FilingInfo';
 
 const { Paragraph } = Typography;
 
@@ -157,6 +158,7 @@ export default function ForgotPassword() {
           <Link to="/login" style={{ color: 'var(--indigo)', fontSize: 14 }}>← {t('auth.backToLogin')}</Link>
         </div>
       </div>
+      <FilingInfo />
     </div>
   );
 }

@@ -647,10 +647,10 @@ INSERT INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id FROM roles r, permissions p
 WHERE r.code = 'USER' AND p.code IN ('PRODUCT:READ', 'COMMENT:CREATE');
 
--- 超级管理员账号（密码: Admin@123456）
+-- 超级管理员账号（密码: Smg.2026）
 INSERT INTO users (username, email, password_hash, status, email_verified) VALUES
     ('KirLab', '3143285505@qq.com',
-     '$2b$12$tH4WN5HN71TGIqpNy/MYj.1jC2UOCQEJcAWt1YNangzAD/xTjGR5K',
+     '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.VTtYA/7.J6LlZG',
      'ACTIVE', TRUE);
 
 INSERT INTO user_roles (user_id, role_id)

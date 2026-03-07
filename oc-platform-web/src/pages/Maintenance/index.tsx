@@ -3,6 +3,7 @@ import { Button, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { Wrench, Clock, Mail, RefreshCw } from 'lucide-react';
 import request from '@/utils/request';
+import { FilingInfo } from '@/components/FilingInfo';
 
 interface MaintenanceStatus {
   enabled: boolean;
@@ -149,6 +150,7 @@ export default function Maintenance() {
           <span>{t('maintenance.contact')}</span>
         </div>
       </div>
+      <FilingInfo />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { Github, Twitter, Linkedin, Quote, Calendar, Mail } from 'lucide-react';
-import { SiteLogo } from '@/components/SiteLogo';
+import { Github, Twitter, Linkedin, Quote, Calendar, Mail, Shield } from 'lucide-react';
+import { SiteLogo } from '../SiteLogo';
 import { useAppSelector } from '@/store/hooks';
 
 export const Footer = () => {
@@ -168,29 +168,15 @@ export const Footer = () => {
               3. 公安备案图标URL（可从公安机关备案网站下载）
             */}
             <div className="flex flex-wrap items-center justify-center gap-4">
-              {/* 公安备案 - 取消注释并填写您的备案信息
-              <a 
-                href="https://beian.gov.cn/portal/registerSystemInfo?recordcode=您的公安备案号（纯数字）" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-gray-300 transition-all duration-200"
-              >
-                <img src="您的公安备案图标URL" alt="公安备案" className="w-5 h-5" />
-                <span className="text-sm text-gray-700 font-medium">您的公安备案号</span>
-              </a>
-              */}
-              
-              {/* ICP备案 - 取消注释并填写您的备案信息
               <a 
                 href="https://beian.miit.gov.cn/" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-gray-300 transition-all duration-200"
+                className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 hover:shadow-md hover:border-gray-300 dark:hover:border-slate-600 transition-all duration-200"
               >
                 <Shield size={18} className="text-blue-500" />
-                <span className="text-sm text-gray-700 font-medium">您的ICP备案号</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">黔ICP备2026002901号-1</span>
               </a>
-              */}
             </div>
           </div>
         </div>

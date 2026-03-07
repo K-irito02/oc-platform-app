@@ -10,6 +10,7 @@ import { SiteLogo } from '@/components/SiteLogo';
 import { CloudflareTurnstile } from '@/components/CloudflareTurnstile';
 import { useCaptchaConfig } from '@/hooks/useCaptchaConfig';
 import { useCountdown } from '@/hooks/useCountdown';
+import { FilingInfo } from '@/components/FilingInfo';
 
 type RegisterFormValues = {
   username: string;
@@ -200,6 +201,7 @@ export default function Register() {
           </div>
         </Card>
       </div>
+      <FilingInfo />
     </div>
   );
 }

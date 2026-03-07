@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { FileQuestion, ServerCrash, ShieldX, WifiOff, Home, ArrowLeft, RefreshCw, LogIn } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { FilingInfo } from '@/components/FilingInfo';
 
 type ErrorType = '404' | '500' | '403' | 'network';
 
@@ -148,6 +149,7 @@ export default function ErrorPage({ type = '404' }: ErrorPageProps) {
           })}
         </div>
       </div>
+      <FilingInfo />
     </div>
   );
 }

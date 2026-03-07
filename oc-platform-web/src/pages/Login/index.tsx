@@ -27,6 +27,7 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { GlassButton } from '@/components/ui/GlassButton';
 import { AuthPageToolbar } from '@/components/AuthPageToolbar';
 import { SiteLogo } from '@/components/SiteLogo';
+import { FilingInfo } from '@/components/FilingInfo';
 
 export default function Login() {
   const { t, i18n } = useTranslation();
@@ -182,6 +183,7 @@ export default function Login() {
             </Link>
         </div>
       </GlassCard>
+      <FilingInfo />
     </div>
   );
 }
