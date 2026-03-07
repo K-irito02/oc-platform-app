@@ -180,6 +180,7 @@
     "developer": "开发者",
     "developerName": "开发者名称",
     "publishedAt": "发布时间",
+    "noProducts": "暂无产品",
     "confirmAudit": {
       "title": "确认 {{status}}？",
       "content": "确定要将此产品标记为 {{status}} 吗？"
@@ -201,9 +202,11 @@
     "noReleaseNotes": "暂无发布说明",
     "submitReview": "提交评论",
     "yourReview": "您的评论",
-    "rating": "体验评分",
+    "rating": "产品评分",
     "productRating": "产品评分",
-    "experienceRating": "体验评分",
+    "experienceRating": "产品评分",
+    "commentRating": "评论评分",
+    "yourRating": "您的评分",
     "comment": "评论内容",
     "commentPlaceholder": "分享您的使用体验...",
     "noReviews": "暂无评论",
@@ -267,12 +270,12 @@
     "deleteFailed": "删除评分失败"
   },
   "experienceRating": {
-    "title": "体验评分",
-    "submitRating": "提交体验评分",
-    "myRating": "我的体验评分",
-    "ratings": "{{count}} 条体验评分",
-    "averageRating": "平均体验评分",
-    "noRatings": "暂无体验评分",
+    "title": "产品评分",
+    "submitRating": "提交产品评分",
+    "myRating": "我的产品评分",
+    "ratings": "{{count}} 条产品评分",
+    "averageRating": "平均产品评分",
+    "noRatings": "暂无产品评分",
     "loginToRate": "请登录后评分",
     "stars": "{{count}} 星"
   },

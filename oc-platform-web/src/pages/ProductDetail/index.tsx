@@ -323,7 +323,7 @@ const CommentItem = ({ comment, isAuthenticated, handleLikeComment, handleReplyC
             </span>
             {comment.rating && (
               <div className="flex items-center gap-1">
-                <span className="text-xs text-slate-500">{t('productDetail.experienceRating')}:</span>
+                <span className="text-xs text-slate-500">{t('productDetail.commentRating')}:</span>
                 <Rate disabled defaultValue={comment.rating} className="text-xs" style={{ fontSize: 10 }} />
               </div>
             )}
@@ -812,7 +812,7 @@ export default function ProductDetail() {
                           </div>
                           <Form form={form} onFinish={handleComment} layout="vertical">
                             {!replyingTo && (
-                              <Form.Item name="rating" label={t('productDetail.experienceRating')} initialValue={5}>
+                              <Form.Item name="rating" label={t('productDetail.yourRating')} initialValue={5}>
                                 <Rate />
                               </Form.Item>
                             )}

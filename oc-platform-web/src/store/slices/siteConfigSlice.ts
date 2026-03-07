@@ -36,8 +36,8 @@ export interface SiteConfigState {
 }
 
 const defaultConfig: SiteConfig = {
-  siteName: 'KiritoLab',
-  siteNameEn: 'KiritoLab',
+  siteName: '桐人创研',
+  siteNameEn: 'KirLab',
   siteDescription: '',
   siteLogo: '',
   faviconLogo: '',

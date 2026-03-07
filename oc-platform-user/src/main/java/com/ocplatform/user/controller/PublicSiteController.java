@@ -110,8 +110,8 @@ public class PublicSiteController {
         }
 
         // Set defaults if not found
-        result.putIfAbsent("siteName", "KiritoLab");
-        result.putIfAbsent("siteNameEn", "KiritoLab");
+        result.putIfAbsent("siteName", "桐人创研");
+        result.putIfAbsent("siteNameEn", "KirLab");
         result.putIfAbsent("siteDescription", "");
         result.putIfAbsent("siteLogo", "");
         result.putIfAbsent("siteFavicon", "");

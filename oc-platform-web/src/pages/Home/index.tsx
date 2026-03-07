@@ -33,7 +33,7 @@ export default function Home() {
   const navigate = useNavigate();
   const { config } = useAppSelector((state) => state.siteConfig);
   const siteName = i18n.language === 'zh-CN' ? config.siteName : config.siteNameEn;
-  const displayName = siteName || 'KiritoLab';
+  const displayName = siteName || '桐人创研';
   const [featured, setFeatured] = useState<ProductItem[]>([]);
   const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [loading, setLoading] = useState(true);

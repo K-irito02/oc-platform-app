@@ -180,6 +180,7 @@
     "developer": "Developer",
     "developerName": "Developer Name",
     "publishedAt": "Published At",
+    "noProducts": "No products found",
     "confirmAudit": {
       "title": "Confirm {{status}}?",
       "content": "Are you sure you want to mark this product as {{status}}?"
@@ -201,9 +202,11 @@
     "noReleaseNotes": "No release notes",
     "submitReview": "Submit Review",
     "yourReview": "Your Review",
-    "rating": "Experience Rating",
+    "rating": "Product Rating",
     "productRating": "Product Rating",
-    "experienceRating": "Experience Rating",
+    "experienceRating": "Product Rating",
+    "commentRating": "Review Rating",
+    "yourRating": "Your Rating",
     "comment": "Comment",
     "commentPlaceholder": "Share your experience...",
     "noReviews": "No reviews yet",
@@ -267,12 +270,12 @@
     "deleteFailed": "Failed to delete rating"
   },
   "experienceRating": {
-    "title": "Experience Rating",
-    "submitRating": "Rate Experience",
-    "myRating": "My Experience Rating",
-    "ratings": "{{count}} experience rating(s)",
-    "averageRating": "Average Experience Rating",
-    "noRatings": "No experience ratings yet",
+    "title": "Product Rating",
+    "submitRating": "Rate Product",
+    "myRating": "My Product Rating",
+    "ratings": "{{count}} product rating(s)",
+    "averageRating": "Average Product Rating",
+    "noRatings": "No product ratings yet",
     "loginToRate": "Please login to rate",
     "stars": "{{count}} Star(s)"
   },
@@ -786,7 +789,7 @@
     "subtitle": "This feature is under development. Stay tuned for updates."
   },
   "footer": {
-    "copyright": "© 2026 KiritoLab",
+    "copyright": "© 2026 KirLab",
     "siteDesc": "A solo-maintained, free software hub.",
     "siteNote": "Built to manage and iterate my own apps, shared for everyone.",
     "site": "Site",

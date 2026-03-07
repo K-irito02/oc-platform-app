@@ -42,15 +42,15 @@ public class EmailConfigService {
         return EmailTemplateConfig.builder()
                 // 站点信息
                 .siteName(configMap.getOrDefault("site.name", "桐人创研"))
-                .siteNameEn(configMap.getOrDefault("site.name_en", "KiritoLab"))
+                .siteNameEn(configMap.getOrDefault("site.name_en", "KirLab"))
                 .siteUrl(configMap.getOrDefault("site.url", "https://kiritolab.com"))
                 .siteLogo(configMap.getOrDefault("site.logo", ""))
                 // 邮件发件人
                 .senderName(configMap.getOrDefault("email.sender_name", "桐人创研"))
-                .senderNameEn(configMap.getOrDefault("email.sender_name_en", "KiritoLab"))
+                .senderNameEn(configMap.getOrDefault("email.sender_name_en", "KirLab"))
                 // 版权信息
                 .copyright(configMap.getOrDefault("email.copyright", "© 2026 桐人创研. 保留所有权利."))
-                .copyrightEn(configMap.getOrDefault("email.copyright_en", "© 2026 KiritoLab. All rights reserved."))
+                .copyrightEn(configMap.getOrDefault("email.copyright_en", "© 2026 KirLab. All rights reserved."))
                 // 安全提示
                 .securityTip(configMap.getOrDefault("email.security_tip", "如果这不是您本人的操作，请忽略此邮件。您的账户仍然安全。"))
                 .securityTipEn(configMap.getOrDefault("email.security_tip_en", "If you did not request this, please ignore this email. Your account is still secure."))

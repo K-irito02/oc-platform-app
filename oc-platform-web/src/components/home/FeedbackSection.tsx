@@ -513,13 +513,8 @@ export default function FeedbackSection() {
               <Spin />
             </div>
           ) : feedbacks.length === 0 ? (
-            <div className="text-center py-10 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 flex-1 flex flex-col items-center justify-center min-h-[200px]">
-              <p className="text-slate-600 dark:text-slate-400 mb-4">{t('feedback.noMessages')}</p>
-              {isAuthenticated ? (
-                <Button type="link" className="text-blue-600 hover:text-blue-700">{t('feedback.beFirst')}</Button>
-              ) : (
-                <Link to="/login"><Button type="primary">{t('common.login')}</Button></Link>
-              )}
+            <div className="text-center bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 flex-1 flex flex-col items-center justify-center h-full min-h-[350px]">
+              <p className="text-slate-600 dark:text-slate-400">{t('feedback.noMessages')}</p>
             </div>
           ) : (
             <div className="space-y-6">

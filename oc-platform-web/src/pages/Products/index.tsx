@@ -136,7 +136,7 @@ export default function Products() {
         </div>
       ) : products.length === 0 ? (
         <Empty
-          description={<span className="text-slate-500 dark:text-slate-400">No products found</span>}
+          description={<span className="text-slate-500 dark:text-slate-400">{t('product.noProducts')}</span>}
           className="py-20"
         />
       ) : (

@@ -1,5 +1,5 @@
 -- ============================================================
--- Qt 产品发布平台 - 数据库初始化脚本
+-- oc 产品发布平台 - 数据库初始化脚本
 -- Phase One MVP
 -- ============================================================
 
@@ -199,9 +199,9 @@ CREATE TABLE products (
 
 COMMENT ON COLUMN products.developer_name IS '开发者名称';
 COMMENT ON COLUMN products.latest_version IS '最新版本号';
-COMMENT ON COLUMN products.experience_rating_average IS '体验评分平均值(来自评论)';
-COMMENT ON COLUMN products.experience_rating_count IS '体验评分总数(来自评论)';
-COMMENT ON COLUMN products.experience_rating_distribution IS '体验评分分布(来自评论)';
+COMMENT ON COLUMN products.experience_rating_average IS '评论评分平均值(来自评论中的打分，独立于产品评分)';
+COMMENT ON COLUMN products.experience_rating_count IS '评论评分总数(来自评论中的打分)';
+COMMENT ON COLUMN products.experience_rating_distribution IS '评论评分分布(来自评论中的打分)';
 COMMENT ON COLUMN products.display_versions IS 'JSON mapping of platform+architecture to version ID for display. Format: {"PLATFORM_arch": versionId}';
 
 CREATE INDEX idx_products_status ON products(status);
@@ -660,7 +660,7 @@ WHERE u.username = 'KirLab' AND r.code = 'SUPER_ADMIN';
 -- 系统配置
 INSERT INTO system_configs (config_key, config_value, description) VALUES
     ('site.name',           '桐人创研',               '站点中文名称'),
-    ('site.name_en',        'KiritoLab',             '站点英文名称'),
+    ('site.name_en',        'KirLab',                '站点英文名称'),
     ('site.description',    '免费提供个人开发的工具类应用程序', '站点描述'),
     ('site.logo',           '',                       '站点Logo图片URL'),
     ('site.favicon',        '',                       '浏览器标签页图标URL'),
@@ -679,9 +679,9 @@ INSERT INTO system_configs (config_key, config_value, description) VALUES
     ('footer.quote_author', '',                       '名言作者'),
     ('footer.quote_author_en', '',                    'Quote Author'),
     ('email.sender_name',   '桐人创研',               '邮件发件人名称（中文）'),
-    ('email.sender_name_en', 'KiritoLab',             '邮件发件人名称（英文）'),
+    ('email.sender_name_en', 'KirLab',               '邮件发件人名称（英文）'),
     ('email.copyright',     '© 2026 桐人创研. 保留所有权利.', '邮件版权信息（中文）'),
-    ('email.copyright_en',  '© 2026 KiritoLab. All rights reserved.', '邮件版权信息（英文）'),
+    ('email.copyright_en',  '© 2026 KirLab. All rights reserved.', '邮件版权信息（英文）'),
     ('email.security_tip',  '如果这不是您本人的操作，请忽略此邮件。您的账户仍然安全。', '邮件安全提示（中文）'),
     ('email.security_tip_en', 'If you did not request this, please ignore this email. Your account is still secure.', '邮件安全提示（英文）'),
     ('social.github',       '',                       'GitHub 链接'),
