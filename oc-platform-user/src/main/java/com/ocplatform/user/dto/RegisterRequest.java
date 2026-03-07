@@ -20,7 +20,7 @@ public class RegisterRequest {
 
     @NotBlank(message = "密码不能为空")
     @Size(min = 8, max = 64, message = "密码长度为 8-64 个字符")
-    @Pattern(regexp = "^[a-zA-Z0-9]+$", message = "密码只能包含字母和数字，不能包含空格或特殊符号")
+    @Pattern(regexp = "^[a-zA-Z0-9!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]+$", message = "密码只能包含字母、数字和常见特殊字符，不能包含空格")
     private String password;
 
     @NotBlank(message = "验证码不能为空")

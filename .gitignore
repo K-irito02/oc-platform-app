@@ -1,3 +1,36 @@
+# ============================================================
+# OC Platform Git 忽略配置
+# ============================================================
+#
+# 【部署时需要手动提供的文件】
+# 以下文件被 Git 忽略，部署时需要手动创建或提供：
+#
+# 1. 环境配置文件：
+#    - .env                          # Docker Compose 环境变量（数据库密码等）
+#    - application-dev.yml           # Spring Boot 开发环境配置
+#    - application-prod.yml          # Spring Boot 生产环境配置
+#    - oc-platform-web/.env.local    # 前端本地环境变量
+#    - oc-platform-web/.env.production # 前端生产环境变量
+#
+# 2. 敏感配置（已在 init.sql 中配置，但建议生产环境单独管理）：
+#    - Cloudflare Turnstile 密钥（captcha.cloudflare.site_key/secret_key）
+#    - JWT 密钥
+#    - 邮件服务配置（SMTP 密码）
+#    - OAuth 客户端密钥
+#
+# 3. 数据目录（生产环境需挂载持久化卷）：
+#    - data/                         # PostgreSQL 数据
+#    - pgdata/                       # PostgreSQL 数据目录
+#    - redis-data/                   # Redis 数据
+#    - uploads/                      # 用户上传文件
+#    - files/                        # 文件存储
+#
+# 4. SSL 证书（如需 HTTPS）：
+#    - ssl/cert.pem
+#    - ssl/key.pem
+#
+# ============================================================
+
 # ===== Java / Maven =====
 target/
 *.class
@@ -10,6 +43,7 @@ target/
 *.iws
 
 # ===== Spring Boot =====
+# 【部署需提供】application-dev.yml, application-prod.yml
 application-*.yml
 application-*.properties
 !application.yml
@@ -34,6 +68,7 @@ desktop.ini
 *~
 
 # ===== Environment =====
+# 【部署需提供】.env 文件包含数据库密码、JWT密钥等敏感信息
 .env
 *.env.local
 *.env.production
@@ -43,6 +78,7 @@ desktop.ini
 # ===== Node.js (前端) =====
 oc-platform-web/node_modules/
 oc-platform-web/dist/
+# 【部署需提供】前端环境变量（API地址等）
 oc-platform-web/.env.local
 oc-platform-web/.env.production
 oc-platform-web/.env.development
@@ -72,6 +108,7 @@ nohup.out
 backend*.log
 
 # ===== 上传文件 =====
+# 【部署需提供】生产环境需配置持久化存储
 uploads/
 files/
 static/
@@ -136,10 +173,12 @@ Front-end testing/
 
 # ===== 项目特定 =====
 # PostgreSQL 数据目录
+# 【部署需提供】生产环境需挂载数据卷
 data/
 pgdata/
 
 # Redis 数据目录
+# 【部署需提供】生产环境需挂载数据卷
 redis-data/
 
 # 临时文件

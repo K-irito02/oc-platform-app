@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { useAppSelector } from '@/store/hooks';
 
 interface CloudflareTurnstileProps {
   siteKey: string;
@@ -42,7 +43,7 @@ export function CloudflareTurnstile({
   onVerify,
   onError,
   onExpire,
-  theme = 'auto',
+  theme: propTheme,
   size = 'normal',
   lang = 'zh-CN',
   className = '',
@@ -52,6 +53,33 @@ export function CloudflareTurnstile({
   const widgetIdRef = useRef<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const onVerifyRef = useRef(onVerify);
+  const onErrorRef = useRef(onError);
+  const onExpireRef = useRef(onExpire);
+
+  const currentTheme = useAppSelector((state) => state.theme.currentTheme);
+
+  const computedTheme = useMemo((): 'light' | 'dark' | 'auto' => {
+    if (propTheme) return propTheme;
+    
+    const mode = currentTheme.appearance.mode;
+    if (mode === 'light') return 'light';
+    if (mode === 'dark') return 'dark';
+    
+    if (mode === 'system') {
+      if (typeof window !== 'undefined') {
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+    }
+    
+    return 'auto';
+  }, [propTheme, currentTheme.appearance.mode]);
+
+  useEffect(() => {
+    onVerifyRef.current = onVerify;
+    onErrorRef.current = onError;
+    onExpireRef.current = onExpire;
+  });
 
   useEffect(() => {
     if (!visible) return;
@@ -92,19 +120,18 @@ export function CloudflareTurnstile({
           clearInterval(checkTurnstile);
         }
       }, 100);
-
       setTimeout(() => {
         clearInterval(checkTurnstile);
         if (!window.turnstile) {
           setError('Turnstile SDK 加载超时');
-          onError?.('Turnstile SDK 加载超时');
+          onErrorRef.current?.('Turnstile SDK 加载超时');
         }
       }, 10000);
     };
 
     script.onerror = () => {
       setError('Turnstile SDK 加载失败');
-      onError?.('Turnstile SDK 加载失败');
+      onErrorRef.current?.('Turnstile SDK 加载失败');
     };
 
     document.head.appendChild(script);
@@ -114,13 +141,13 @@ export function CloudflareTurnstile({
         try {
           window.turnstile.remove(widgetIdRef.current);
         } catch (e) {
-          console.warn('Failed to remove Turnstile widget:', e);
+          console.warn('Failed to remove turnstile widget:', e);
         }
       }
     };
-  }, [onError, visible]);
+  }, [visible]);
 
-  const renderWidget = useCallback(() => {
+  useEffect(() => {
     if (!loaded || !window.turnstile || !containerRef.current || !visible) {
       return;
     }
@@ -142,9 +169,9 @@ export function CloudflareTurnstile({
         sitekey: siteKey,
         callback: (token: string) => {
           setError(null);
-          onVerify(token);
+          onVerifyRef.current(token);
         },
-        theme,
+        theme: computedTheme,
         size,
         language,
         retry: 'auto',
@@ -152,16 +179,16 @@ export function CloudflareTurnstile({
         'refresh-expired': 'auto',
       };
 
-      if (onError) {
+      if (onErrorRef.current) {
         options['error-callback'] = (errorMsg: string) => {
           setError(errorMsg);
-          onError(errorMsg);
+          onErrorRef.current?.(errorMsg);
         };
       }
 
-      if (onExpire) {
+      if (onExpireRef.current) {
         options['expired-callback'] = () => {
-          onExpire();
+          onExpireRef.current?.();
         };
       }
 
@@ -170,15 +197,9 @@ export function CloudflareTurnstile({
       const errorMsg = 'Turnstile 渲染失败';
       console.error('Turnstile render error:', e);
       setError(errorMsg);
-      onError?.(errorMsg);
+      onErrorRef.current?.(errorMsg);
     }
-  }, [loaded, siteKey, onVerify, onError, onExpire, theme, size, lang, visible]);
-
-  useEffect(() => {
-    if (loaded && visible) {
-      renderWidget();
-    }
-  }, [loaded, renderWidget, visible]);
+  }, [loaded, siteKey, computedTheme, size, lang, visible]);
 
   const reset = useCallback(() => {
     if (widgetIdRef.current && window.turnstile) {
@@ -199,8 +220,8 @@ export function CloudflareTurnstile({
 
   useEffect(() => {
     if (containerRef.current) {
-      (containerRef.current as any).resetTurnstile = reset;
-      (containerRef.current as any).getTurnstileResponse = getResponse;
+      (containerRef.current as HTMLDivElement & { resetTurnstile: () => void; getTurnstileResponse: () => string | undefined }).resetTurnstile = reset;
+      (containerRef.current as HTMLDivElement & { resetTurnstile: () => void; getTurnstileResponse: () => string | undefined }).getTurnstileResponse = getResponse;
     }
   }, [reset, getResponse]);
 
@@ -225,14 +246,16 @@ export function CloudflareTurnstile({
 }
 
 export const resetTurnstile = (container: HTMLElement) => {
-  if ((container as any).resetTurnstile) {
-    (container as any).resetTurnstile();
+  const containerWithMethods = container as HTMLElement & { resetTurnstile?: () => void };
+  if (containerWithMethods.resetTurnstile) {
+    containerWithMethods.resetTurnstile();
   }
 };
 
 export const getTurnstileResponse = (container: HTMLElement): string | undefined => {
-  if ((container as any).getTurnstileResponse) {
-    return (container as any).getTurnstileResponse();
+  const containerWithMethods = container as HTMLElement & { getTurnstileResponse?: () => string | undefined };
+  if (containerWithMethods.getTurnstileResponse) {
+    return containerWithMethods.getTurnstileResponse();
   }
   return undefined;
 };

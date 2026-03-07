@@ -820,14 +820,19 @@ export default function ProductDetail() {
                               <TextArea rows={4} placeholder={t('productDetail.commentPlaceholder')} className="rounded-xl resize-none" />
                             </Form.Item>
                             {/* 验证码组件：仅在启用时显示 */}
-                            {captchaConfig.enabled && captchaConfig.siteKey && (
+                            {captchaConfig.enabled && (
                               <Form.Item>
-                                <CloudflareTurnstile
-                                  siteKey={captchaConfig.siteKey}
-                                  onVerify={handleCaptchaVerify}
-                                  theme="auto"
-                                  lang={i18n.language}
-                                />
+                                {captchaConfig.siteKey ? (
+                                  <CloudflareTurnstile
+                                    siteKey={captchaConfig.siteKey}
+                                    onVerify={handleCaptchaVerify}
+                                    lang={i18n.language}
+                                  />
+                                ) : (
+                                  <div className="text-red-500 text-sm p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                                    {t('productDetail.captchaConfigError') || '验证码配置错误，请联系管理员'}
+                                  </div>
+                                )}
                               </Form.Item>
                             )}
                             <div className="flex justify-end">

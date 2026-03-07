@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Form, Input, Button, Card } from 'antd';
 import { message } from '@/utils/antdUtils';
 import { Link, useNavigate } from 'react-router-dom';
@@ -7,7 +7,7 @@ import { User, Mail, Lock, ShieldCheck, ArrowRight } from 'lucide-react';
 import { authApi } from '@/utils/api';
 import { AuthPageToolbar } from '@/components/AuthPageToolbar';
 import { SiteLogo } from '@/components/SiteLogo';
-import { CloudflareTurnstile } from '@/components/CloudflareTurnstile';
+import { CloudflareTurnstile, resetTurnstile } from '@/components/CloudflareTurnstile';
 import { useCaptchaConfig } from '@/hooks/useCaptchaConfig';
 import { useCountdown } from '@/hooks/useCountdown';
 import { FilingInfo } from '@/components/FilingInfo';
@@ -27,6 +27,7 @@ export default function Register() {
   const [codeSending, setCodeSending] = useState(false);
   const [form] = Form.useForm();
   const [captchaToken, setCaptchaToken] = useState<string>('');
+  const captchaRef = useRef<HTMLDivElement>(null);
   const { config: captchaConfig } = useCaptchaConfig();
   const { countdown, start: startCountdown } = useCountdown(60);
 
@@ -46,9 +47,19 @@ export default function Register() {
       });
       message.success(t('auth.codeSent') || 'Verification code sent');
       startCountdown();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to send verification code:', error);
-      message.error(t('auth.codeSendFailed') || 'Failed to send verification code');
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
+      const errorMsg = err.response?.data?.message || err.message || '';
+      if (errorMsg) {
+        message.error(errorMsg);
+      } else {
+        message.error(t('auth.codeSendFailed') || 'Failed to send verification code');
+      }
+      if (captchaRef.current) {
+        resetTurnstile(captchaRef.current);
+        setCaptchaToken('');
+      }
     } finally {
       setCodeSending(false);
     }
@@ -71,8 +82,18 @@ export default function Register() {
       });
       message.success(t('auth.registerSuccess') || 'Registration successful');
       navigate('/login');
-    } catch {
-      message.error(t('auth.registerFailed') || 'Registration failed');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
+      const errorMsg = err.response?.data?.message || err.message || '';
+      if (errorMsg) {
+        message.error(errorMsg);
+      } else {
+        message.error(t('auth.registerFailed') || 'Registration failed');
+      }
+      if (captchaRef.current) {
+        resetTurnstile(captchaRef.current);
+        setCaptchaToken('');
+      }
     } finally {
       setLoading(false);
     }
@@ -144,7 +165,7 @@ export default function Register() {
                 rules={[
                   { required: true, message: t('auth.passwordRequired') },
                   { min: 8, max: 64, message: t('auth.passwordLength') },
-                  { pattern: /^[a-zA-Z0-9]+$/, message: t('auth.passwordFormat') }
+                  { pattern: /^[a-zA-Z0-9!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]+$/, message: t('auth.passwordFormat') }
                 ]}
               >
                 <Input.Password prefix={<Lock size={18} className="text-slate-400 mr-2" />} placeholder="••••••••" />
@@ -169,14 +190,21 @@ export default function Register() {
             </div>
 
             {/* Cloudflare Turnstile 验证码 */}
-            {captchaConfig.enabled && captchaConfig.siteKey && (
+            {captchaConfig.enabled && (
               <div className="flex justify-center my-6">
-                <CloudflareTurnstile
-                  siteKey={captchaConfig.siteKey}
-                  onVerify={handleCaptchaVerify}
-                  theme="auto"
-                  lang={i18n.language}
-                />
+                {captchaConfig.siteKey ? (
+                  <div ref={captchaRef}>
+                    <CloudflareTurnstile
+                      siteKey={captchaConfig.siteKey}
+                      onVerify={handleCaptchaVerify}
+                      lang={i18n.language}
+                    />
+                  </div>
+                ) : (
+                  <div className="text-red-500 text-sm p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                    {t('auth.captchaConfigError')}
+                  </div>
+                )}
               </div>
             )}
 

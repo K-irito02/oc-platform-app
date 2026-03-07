@@ -32,6 +32,8 @@ public class EmailConfigService {
                 .likeRight(SystemConfig::getConfigKey, "email.")
                 .or()
                 .likeRight(SystemConfig::getConfigKey, "footer.")
+                .or()
+                .likeRight(SystemConfig::getConfigKey, "social.")
         );
 
         Map<String, String> configMap = new HashMap<>();
@@ -59,6 +61,13 @@ public class EmailConfigService {
                 .beianEn(configMap.getOrDefault("footer.beian_en", ""))
                 .icp(configMap.getOrDefault("footer.icp", ""))
                 .icpEn(configMap.getOrDefault("footer.icp_en", ""))
+                // 社交链接
+                .socialGithub(configMap.getOrDefault("social.github", ""))
+                .socialTwitter(configMap.getOrDefault("social.twitter", ""))
+                .socialLinkedin(configMap.getOrDefault("social.linkedin", ""))
+                .socialWeibo(configMap.getOrDefault("social.weibo", ""))
+                .socialWechat(configMap.getOrDefault("social.wechat", ""))
+                .socialEmail(configMap.getOrDefault("social.email", ""))
                 .build();
     }
 
@@ -81,5 +90,21 @@ public class EmailConfigService {
         private String beianEn;
         private String icp;
         private String icpEn;
+        // 社交链接
+        private String socialGithub;
+        private String socialTwitter;
+        private String socialLinkedin;
+        private String socialWeibo;
+        private String socialWechat;
+        private String socialEmail;
+        
+        public boolean hasAnySocialLink() {
+            return (socialGithub != null && !socialGithub.isEmpty()) ||
+                   (socialTwitter != null && !socialTwitter.isEmpty()) ||
+                   (socialLinkedin != null && !socialLinkedin.isEmpty()) ||
+                   (socialWeibo != null && !socialWeibo.isEmpty()) ||
+                   (socialWechat != null && !socialWechat.isEmpty()) ||
+                   (socialEmail != null && !socialEmail.isEmpty());
+        }
     }
 }

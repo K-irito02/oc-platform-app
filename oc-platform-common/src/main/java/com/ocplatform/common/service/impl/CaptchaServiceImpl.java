@@ -7,6 +7,7 @@ import com.ocplatform.common.entity.CaptchaRecord;
 import com.ocplatform.common.repository.CaptchaRecordMapper;
 import com.ocplatform.common.service.CaptchaConfigResponse;
 import com.ocplatform.common.service.CaptchaService;
+import com.ocplatform.common.service.SystemConfigService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,6 +23,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -31,9 +33,39 @@ public class CaptchaServiceImpl implements CaptchaService {
     private final CaptchaConfig captchaConfig;
     private final CaptchaRecordMapper captchaRecordMapper;
     private final RestTemplate restTemplate;
+    private final SystemConfigService systemConfigService;
 
     @Value("${captcha.enabled:true}")
     private boolean captchaEnabled;
+
+    private static final String SITE_KEY_CONFIG = "captcha.cloudflare.site_key";
+    private static final String SECRET_KEY_CONFIG = "captcha.cloudflare.secret_key";
+    private static final String ENABLED_CONFIG = "captcha.enabled";
+    private static final String VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+
+    private String getSiteKey() {
+        Optional<String> dbValue = systemConfigService.getConfig(SITE_KEY_CONFIG);
+        if (dbValue.isPresent() && !dbValue.get().isBlank()) {
+            return dbValue.get();
+        }
+        return captchaConfig.getSiteKey();
+    }
+
+    private String getSecretKey() {
+        Optional<String> dbValue = systemConfigService.getConfig(SECRET_KEY_CONFIG);
+        if (dbValue.isPresent() && !dbValue.get().isBlank()) {
+            return dbValue.get();
+        }
+        return captchaConfig.getSecretKey();
+    }
+
+    private boolean isDbEnabled() {
+        Optional<String> dbValue = systemConfigService.getConfig(ENABLED_CONFIG);
+        if (dbValue.isPresent()) {
+            return "true".equalsIgnoreCase(dbValue.get());
+        }
+        return captchaEnabled;
+    }
 
     @Override
     public CaptchaVerifyResponse verify(CaptchaVerifyRequest request, String clientIp, Long userId) {
@@ -47,13 +79,23 @@ public class CaptchaServiceImpl implements CaptchaService {
                 .createdAt(LocalDateTime.now())
                 .build();
 
+        String secretKey = getSecretKey();
+        if (secretKey == null || secretKey.isBlank()) {
+            log.error("验证码 Secret Key 未配置");
+            response.setSuccess(false);
+            response.setMessage("验证码服务未配置");
+            record.setVerifyResult(false);
+            record.setFailReason("Secret Key 未配置");
+            captchaRecordMapper.insert(record);
+            return response;
+        }
+
         try {
-            // 调用 Cloudflare Turnstile 验证 API
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
             MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-            params.add("secret", captchaConfig.getSecretKey());
+            params.add("secret", secretKey);
             params.add("response", request.getToken());
             params.add("remoteip", clientIp);
 
@@ -61,7 +103,7 @@ public class CaptchaServiceImpl implements CaptchaService {
 
             @SuppressWarnings("unchecked")
             Map<String, Object> result = restTemplate.postForObject(
-                    captchaConfig.getVerifyUrl(),
+                    VERIFY_URL,
                     requestEntity,
                     Map.class
             );
@@ -76,7 +118,6 @@ public class CaptchaServiceImpl implements CaptchaService {
                 response.setMessage("验证失败");
                 record.setVerifyResult(false);
                 
-                // 解析错误码
                 @SuppressWarnings("unchecked")
                 List<String> errorCodes = (List<String>) result.get("error-codes");
                 if (errorCodes != null && !errorCodes.isEmpty()) {
@@ -97,18 +138,21 @@ public class CaptchaServiceImpl implements CaptchaService {
             record.setFailReason(e.getMessage());
         }
 
-        // 保存验证记录
         captchaRecordMapper.insert(record);
         return response;
     }
 
     @Override
     public boolean isEnabled() {
-        return captchaEnabled && captchaConfig.getSiteKey() != null && !captchaConfig.getSiteKey().isEmpty();
+        if (!isDbEnabled()) {
+            return false;
+        }
+        String siteKey = getSiteKey();
+        return siteKey != null && !siteKey.isBlank();
     }
 
     @Override
     public CaptchaConfigResponse getConfig() {
-        return new CaptchaConfigResponse(isEnabled(), captchaConfig.getSiteKey());
+        return new CaptchaConfigResponse(isEnabled(), getSiteKey());
     }
 }

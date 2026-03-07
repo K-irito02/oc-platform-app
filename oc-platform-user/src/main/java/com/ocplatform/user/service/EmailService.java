@@ -40,17 +40,19 @@ public class EmailService {
     private static final int CODE_EXPIRE_MINUTES = 10;
 
     public String generateAndSendCode(String email, String type) {
-        // Normalize email to lowercase for consistency
+        if (mailFrom == null || mailFrom.isBlank()) {
+            log.error("Email service not configured: MAIL_USERNAME is empty");
+            throw new BusinessException(ErrorCode.UNKNOWN_ERROR, "邮件服务未配置，请联系管理员");
+        }
+        
         String normalizedEmail = email.toLowerCase().trim();
         
-        // Rate limiting check via Redis
         String rateLimitKey = RedisKeys.VERIFY_CODE + normalizedEmail + ":" + type;
         String existing = stringRedisTemplate.opsForValue().get(rateLimitKey);
         if (existing != null) {
             throw new BusinessException(ErrorCode.VERIFICATION_CODE_TOO_FREQUENT);
         }
 
-        // Check hourly limit
         int recentCount = emailVerificationMapper.countRecentByEmail(normalizedEmail, type);
         if (recentCount >= 10) {
             throw new BusinessException(ErrorCode.VERIFICATION_CODE_TOO_FREQUENT, "验证码发送次数已达上限，请稍后再试");
@@ -58,7 +60,6 @@ public class EmailService {
 
         String code = generateCode();
 
-        // Save to database with normalized email
         EmailVerification verification = EmailVerification.builder()
                 .email(normalizedEmail)
                 .code(code)
@@ -68,13 +69,11 @@ public class EmailService {
                 .build();
         emailVerificationMapper.insert(verification);
 
-        // Set rate limit (1 minute cooldown)
         stringRedisTemplate.opsForValue().set(rateLimitKey, "1", 60, TimeUnit.SECONDS);
 
         log.info("Verification code generated for {} (type: {})", 
                 normalizedEmail.replaceAll("(?<=.{2}).(?=.*@)", "*"), type);
 
-        // Send email truly asynchronously using executor directly
         asyncExecutor.execute(() -> sendVerificationEmailInternal(normalizedEmail, code, type));
 
         return code;
@@ -111,13 +110,17 @@ public class EmailService {
     }
 
     private void sendVerificationEmailInternal(String email, String code, String type) {
+        if (mailFrom == null || mailFrom.isBlank()) {
+            log.error("Email service not configured: MAIL_USERNAME is empty");
+            throw new BusinessException(ErrorCode.UNKNOWN_ERROR, "邮件服务未配置，请联系管理员");
+        }
+        
         try {
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
             
             helper.setFrom(mailFrom);
             helper.setTo(email);
-            // 使用新的邮件模板服务生成主题和内容
             helper.setSubject(emailTemplateService.getSubject(type, "zh"));
             helper.setText(emailTemplateService.generateVerificationEmail(code, type), true);
             
@@ -125,6 +128,10 @@ public class EmailService {
             log.info("Verification email sent to {}", email.replaceAll("(?<=.{2}).(?=.*@)", "*"));
         } catch (MessagingException e) {
             log.error("Failed to send email to {}: {}", email.replaceAll("(?<=.{2}).(?=.*@)", "*"), e.getMessage());
+            throw new BusinessException(ErrorCode.UNKNOWN_ERROR, "邮件发送失败，请稍后重试");
+        } catch (Exception e) {
+            log.error("Unexpected error sending email to {}: {}", email.replaceAll("(?<=.{2}).(?=.*@)", "*"), e.getMessage());
+            throw new BusinessException(ErrorCode.UNKNOWN_ERROR, "邮件发送失败，请稍后重试");
         }
     }
 
@@ -135,6 +142,42 @@ public class EmailService {
             sb.append(random.nextInt(10));
         }
         return sb.toString();
+    }
+
+    /**
+     * 发送邮箱更改通知到旧邮箱
+     * @param oldEmail 旧邮箱
+     * @param newEmail 新邮箱
+     * @param success 是否成功
+     * @param reason 失败原因（如果失败）
+     */
+    public void sendEmailChangeNotification(String oldEmail, String newEmail, boolean success, String reason) {
+        if (mailFrom == null || mailFrom.isBlank()) {
+            log.error("Email service not configured: MAIL_USERNAME is empty");
+            return;
+        }
+        
+        asyncExecutor.execute(() -> {
+            try {
+                MimeMessage mimeMessage = mailSender.createMimeMessage();
+                MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+                
+                helper.setFrom(mailFrom);
+                helper.setTo(oldEmail.toLowerCase().trim());
+                helper.setSubject(emailTemplateService.getEmailChangeNotificationSubject(success, "zh"));
+                helper.setText(emailTemplateService.generateEmailChangeNotificationEmail(oldEmail, newEmail, success, reason), true);
+                
+                mailSender.send(mimeMessage);
+                log.info("Email change notification sent to {} (success: {})", 
+                        oldEmail.replaceAll("(?<=.{2}).(?=.*@)", "*"), success);
+            } catch (MessagingException e) {
+                log.error("Failed to send email change notification to {}: {}", 
+                        oldEmail.replaceAll("(?<=.{2}).(?=.*@)", "*"), e.getMessage());
+            } catch (Exception e) {
+                log.error("Unexpected error sending email change notification to {}: {}", 
+                        oldEmail.replaceAll("(?<=.{2}).(?=.*@)", "*"), e.getMessage());
+            }
+        });
     }
 
     private String getSubject(String type) {

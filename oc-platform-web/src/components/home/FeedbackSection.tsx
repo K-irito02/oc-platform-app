@@ -432,16 +432,23 @@ export default function FeedbackSection() {
                 </span>
               </Checkbox>
             </div>
-            {captchaConfig.enabled && captchaConfig.siteKey && (
+            {captchaConfig.enabled && (
               <div className="flex flex-col gap-2">
-                <CloudflareTurnstile
-                  siteKey={captchaConfig.siteKey}
-                  onVerify={handleCaptchaVerify}
-                  theme="auto"
-                  lang={i18n.language}
-                />
-                {captchaError && (
-                  <div className="text-red-500 text-xs">{captchaError}</div>
+                {captchaConfig.siteKey ? (
+                  <>
+                    <CloudflareTurnstile
+                      siteKey={captchaConfig.siteKey}
+                      onVerify={handleCaptchaVerify}
+                      lang={i18n.language}
+                    />
+                    {captchaError && (
+                      <div className="text-red-500 text-xs">{captchaError}</div>
+                    )}
+                  </>
+                ) : (
+                  <div className="text-red-500 text-sm p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                    {t('feedback.captchaConfigError') || '验证码配置错误，请联系管理员'}
+                  </div>
                 )}
               </div>
             )}

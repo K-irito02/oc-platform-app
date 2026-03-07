@@ -50,7 +50,9 @@
     "loginToLike": "Please login to like",
     "likeFailed": "Operation failed",
     "rateLimitExceeded": "Too many messages, please wait {{seconds}} seconds",
-    "sortByReplies": "Replies"
+    "sortByReplies": "Replies",
+    "captchaRequired": "Please complete the captcha verification",
+    "captchaConfigError": "Captcha configuration error, please contact administrator"
   },
   "disclaimer": {
     "title": "Free Disclaimer",
@@ -134,7 +136,7 @@
     "codePlaceholder": "Verification code",
     "emailPlaceholder": "Email address",
     "passwordLength": "Password must be 8-64 characters",
-    "passwordFormat": "Password can only contain letters and numbers, no spaces or special characters",
+    "passwordFormat": "Password can only contain letters, numbers and common special characters, no spaces",
     "passwordsNotMatch": "Passwords do not match",
     "confirmPasswordRequired": "Please confirm your password",
     "confirmPasswordPlaceholder": "Confirm new password",
@@ -159,7 +161,8 @@
     "accountFormat": "Invalid account format",
     "captchaRequired": "Please complete security verification",
     "captchaFailed": "Captcha verification failed, please try again",
-    "captchaLoading": "Loading captcha..."
+    "captchaLoading": "Loading captcha...",
+    "captchaConfigError": "Captcha configuration error, please contact administrator"
   },
   "product": {
     "allProducts": "All Products",
@@ -718,6 +721,7 @@
     "emailChanged": "Email changed, please login again with new email",
     "captcha": "Captcha",
     "captchaRequired": "Please complete the captcha verification",
+    "captchaConfigError": "Captcha configuration error, please contact administrator",
     "bgImage": "Image",
     "bgVideo": "Video",
     "bgFile": "Background File",
@@ -806,7 +810,10 @@
     "about": "About",
     "freeStatement": "Free & Non-profit",
     "privacyPolicy": "Privacy Policy",
-    "termsOfService": "Terms of Service"
+    "termsOfService": "Terms of Service",
+    "weibo": "Weibo",
+    "wechat": "WeChat Official Account",
+    "contactEmail": "Contact Email"
   },
   "footerPages": {
     "about": {

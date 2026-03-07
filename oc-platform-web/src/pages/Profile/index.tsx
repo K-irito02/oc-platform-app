@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Form, Input, Button, Tabs, Descriptions, Tag, Upload, Avatar, Card, Divider } from 'antd';
 import { message } from '@/utils/antdUtils';
 import { User, Lock, Edit, Upload as UploadIcon, Mail, ShieldCheck, Info } from 'lucide-react';
@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { setUser, logout } from '@/store/slices/authSlice';
 import { userApi, authApi } from '@/utils/api';
-import { CloudflareTurnstile } from '@/components/CloudflareTurnstile';
+import { CloudflareTurnstile, resetTurnstile } from '@/components/CloudflareTurnstile';
 import { useCaptchaConfig } from '@/hooks/useCaptchaConfig';
 import { useCountdown } from '@/hooks/useCountdown';
 
@@ -48,8 +48,14 @@ export default function Profile() {
   const [emailForm] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [emailCodeSending, setEmailCodeSending] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState<string>('');
-  const [captchaVerified, setCaptchaVerified] = useState(false);
+  
+  const [passwordCaptchaToken, setPasswordCaptchaToken] = useState<string>('');
+  const [passwordCaptchaVerified, setPasswordCaptchaVerified] = useState(false);
+  const [emailCaptchaToken, setEmailCaptchaToken] = useState<string>('');
+  const [emailCaptchaVerified, setEmailCaptchaVerified] = useState(false);
+  
+  const passwordCaptchaRef = useRef<HTMLDivElement>(null);
+  const emailCaptchaRef = useRef<HTMLDivElement>(null);
   
   // 使用 useCaptchaConfig Hook 获取验证码配置
   const { config: captchaConfig } = useCaptchaConfig();
@@ -80,19 +86,31 @@ export default function Profile() {
       const res = await userApi.updateProfile(values) as ApiResponse<UserProfile>;
       if (res.data) dispatch(setUser(res.data));
       message.success(t('profile.profileUpdated'));
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to update profile:', error);
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
+      const errorMsg = err.response?.data?.message || err.message || '';
+      if (errorMsg) {
+        message.error(errorMsg);
+      } else {
+        message.error(t('profile.profileUpdateFailed') || 'Failed to update profile');
+      }
     } finally { setLoading(false); }
   };
 
-  const handleCaptchaVerify = (token: string) => {
-    setCaptchaToken(token);
-    setCaptchaVerified(true);
+  const handlePasswordCaptchaVerify = (token: string) => {
+    setPasswordCaptchaToken(token);
+    setPasswordCaptchaVerified(true);
+  };
+
+  const handleEmailCaptchaVerify = (token: string) => {
+    setEmailCaptchaToken(token);
+    setEmailCaptchaVerified(true);
   };
 
   const onPasswordChange = async () => {
     // 验证码检查
-    if (captchaConfig.enabled && !captchaVerified) {
+    if (captchaConfig.enabled && !passwordCaptchaVerified) {
       message.error(t('profile.captchaRequired'));
       return;
     }
@@ -103,19 +121,31 @@ export default function Profile() {
       await authApi.changePassword({ 
         oldPassword: values.oldPassword, 
         newPassword: values.newPassword,
-        captchaToken: captchaToken
+        captchaToken: passwordCaptchaToken
       });
       message.success(t('profile.passwordChanged'));
       dispatch(logout());
       navigate('/login');
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to change password:', error);
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
+      const errorMsg = err.response?.data?.message || err.message || '';
+      if (errorMsg) {
+        message.error(errorMsg);
+      } else {
+        message.error(t('profile.passwordChangeFailed') || 'Failed to change password');
+      }
+      if (passwordCaptchaRef.current) {
+        resetTurnstile(passwordCaptchaRef.current);
+        setPasswordCaptchaVerified(false);
+        setPasswordCaptchaToken('');
+      }
     } finally { setLoading(false); }
   };
 
   const sendEmailCode = async () => {
     // 验证码检查
-    if (captchaConfig.enabled && !captchaVerified) {
+    if (captchaConfig.enabled && !emailCaptchaVerified) {
       message.error(t('profile.captchaRequired'));
       return;
     }
@@ -131,7 +161,7 @@ export default function Profile() {
     try {
       await authApi.sendChangeEmailCode({ 
         newEmail,
-        captchaToken: captchaToken
+        captchaToken: emailCaptchaToken
       });
       message.success(t('profile.emailCodeSent'));
       startEmailCountdown();
@@ -139,6 +169,11 @@ export default function Profile() {
       console.error('Failed to send email verification code:', error);
       const err = error as { response?: { data?: { message?: string } } };
       message.error(err.response?.data?.message || t('profile.emailCodeSendFailed'));
+      if (emailCaptchaRef.current) {
+        resetTurnstile(emailCaptchaRef.current);
+        setEmailCaptchaVerified(false);
+        setEmailCaptchaToken('');
+      }
     } finally {
       setEmailCodeSending(false);
     }
@@ -151,8 +186,15 @@ export default function Profile() {
       message.success(t('profile.emailChanged'));
       dispatch(logout());
       navigate('/login');
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to change email:', error);
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
+      const errorMsg = err.response?.data?.message || err.message || '';
+      if (errorMsg) {
+        message.error(errorMsg);
+      } else {
+        message.error(t('profile.emailChangeFailed') || 'Failed to change email');
+      }
     } finally { setLoading(false); }
   };
 
@@ -261,7 +303,7 @@ export default function Profile() {
               <Form.Item label={t('profile.newPassword')} name="newPassword" rules={[
                 { required: true, message: t('auth.passwordRequired') },
                 { min: 8, max: 64, message: t('auth.passwordLength') },
-                { pattern: /^[a-zA-Z0-9]+$/, message: t('auth.passwordFormat') }
+                { pattern: /^[a-zA-Z0-9!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]+$/, message: t('auth.passwordFormat') }
               ]}>
                 <Input.Password size="large" prefix={<Lock size={16} className="text-slate-400" />} />
               </Form.Item>
@@ -277,14 +319,21 @@ export default function Profile() {
                 <Input.Password size="large" prefix={<Lock size={16} className="text-slate-400" />} />
               </Form.Item>
               {/* 验证码组件 */}
-              {captchaConfig.enabled && captchaConfig.siteKey && (
+              {captchaConfig.enabled && (
                 <Form.Item label={t('profile.captcha')} required>
-                  <CloudflareTurnstile
-                    siteKey={captchaConfig.siteKey}
-                    onVerify={handleCaptchaVerify}
-                    theme="auto"
-                    lang={i18n.language}
-                  />
+                  {captchaConfig.siteKey ? (
+                    <div ref={passwordCaptchaRef}>
+                      <CloudflareTurnstile
+                        siteKey={captchaConfig.siteKey}
+                        onVerify={handlePasswordCaptchaVerify}
+                        lang={i18n.language}
+                      />
+                    </div>
+                  ) : (
+                    <div className="text-red-500 text-sm p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                      {t('profile.captchaConfigError')}
+                    </div>
+                  )}
                 </Form.Item>
               )}
               <Form.Item>
@@ -324,14 +373,21 @@ export default function Profile() {
                 <Input size="large" prefix={<Mail size={16} className="text-slate-400" />} placeholder={t('profile.newEmailPlaceholder')} />
               </Form.Item>
               {/* 验证码组件 */}
-              {captchaConfig.enabled && captchaConfig.siteKey && (
+              {captchaConfig.enabled && (
                 <Form.Item label={t('profile.captcha')} required>
-                  <CloudflareTurnstile
-                    siteKey={captchaConfig.siteKey}
-                    onVerify={handleCaptchaVerify}
-                    theme="auto"
-                    lang={i18n.language}
-                  />
+                  {captchaConfig.siteKey ? (
+                    <div ref={emailCaptchaRef}>
+                      <CloudflareTurnstile
+                        siteKey={captchaConfig.siteKey}
+                        onVerify={handleEmailCaptchaVerify}
+                        lang={i18n.language}
+                      />
+                    </div>
+                  ) : (
+                    <div className="text-red-500 text-sm p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                      {t('profile.captchaConfigError')}
+                    </div>
+                  )}
                 </Form.Item>
               )}
               <Form.Item label={t('profile.verificationCode')} name="code" rules={[{ required: true, message: t('profile.codeRequired') }]}>

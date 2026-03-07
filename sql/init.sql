@@ -114,7 +114,7 @@ CREATE TABLE captcha_records (
     user_id       BIGINT,
     ip_address    VARCHAR(45) NOT NULL,
     scene         VARCHAR(50) NOT NULL,
-    ticket        VARCHAR(200),
+    ticket        TEXT,
     verify_result BOOLEAN NOT NULL,
     evil_level    INTEGER,
     fail_reason   VARCHAR(200),
@@ -647,10 +647,10 @@ INSERT INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id FROM roles r, permissions p
 WHERE r.code = 'USER' AND p.code IN ('PRODUCT:READ', 'COMMENT:CREATE');
 
--- 超级管理员账号（密码: Smg.2026）
+-- 超级管理员账号（密码: Smg.2025）
 INSERT INTO users (username, email, password_hash, status, email_verified) VALUES
     ('KirLab', '3143285505@qq.com',
-     '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.VTtYA/7.J6LlZG',
+     '$2a$12$90sfZGvbZYsNLulMI3jomuQKvzpz4eP9b9Xm89STJQEzKtNiQavY.',
      'ACTIVE', TRUE);
 
 INSERT INTO user_roles (user_id, role_id)
@@ -684,7 +684,7 @@ INSERT INTO system_configs (config_key, config_value, description) VALUES
     ('email.copyright_en',  '© 2026 KirLab. All rights reserved.', '邮件版权信息（英文）'),
     ('email.security_tip',  '如果这不是您本人的操作，请忽略此邮件。您的账户仍然安全。', '邮件安全提示（中文）'),
     ('email.security_tip_en', 'If you did not request this, please ignore this email. Your account is still secure.', '邮件安全提示（英文）'),
-    ('social.github',       '',                       'GitHub 链接'),
+    ('social.github',       'https://github.com/K-irito02/oc-platform-app', 'GitHub 链接'),
     ('social.twitter',      '',                       'Twitter/X 链接'),
     ('social.linkedin',     '',                       'LinkedIn 链接'),
     ('social.weibo',        '',                       '微博链接'),
@@ -718,8 +718,8 @@ INSERT INTO system_configs (config_key, config_value, description) VALUES
      }',
      '平台和架构配置'),
     ('captcha.enabled', 'true', '验证码功能开关'),
-    ('captcha.cloudflare.site_key', '', 'Cloudflare Turnstile Site Key'),
-    ('captcha.cloudflare.secret_key', '', 'Cloudflare Turnstile Secret Key');
+    ('captcha.cloudflare.site_key', '0x4AAAAAACnWLahpCdkdO4qv', 'Cloudflare Turnstile Site Key'),
+    ('captcha.cloudflare.secret_key', '0x4AAAAAACnWLTxjQ17uu88EHQS_cL8ZF1M', 'Cloudflare Turnstile Secret Key');
 
 -- ============================================================
 -- 数据库优化修复（2026-03-07）

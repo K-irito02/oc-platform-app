@@ -272,6 +272,7 @@ docker compose -f docker-compose.dev.yml up -d
 - [x] **通知/审计**: 站内通知、审计日志
 - [x] **管理后台**: 仪表盘统计、用户管理（封禁/角色）、产品审核、评论管理、分类管理、系统配置、社交链接管理、邮件配置管理、UI优化
 - [x] **安全体系**: Spring Security + JWT + RBAC（5 角色 17 权限）、登录限流、CORS
+- [x] **人机验证**: Cloudflare Turnstile 集成（登录、注册、密码重置、修改邮箱、评论、留言等场景）
 - [x] **维护模式**: 维护页面、后端拦截器、管理后台配置
 - [x] **错误页面**: 404/403/500/网络错误页面
 - [x] **ICP备案**: 备案信息管理 + 邮箱验证 + Footer显示
@@ -329,6 +330,11 @@ docker compose -f docker-compose.dev.yml up -d
 - [x] 时区配置（Docker容器、PostgreSQL、后端Jackson统一Asia/Shanghai）
 - [x] 登录页面简化（移除GitHub登录和测试区域）
 - [x] SQL文件整理（合并迁移脚本、删除种子数据文件）
+- [x] Cloudflare Turnstile 人机验证集成（前端组件、后端验证、深色主题支持）
+- [x] 邮箱更改通知旧邮箱功能（成功/失败通知邮件）
+- [x] 社交链接条件显示（无配置时不显示）
+- [x] 备案信息样式统一
+- [x] .gitignore 部署说明注释
 - [ ] 文件上传/下载端到端测试
 - [ ] 单元测试编写（前端 Jest + 后端 JUnit 5）
 - [ ] 响应式设计优化（移动端适配）

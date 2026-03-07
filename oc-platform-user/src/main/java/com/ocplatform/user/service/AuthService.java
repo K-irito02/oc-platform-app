@@ -256,23 +256,43 @@ public class AuthService {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
 
-        // Verify the code was sent to the NEW email
-        if (!emailService.verifyCode(newEmail, code, "CHANGE_EMAIL")) {
-            throw new BusinessException(ErrorCode.VERIFICATION_CODE_INVALID);
+        // 保存旧邮箱地址，用于发送通知
+        String oldEmail = user.getEmail();
+
+        try {
+            // Verify the code was sent to the NEW email
+            if (!emailService.verifyCode(newEmail, code, "CHANGE_EMAIL")) {
+                // 发送失败通知到旧邮箱
+                emailService.sendEmailChangeNotification(oldEmail, newEmail, false, "验证码错误");
+                throw new BusinessException(ErrorCode.VERIFICATION_CODE_INVALID);
+            }
+
+            // Check if new email is already taken
+            if (userMapper.existsByEmail(newEmail)) {
+                // 发送失败通知到旧邮箱
+                emailService.sendEmailChangeNotification(oldEmail, newEmail, false, "邮箱已被其他账户使用");
+                throw new BusinessException(ErrorCode.EMAIL_EXISTS);
+            }
+
+            userMapper.updateEmail(user.getId(), newEmail);
+
+            // Invalidate all sessions so user must re-login with new email
+            stringRedisTemplate.delete(RedisKeys.AUTH_SESSION + user.getId());
+
+            log.info("Email changed for user: {} -> new email: {}", user.getUsername(),
+                    newEmail.replaceAll("(?<=.{2}).(?=.*@)", "*"));
+
+            // 发送成功通知到旧邮箱
+            emailService.sendEmailChangeNotification(oldEmail, newEmail, true, null);
+
+        } catch (BusinessException e) {
+            // BusinessException 已经在上面发送了通知，直接抛出
+            throw e;
+        } catch (Exception e) {
+            // 其他异常，发送失败通知
+            emailService.sendEmailChangeNotification(oldEmail, newEmail, false, "系统错误");
+            throw e;
         }
-
-        // Check if new email is already taken
-        if (userMapper.existsByEmail(newEmail)) {
-            throw new BusinessException(ErrorCode.EMAIL_EXISTS);
-        }
-
-        userMapper.updateEmail(user.getId(), newEmail);
-
-        // Invalidate all sessions so user must re-login with new email
-        stringRedisTemplate.delete(RedisKeys.AUTH_SESSION + user.getId());
-
-        log.info("Email changed for user: {} -> new email: {}", user.getUsername(),
-                newEmail.replaceAll("(?<=.{2}).(?=.*@)", "*"));
     }
 
     public void changePassword(Long userId, ChangePasswordRequest request) {

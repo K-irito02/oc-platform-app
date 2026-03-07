@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Form, Input } from 'antd';
 import { message } from '@/utils/antdUtils';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useAppDispatch } from '@/store/hooks';
 import { setCredentials } from '@/store/slices/authSlice';
 import { authApi } from '@/utils/api';
-import { CloudflareTurnstile } from '@/components/CloudflareTurnstile';
+import { CloudflareTurnstile, resetTurnstile } from '@/components/CloudflareTurnstile';
 import { useCaptchaConfig } from '@/hooks/useCaptchaConfig';
 
 interface LoginResponse {
@@ -37,6 +37,7 @@ export default function Login() {
   const [form] = Form.useForm();
   const [captchaToken, setCaptchaToken] = useState<string>('');
   const [captchaError, setCaptchaError] = useState<string>('');
+  const captchaRef = useRef<HTMLDivElement>(null);
   
   // 从后端动态获取验证码配置
   const { config: captchaConfig } = useCaptchaConfig();
@@ -67,14 +68,24 @@ export default function Login() {
       }));
       message.success(t('auth.loginSuccess') || '登录成功');
       navigate('/');
-    } catch (error) {
-      const err = error as Error & { code?: number };
+    } catch (error: unknown) {
+      const err = error as { code?: number; response?: { data?: { message?: string } }; message?: string };
       const errorCode = err.code;
+      const errorMsg = err.response?.data?.message || err.message || '';
       
       if (errorCode === 20009) {
         message.error(t('auth.userNotRegistered') || '该账号未注册，请先注册');
       } else if (errorCode === 20003) {
         message.error(t('auth.loginFailed') || '用户名或密码错误');
+      } else if (errorMsg) {
+        // 显示后端返回的具体错误信息
+        message.error(errorMsg);
+      } else {
+        message.error(t('auth.loginFailed') || '登录失败，请稍后重试');
+      }
+      if (captchaRef.current) {
+        resetTurnstile(captchaRef.current);
+        setCaptchaToken('');
       }
     } finally {
       setLoading(false);
@@ -137,16 +148,23 @@ export default function Login() {
           </Form.Item>
 
           {/* 验证码组件 - 根据配置动态显示 */}
-          {captchaConfig.enabled && captchaConfig.siteKey && (
+          {captchaConfig.enabled && (
             <div className="mb-6">
-              <CloudflareTurnstile
-                siteKey={captchaConfig.siteKey}
-                onVerify={handleCaptchaVerify}
-                theme="auto"
-                lang={i18n.language}
-              />
-              {captchaError && (
-                <div className="text-red-500 text-sm mt-2">{captchaError}</div>
+              {captchaConfig.siteKey ? (
+                <div ref={captchaRef}>
+                  <CloudflareTurnstile
+                    siteKey={captchaConfig.siteKey}
+                    onVerify={handleCaptchaVerify}
+                    lang={i18n.language}
+                  />
+                  {captchaError && (
+                    <div className="text-red-500 text-sm mt-2">{captchaError}</div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-red-500 text-sm p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                  {t('auth.captchaConfigError')}
+                </div>
               )}
             </div>
           )}

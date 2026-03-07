@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Form, Input, Button, Typography, Space, Steps } from 'antd';
 import { message } from '@/utils/antdUtils';
 import { MailOutlined, LockOutlined, SafetyOutlined } from '@ant-design/icons';
@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { authApi } from '@/utils/api';
 import { AuthPageToolbar } from '@/components/AuthPageToolbar';
 import { SiteLogo } from '@/components/SiteLogo';
-import { CloudflareTurnstile } from '@/components/CloudflareTurnstile';
+import { CloudflareTurnstile, resetTurnstile } from '@/components/CloudflareTurnstile';
 import { useCaptchaConfig } from '@/hooks/useCaptchaConfig';
 import { useCountdown } from '@/hooks/useCountdown';
 import { FilingInfo } from '@/components/FilingInfo';
@@ -23,6 +23,7 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [form] = Form.useForm();
   const [captchaToken, setCaptchaToken] = useState<string>('');
+  const captchaRef = useRef<HTMLDivElement>(null);
 
   // 从后端动态获取验证码配置
   const { config: captchaConfig } = useCaptchaConfig();
@@ -54,8 +55,19 @@ export default function ForgotPassword() {
       setEmail(emailVal);
       startCountdown();
       setStep(1);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to send verification code:', error);
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
+      const errorMsg = err.response?.data?.message || err.message || '';
+      if (errorMsg) {
+        message.error(errorMsg);
+      } else {
+        message.error(t('auth.codeSendFailed') || 'Failed to send verification code');
+      }
+      if (captchaRef.current) {
+        resetTurnstile(captchaRef.current);
+        setCaptchaToken('');
+      }
     } finally { setCodeSending(false); }
   };
 
@@ -65,8 +77,15 @@ export default function ForgotPassword() {
       await authApi.resetPassword({ email, code: values.code, newPassword: values.newPassword });
       message.success(t('auth.resetSuccess'));
       navigate('/login');
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to reset password:', error);
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
+      const errorMsg = err.response?.data?.message || err.message || '';
+      if (errorMsg) {
+        message.error(errorMsg);
+      } else {
+        message.error(t('auth.resetFailed') || 'Failed to reset password');
+      }
     } finally { setLoading(false); }
   };
 
@@ -96,14 +115,21 @@ export default function ForgotPassword() {
                 <Input prefix={<MailOutlined style={{ color: 'var(--ink-lighter)' }} />} placeholder={t('auth.emailPlaceholder')} style={{ borderRadius: 'var(--radius-md)' }} />
               </Form.Item>
               {/* 验证码组件：当 config.enabled 为 true 时显示 */}
-              {captchaConfig.enabled && captchaConfig.siteKey && (
+              {captchaConfig.enabled && (
                 <Form.Item>
-                  <CloudflareTurnstile
-                    siteKey={captchaConfig.siteKey}
-                    onVerify={handleCaptchaVerify}
-                    theme="auto"
-                    lang={i18n.language}
-                  />
+                  {captchaConfig.siteKey ? (
+                    <div ref={captchaRef}>
+                      <CloudflareTurnstile
+                        siteKey={captchaConfig.siteKey}
+                        onVerify={handleCaptchaVerify}
+                        lang={i18n.language}
+                      />
+                    </div>
+                  ) : (
+                    <div className="text-red-500 text-sm p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                      {t('auth.captchaConfigError')}
+                    </div>
+                  )}
                 </Form.Item>
               )}
               <Form.Item>
@@ -128,7 +154,7 @@ export default function ForgotPassword() {
               <Form.Item name="newPassword" rules={[
                 { required: true, message: t('auth.newPasswordRequired') },
                 { min: 8, message: t('auth.passwordMin8') },
-                { pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/, message: t('auth.passwordPattern') },
+                { pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z0-9!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]+$/, message: t('auth.passwordPattern') },
               ]}>
                 <Input.Password prefix={<LockOutlined style={{ color: 'var(--ink-lighter)' }} />} placeholder={t('auth.newPasswordPlaceholder')} style={{ borderRadius: 'var(--radius-md)' }} />
               </Form.Item>

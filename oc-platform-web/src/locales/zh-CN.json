@@ -50,7 +50,9 @@
     "loginToLike": "请登录后点赞",
     "likeFailed": "操作失败",
     "rateLimitExceeded": "留言过于频繁，请 {{seconds}} 秒后再试",
-    "sortByReplies": "回复数"
+    "sortByReplies": "回复数",
+    "captchaRequired": "请完成人机验证",
+    "captchaConfigError": "验证码配置错误，请联系管理员"
   },
   "disclaimer": {
     "title": "免费声明",
@@ -134,7 +136,7 @@
     "codePlaceholder": "验证码",
     "emailPlaceholder": "邮箱地址",
     "passwordLength": "密码长度为 8-64 个字符",
-    "passwordFormat": "密码只能包含字母和数字，不能包含空格或特殊符号",
+    "passwordFormat": "密码只能包含字母、数字和常见特殊字符，不能包含空格",
     "passwordsNotMatch": "两次输入的密码不一致",
     "confirmPasswordRequired": "请确认密码",
     "confirmPasswordPlaceholder": "确认新密码",
@@ -159,7 +161,8 @@
     "accountFormat": "账号格式不正确",
     "captchaRequired": "请完成安全验证",
     "captchaFailed": "验证码验证失败，请重试",
-    "captchaLoading": "验证码加载中..."
+    "captchaLoading": "验证码加载中...",
+    "captchaConfigError": "验证码配置错误，请联系管理员"
   },
   "product": {
     "allProducts": "全部产品",
@@ -714,7 +717,8 @@
     "emailCodeSendFailed": "验证码发送失败",
     "emailChanged": "邮箱已修改，请使用新邮箱重新登录",
     "captcha": "人机验证",
-    "captchaRequired": "请完成人机验证"
+    "captchaRequired": "请完成人机验证",
+    "captchaConfigError": "验证码配置错误，请联系管理员"
   },
   "theme": {
     "light": "浅色",
@@ -813,7 +817,10 @@
     "about": "关于本站",
     "freeStatement": "免费与非盈利",
     "privacyPolicy": "隐私政策",
-    "termsOfService": "服务条款"
+    "termsOfService": "服务条款",
+    "weibo": "微博",
+    "wechat": "微信公众号",
+    "contactEmail": "联系邮箱"
   },
   "footerPages": {
     "about": {

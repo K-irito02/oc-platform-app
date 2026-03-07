@@ -9,11 +9,15 @@ interface UseCaptchaReturn {
   error: string | null;
 }
 
+interface TurnstileContainer extends HTMLDivElement {
+  resetTurnstile?: () => void;
+}
+
 export function useCaptcha(): UseCaptchaReturn {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  const containerRef = useRef<TurnstileContainer | null>(null);
 
   // 重置验证码
   const reset = useCallback(() => {
@@ -21,8 +25,8 @@ export function useCaptcha(): UseCaptchaReturn {
     setError(null);
     
     // 重置 Turnstile widget
-    if (containerRef.current && (containerRef.current as any).resetTurnstile) {
-      (containerRef.current as any).resetTurnstile();
+    if (containerRef.current?.resetTurnstile) {
+      containerRef.current.resetTurnstile();
     }
   }, []);
 
@@ -46,14 +50,14 @@ export function useCaptcha(): UseCaptchaReturn {
         }, 60000); // 60秒超时
 
         // 存储回调供 CloudflareTurnstile 组件调用
-        (window as any).__turnstileVerifyCallback = (newToken: string) => {
+        (window as Window & { __turnstileVerifyCallback?: (token: string) => void }).__turnstileVerifyCallback = (newToken: string) => {
           clearTimeout(timeout);
           setToken(newToken);
           setLoading(false);
           resolve(newToken);
         };
 
-        (window as any).__turnstileErrorCallback = (errorMsg: string) => {
+        (window as Window & { __turnstileErrorCallback?: (error: string) => void }).__turnstileErrorCallback = (errorMsg: string) => {
           clearTimeout(timeout);
           setError(errorMsg);
           setLoading(false);

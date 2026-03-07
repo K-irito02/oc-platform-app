@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Github, Twitter, Linkedin, Quote, Calendar, Mail, Shield } from 'lucide-react';
+import { Github, Twitter, Linkedin, Quote, Calendar, Mail, MessageCircle, MessageSquare } from 'lucide-react';
 import { SiteLogo } from '../SiteLogo';
 import { useAppSelector } from '@/store/hooks';
 
@@ -16,6 +16,8 @@ export const Footer = () => {
     github: siteConfig.socialGithub,
     twitter: siteConfig.socialTwitter,
     linkedin: siteConfig.socialLinkedin,
+    weibo: siteConfig.socialWeibo,
+    wechat: siteConfig.socialWechat,
     email: siteConfig.socialEmail,
   };
 
@@ -56,31 +58,34 @@ export const Footer = () => {
             </p>
             <div className="flex space-x-4">
               {socialLinks.github && (
-                <a href={socialLinks.github} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                <a href={socialLinks.github} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors" title="GitHub">
                   <Github size={20} />
                 </a>
               )}
               {socialLinks.twitter && (
-                <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors" title="Twitter / X">
                   <Twitter size={20} />
                 </a>
               )}
               {socialLinks.linkedin && (
-                <a href={socialLinks.linkedin} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                <a href={socialLinks.linkedin} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors" title="LinkedIn">
                   <Linkedin size={20} />
                 </a>
               )}
-              {socialLinks.email && (
-                <a href={`mailto:${socialLinks.email}`} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
-                  <Mail size={20} />
+              {socialLinks.weibo && (
+                <a href={socialLinks.weibo} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors" title={t('footer.weibo') || '微博'}>
+                  <MessageCircle size={20} />
                 </a>
               )}
-              {!socialLinks.github && !socialLinks.twitter && !socialLinks.linkedin && !socialLinks.email && (
-                <>
-                  <span className="text-slate-400"><Github size={20} /></span>
-                  <span className="text-slate-400"><Twitter size={20} /></span>
-                  <span className="text-slate-400"><Linkedin size={20} /></span>
-                </>
+              {socialLinks.wechat && (
+                <span className="text-slate-400 cursor-pointer hover:text-slate-600 dark:hover:text-slate-300 transition-colors" title={t('footer.wechat') || '微信公众号'}>
+                  <MessageSquare size={20} />
+                </span>
+              )}
+              {socialLinks.email && (
+                <a href={`mailto:${socialLinks.email}`} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors" title={t('footer.contactEmail') || '联系邮箱'}>
+                  <Mail size={20} />
+                </a>
               )}
             </div>
           </div>
@@ -167,17 +172,14 @@ export const Footer = () => {
               2. 公安备案号（如：黔公网安备52010000000000号）
               3. 公安备案图标URL（可从公安机关备案网站下载）
             */}
-            <div className="flex flex-wrap items-center justify-center gap-4">
-              <a 
-                href="https://beian.miit.gov.cn/" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 hover:shadow-md hover:border-gray-300 dark:hover:border-slate-600 transition-all duration-200"
-              >
-                <Shield size={18} className="text-blue-500" />
-                <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">黔ICP备2026002901号-1</span>
-              </a>
-            </div>
+            <a 
+              href="https://beian.miit.gov.cn/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-slate-500 dark:text-slate-400 text-sm hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+            >
+              黔ICP备2026002901号-1
+            </a>
           </div>
         </div>
       </div>
