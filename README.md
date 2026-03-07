@@ -77,14 +77,14 @@ docker compose -f docker-compose.dev.yml up -d
 
 | 服务 | 容器名 | 宿主机端口 | 容器端口 | 用户名 | 密码 |
 |------|---------|------------|----------|--------|------|
-| PostgreSQL 15 | oc-dev-postgres | **127.0.0.1:5433** | 5432 | oc_user | 3143285505 |
-| Redis 7 | oc-dev-redis | **127.0.0.1:6380** | 6379 | 无 | 3143285505 |
-| MinIO | oc-dev-minio | **127.0.0.1:9000** | 9000 | minioadmin | 3143285505 |
+| PostgreSQL 15 | oc-dev-postgres | **127.0.0.1:5433** | 5432 | oc_user | -- |
+| Redis 7 | oc-dev-redis | **127.0.0.1:6380** | 6379 | 无 | -- |
+| MinIO | oc-dev-minio | **127.0.0.1:9000** | 9000 | minioadmin | -- |
 
 > **重要**: 
 > - PostgreSQL 端口为 **5433**（非默认 5432），Redis 端口为 **6380**（非默认 6379），MinIO 端口为 **9000**，避免与本地已安装的服务冲突。
 > - 端口仅绑定到 127.0.0.1，确保开发环境安全。
-> - 默认密码为 `oc_dev_password`，可通过 `.env` 文件自定义。
+> - 默认密码请查看 .env 文件，可通过 `.env` 文件自定义。
 
 验证服务是否正常启动：
 
@@ -221,9 +221,9 @@ oc-platform/
 
 | 服务 | 用户名 | 密码 | 数据库 |
 |------|--------|------|--------|
-| PostgreSQL | oc_user | **oc_dev_password** | oc_platform |
-| Redis | 无 | **oc_dev_password** | — |
-| MinIO | minioadmin | **oc_dev_password** | — |
+| PostgreSQL | oc_user | -- | oc_platform |
+| Redis | 无 | -- | — |
+| MinIO | minioadmin | -- | — |
 
 ---
 
