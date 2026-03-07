@@ -78,7 +78,7 @@ CREATE TABLE user_oauth_bindings (
     id             BIGSERIAL PRIMARY KEY,
     user_id        BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     oauth_provider VARCHAR(50) NOT NULL,
-    oauth_id       VARCHAR(200) NOT NULL,
+    oauth_id       TEXT NOT NULL,
     oauth_username VARCHAR(200),
     oauth_avatar   VARCHAR(500),
     access_token   TEXT,
