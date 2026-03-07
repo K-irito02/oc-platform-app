@@ -248,6 +248,27 @@ oc-platform/
 
 如果你的本地没有这些服务冲突，可以在 `docker-compose.dev.yml` 和 `application.yml` 中改回默认端口。
 
+### CORS 配置问题
+
+如果前端 API 请求返回 403 Forbidden，可能是 CORS 配置问题：
+
+```bash
+# 测试 CORS 预检请求
+curl -sk -X OPTIONS https://xiaogans.online/api/v1/auth/login \\
+  -H "Origin: https://xiaogans.online" \\
+  -H "Access-Control-Request-Method: POST" \\
+  -w "\nHTTP Status: %{http_code}\n" -D -
+
+# 如果返回 403，需要检查 SecurityConfig.java 中的 CORS 配置
+# 确保包含生产域名：xiaogans.online 和 www.xiaogans.online
+```
+
+修复步骤：
+1. 编辑 `oc-platform-user/src/main/java/com/ocplatform/user/security/SecurityConfig.java`
+2. 在 `corsConfigurationSource()` 方法中添加生产域名
+3. 重新构建并部署后端容器
+
+
 ### 重置数据库
 
 ```powershell
