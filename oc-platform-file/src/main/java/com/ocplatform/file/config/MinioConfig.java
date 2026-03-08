@@ -17,6 +17,7 @@ public class MinioConfig {
     private String bucketProducts = "products";
     private String bucketVideos = "videos";
     private String bucketDownloads = "downloads";
+    private String externalUrl = "/minio";
 
     @Bean
     public MinioClient minioClient() {

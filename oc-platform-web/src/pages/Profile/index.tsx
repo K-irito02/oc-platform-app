@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { setUser, logout } from '@/store/slices/authSlice';
-import { userApi, authApi } from '@/utils/api';
+import { userApi, authApi, fileApi } from '@/utils/api';
 import { CloudflareTurnstile, resetTurnstile } from '@/components/CloudflareTurnstile';
 import { useCaptchaConfig } from '@/hooks/useCaptchaConfig';
 import { useCountdown } from '@/hooks/useCountdown';
@@ -35,7 +35,9 @@ type ApiResponse<T> = {
 };
 
 type UploadAvatarResponse = {
-  avatarUrl?: string;
+  url: string;
+  id: number;
+  originalName: string;
 };
 
 export default function Profile() {
@@ -57,9 +59,7 @@ export default function Profile() {
   const passwordCaptchaRef = useRef<HTMLDivElement>(null);
   const emailCaptchaRef = useRef<HTMLDivElement>(null);
   
-  // 使用 useCaptchaConfig Hook 获取验证码配置
   const { config: captchaConfig } = useCaptchaConfig();
-  // 使用 useCountdown Hook 管理邮箱验证码倒计时
   const { countdown: emailCountdown, start: startEmailCountdown } = useCountdown(60);
 
   const loadProfile = useCallback(async () => {
@@ -109,7 +109,6 @@ export default function Profile() {
   };
 
   const onPasswordChange = async () => {
-    // 验证码检查
     if (captchaConfig.enabled && !passwordCaptchaVerified) {
       message.error(t('profile.captchaRequired'));
       return;
@@ -144,13 +143,11 @@ export default function Profile() {
   };
 
   const sendEmailCode = async () => {
-    // 验证码检查
     if (captchaConfig.enabled && !emailCaptchaVerified) {
       message.error(t('profile.captchaRequired'));
       return;
     }
     
-    // 先获取新邮箱值
     const newEmail = emailForm.getFieldValue('newEmail');
     if (!newEmail) {
       message.error(t('profile.pleaseEnterNewEmail'));
@@ -199,12 +196,11 @@ export default function Profile() {
   };
 
   const handleAvatarUpload = async (file: File) => {
-    const formData = new FormData();
-    formData.append('file', file);
     try {
-      const res = await userApi.uploadAvatar(formData) as ApiResponse<UploadAvatarResponse>;
-      if (res.data?.avatarUrl && user) {
-        const avatarUrlWithCacheBuster = `${res.data.avatarUrl}?t=${Date.now()}`;
+      const res = await fileApi.uploadAvatar(file) as ApiResponse<UploadAvatarResponse>;
+      if (res.data?.url && user) {
+        const avatarUrlWithCacheBuster = `${res.data.url}?t=${Date.now()}`;
+        await userApi.updateProfile({ avatarUrl: res.data.url });
         dispatch(setUser({ ...user, avatarUrl: avatarUrlWithCacheBuster }));
         message.success(t('avatar.uploadSuccess'));
       }
@@ -290,7 +286,6 @@ export default function Profile() {
       label: <span className="flex items-center gap-2"><Lock size={16} /> {t('profile.security')}</span>,
       children: (
         <div className="max-w-md space-y-8">
-          {/* Change Password Section */}
           <div>
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
               <Lock size={18} /> {t('profile.changePasswordTitle')}
@@ -318,7 +313,6 @@ export default function Profile() {
               ]}>
                 <Input.Password size="large" prefix={<Lock size={16} className="text-slate-400" />} />
               </Form.Item>
-              {/* 验证码组件 */}
               {captchaConfig.enabled && (
                 <Form.Item label={t('profile.captcha')} required>
                   {captchaConfig.siteKey ? (
@@ -346,7 +340,6 @@ export default function Profile() {
 
           <Divider />
 
-          {/* Change Email Section */}
           <div>
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
               <Mail size={18} /> {t('profile.changeEmailTitle')}
@@ -372,7 +365,6 @@ export default function Profile() {
               >
                 <Input size="large" prefix={<Mail size={16} className="text-slate-400" />} placeholder={t('profile.newEmailPlaceholder')} />
               </Form.Item>
-              {/* 验证码组件 */}
               {captchaConfig.enabled && (
                 <Form.Item label={t('profile.captcha')} required>
                   {captchaConfig.siteKey ? (

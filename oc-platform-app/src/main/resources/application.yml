@@ -123,6 +123,7 @@ minio:
   bucket-products: ${MINIO_BUCKET_PRODUCTS:products}
   bucket-videos: ${MINIO_BUCKET_VIDEOS:videos}
   bucket-downloads: ${MINIO_BUCKET_DOWNLOADS:downloads}
+  external-url: ${MINIO_EXTERNAL_URL:/minio}
 
 # OAuth
 oauth:

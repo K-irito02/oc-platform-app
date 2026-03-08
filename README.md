@@ -34,7 +34,7 @@
 | MapStruct | 1.6.3 | DTO/Entity 对象映射 |
 | PostgreSQL | 15.x | 主数据库（JSONB + 全文检索 + 表分区） |
 | Redis | 7.x | 缓存 + 限流（单机模式） |
-| MinIO | Latest | 对象存储（图片/视频上传） |
+| MinIO | Latest | 对象存储（图片/视频/头像上传） |
 
 ### 基础设施
 

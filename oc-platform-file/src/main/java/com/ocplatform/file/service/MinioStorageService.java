@@ -112,8 +112,8 @@ public class MinioStorageService {
                     .contentType(file.getContentType())
                     .build());
 
-            // 生成访问 URL
-            String fileUrl = minioConfig.getEndpoint() + "/" + bucket + "/" + objectName;
+            // 生成访问 URL（使用外部访问路径）
+            String fileUrl = minioConfig.getExternalUrl() + "/" + bucket + "/" + objectName;
 
             // 保存文件记录
             FileRecord record = FileRecord.builder()

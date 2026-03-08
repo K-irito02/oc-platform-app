@@ -121,6 +121,7 @@ services:
       MINIO_ENDPOINT: http://minio:9000
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:?MINIO_SECRET_KEY is required}
+      MINIO_EXTERNAL_URL: /minio
       OAUTH_GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
       OAUTH_GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
       OAUTH_GITHUB_REDIRECT_URI: ${GITHUB_REDIRECT_URI:-https://your-domain.com/oauth/github/callback}
