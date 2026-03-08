@@ -161,13 +161,13 @@ export const Navbar = () => {
                 {i18n.language === 'zh-CN' ? '中文' : 'EN'}
               </Button>
               <Dropdown menu={themeMenu} trigger={['click']}>
-                <Button type="text" icon={<Sun size={20} />}>Theme</Button>
+                <Button type="text" icon={<Sun size={20} />}>{t('theme.title') || 'Theme'}</Button>
               </Dropdown>
             </div>
             {!isAuthenticated && (
               <div className="mt-4 px-5 space-y-2">
-                <Button block onClick={() => navigate('/login')}>Log in</Button>
-                <Button block type="primary" onClick={() => navigate('/register')}>Sign up</Button>
+                <Button block onClick={() => navigate('/login')}>{t('common.login') || 'Log in'}</Button>
+                <Button block type="primary" onClick={() => navigate('/register')}>{t('common.register') || 'Sign up'}</Button>
               </div>
             )}
           </div>

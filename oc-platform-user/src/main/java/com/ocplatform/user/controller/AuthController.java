@@ -20,8 +20,10 @@ public class AuthController {
     private final EmailService emailService;
 
     @PostMapping("/register")
-    public ApiResponse<Void> register(@Valid @RequestBody RegisterRequest request) {
-        authService.register(request);
+    public ApiResponse<Void> register(@Valid @RequestBody RegisterRequest request,
+                                      HttpServletRequest httpRequest) {
+        String clientIp = IpUtil.getClientIp(httpRequest);
+        authService.register(request, clientIp);
         return ApiResponse.success();
     }
 
@@ -51,15 +53,19 @@ public class AuthController {
     }
 
     @PostMapping("/send-code")
-    public ApiResponse<Void> sendCode(@Valid @RequestBody SendCodeRequest request) {
-        authService.sendVerificationCode(request);
+    public ApiResponse<Void> sendCode(@Valid @RequestBody SendCodeRequest request,
+                                      HttpServletRequest httpRequest) {
+        String clientIp = IpUtil.getClientIp(httpRequest);
+        authService.sendVerificationCode(request, clientIp);
         return ApiResponse.success();
     }
 
     @PostMapping("/forgot-password")
-    public ApiResponse<Void> forgotPassword(@Valid @RequestBody SendCodeRequest request) {
+    public ApiResponse<Void> forgotPassword(@Valid @RequestBody SendCodeRequest request,
+                                            HttpServletRequest httpRequest) {
         request.setType("RESET_PASSWORD");
-        authService.sendVerificationCode(request);
+        String clientIp = IpUtil.getClientIp(httpRequest);
+        authService.sendVerificationCode(request, clientIp);
         return ApiResponse.success();
     }
 
@@ -71,9 +77,11 @@ public class AuthController {
 
     @PutMapping("/change-password")
     public ApiResponse<Void> changePassword(Authentication authentication,
-                                            @Valid @RequestBody ChangePasswordRequest request) {
+                                            @Valid @RequestBody ChangePasswordRequest request,
+                                            HttpServletRequest httpRequest) {
         Long userId = (Long) authentication.getPrincipal();
-        authService.changePassword(userId, request);
+        String clientIp = IpUtil.getClientIp(httpRequest);
+        authService.changePassword(userId, request, clientIp);
         return ApiResponse.success();
     }
 
@@ -88,10 +96,12 @@ public class AuthController {
 
     @PutMapping("/change-email")
     public ApiResponse<Void> changeEmail(Authentication authentication,
-                                         @Valid @RequestBody ChangeEmailRequest request) {
+                                         @Valid @RequestBody ChangeEmailRequest request,
+                                         HttpServletRequest httpRequest) {
         Long userId = (Long) authentication.getPrincipal();
+        String clientIp = IpUtil.getClientIp(httpRequest);
         authService.changeEmail(userId, request.getCode(), request.getNewEmail(), 
-                               request.getCaptchaToken());
+                               request.getCaptchaToken(), clientIp);
         return ApiResponse.success();
     }
 }

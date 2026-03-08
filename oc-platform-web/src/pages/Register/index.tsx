@@ -42,8 +42,7 @@ export default function Register() {
       const email = form.getFieldValue('email');
       await authApi.sendCode({ 
         email, 
-        type: 'REGISTER',
-        captchaToken: captchaToken
+        type: 'REGISTER'
       });
       message.success(t('auth.codeSent') || 'Verification code sent');
       startCountdown();
@@ -55,10 +54,6 @@ export default function Register() {
         message.error(errorMsg);
       } else {
         message.error(t('auth.codeSendFailed') || 'Failed to send verification code');
-      }
-      if (captchaRef.current) {
-        resetTurnstile(captchaRef.current);
-        setCaptchaToken('');
       }
     } finally {
       setCodeSending(false);
@@ -79,6 +74,7 @@ export default function Register() {
         email: values.email,
         password: values.password,
         verificationCode: values.code,
+        captchaToken: captchaToken,
       });
       message.success(t('auth.registerSuccess') || 'Registration successful');
       navigate('/login');
@@ -141,25 +137,6 @@ export default function Register() {
               </Form.Item>
 
               <Form.Item
-                label={t('auth.verificationCode')}
-                name="code"
-                className="md:col-span-2"
-                rules={[{ required: true, message: t('auth.codeRequired') }]}
-              >
-                <div className="flex gap-3">
-                  <Input prefix={<ShieldCheck size={18} className="text-slate-400 mr-2" />} placeholder="123456" />
-                  <Button 
-                    onClick={sendCode} 
-                    disabled={countdown > 0} 
-                    loading={codeSending}
-                    className="h-12 px-6"
-                  >
-                    {countdown > 0 ? `${countdown}s` : t('auth.sendCode')}
-                  </Button>
-                </div>
-              </Form.Item>
-
-              <Form.Item
                 label={t('auth.password')}
                 name="password"
                 rules={[
@@ -186,6 +163,25 @@ export default function Register() {
                 ]}
               >
                 <Input.Password prefix={<Lock size={18} className="text-slate-400 mr-2" />} placeholder="••••••••" />
+              </Form.Item>
+
+              <Form.Item
+                label={t('auth.verificationCode')}
+                name="code"
+                className="md:col-span-2"
+                rules={[{ required: true, message: t('auth.codeRequired') }]}
+              >
+                <div className="flex gap-3">
+                  <Input prefix={<ShieldCheck size={18} className="text-slate-400 mr-2" />} placeholder="123456" />
+                  <Button 
+                    onClick={sendCode} 
+                    disabled={countdown > 0} 
+                    loading={codeSending}
+                    className="h-12 px-6"
+                  >
+                    {countdown > 0 ? `${countdown}s` : t('auth.sendCode')}
+                  </Button>
+                </div>
               </Form.Item>
             </div>
 

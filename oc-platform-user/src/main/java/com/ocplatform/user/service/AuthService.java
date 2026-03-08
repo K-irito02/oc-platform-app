@@ -42,7 +42,7 @@ public class AuthService {
     private final CaptchaService captchaService;
 
     @Transactional
-    public void register(RegisterRequest request) {
+    public void register(RegisterRequest request, String clientIp) {
         // 验证码校验
         if (captchaService.isEnabled()) {
             if (request.getCaptchaToken() == null) {
@@ -51,7 +51,7 @@ public class AuthService {
             CaptchaVerifyRequest captchaRequest = new CaptchaVerifyRequest();
             captchaRequest.setToken(request.getCaptchaToken());
             captchaRequest.setScene("REGISTER");
-            CaptchaVerifyResponse captchaResponse = captchaService.verify(captchaRequest, null, null);
+            CaptchaVerifyResponse captchaResponse = captchaService.verify(captchaRequest, clientIp, null);
             if (!captchaResponse.getSuccess()) {
                 throw new BusinessException(400, "验证码验证失败");
             }
@@ -180,22 +180,9 @@ public class AuthService {
         }
     }
 
-    public void sendVerificationCode(SendCodeRequest request) {
-        // 验证码校验
-        if (captchaService.isEnabled()) {
-            if (request.getCaptchaToken() == null) {
-                throw new BusinessException(400, "请完成验证码验证");
-            }
-            String scene = "RESET_PASSWORD".equals(request.getType()) ? "RESET_PASSWORD" : "REGISTER";
-            CaptchaVerifyRequest captchaRequest = new CaptchaVerifyRequest();
-            captchaRequest.setToken(request.getCaptchaToken());
-            captchaRequest.setScene(scene);
-            CaptchaVerifyResponse captchaResponse = captchaService.verify(captchaRequest, null, null);
-            if (!captchaResponse.getSuccess()) {
-                throw new BusinessException(400, "验证码验证失败");
-            }
-        }
-
+    public void sendVerificationCode(SendCodeRequest request, String clientIp) {
+        // 发送验证码不需要验证码校验，只在最终操作时校验
+        
         if ("REGISTER".equals(request.getType())) {
             if (userMapper.existsByEmail(request.getEmail())) {
                 throw new BusinessException(ErrorCode.EMAIL_EXISTS);
@@ -236,7 +223,7 @@ public class AuthService {
     }
 
     @Transactional
-    public void changeEmail(Long userId, String code, String newEmail, String captchaToken) {
+    public void changeEmail(Long userId, String code, String newEmail, String captchaToken, String clientIp) {
         // 验证码校验
         if (captchaService.isEnabled()) {
             if (captchaToken == null) {
@@ -245,7 +232,7 @@ public class AuthService {
             CaptchaVerifyRequest captchaRequest = new CaptchaVerifyRequest();
             captchaRequest.setToken(captchaToken);
             captchaRequest.setScene("CHANGE_EMAIL");
-            CaptchaVerifyResponse captchaResponse = captchaService.verify(captchaRequest, null, userId);
+            CaptchaVerifyResponse captchaResponse = captchaService.verify(captchaRequest, clientIp, userId);
             if (!captchaResponse.getSuccess()) {
                 throw new BusinessException(400, "验证码验证失败");
             }
@@ -295,7 +282,7 @@ public class AuthService {
         }
     }
 
-    public void changePassword(Long userId, ChangePasswordRequest request) {
+    public void changePassword(Long userId, ChangePasswordRequest request, String clientIp) {
         // 验证码校验
         if (captchaService.isEnabled()) {
             if (request.getCaptchaToken() == null) {
@@ -304,7 +291,7 @@ public class AuthService {
             CaptchaVerifyRequest captchaRequest = new CaptchaVerifyRequest();
             captchaRequest.setToken(request.getCaptchaToken());
             captchaRequest.setScene("CHANGE_PASSWORD");
-            CaptchaVerifyResponse captchaResponse = captchaService.verify(captchaRequest, null, userId);
+            CaptchaVerifyResponse captchaResponse = captchaService.verify(captchaRequest, clientIp, userId);
             if (!captchaResponse.getSuccess()) {
                 throw new BusinessException(400, "验证码验证失败");
             }
