@@ -101,7 +101,7 @@ jwt:
 
 # 文件存储
 storage:
-  upload-path: ${UPLOAD_PATH:./uploads}
+  upload-path: ${STORAGE_UPLOAD_PATH:./uploads}
   max-file-size: ${MAX_FILE_SIZE:1073741824}
   allowed-extensions:
     - exe
