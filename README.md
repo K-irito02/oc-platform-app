@@ -74,9 +74,9 @@ docker compose -f docker-compose.dev.yml up -d
 
 | 服务 | 容器名 | 宿主机端口 | 容器端口 | 用户名 | 密码 |
 |------|---------|------------|----------|--------|------|
-| PostgreSQL 15 | qt-dev-postgres | **5433** | 5432 | qt_user | 3143285505 |
-| Redis 7 | qt-dev-redis | **6380** | 6379 | 无 | 3143285505 |
-| MinIO | qt-dev-minio | **9000** | 9000 | minioadmin | minioadmin |
+| PostgreSQL 15 | qt-dev-postgres | **5433** | 5432 | qt_user | xxxxxxxxxx |
+| Redis 7 | qt-dev-redis | **6380** | 6379 | 无 | xxxxxxxxxx |
+| MinIO | qt-dev-minio | **9000** | 9000 | minioadmin | xxxxxxxxxx |
 
 > **重要**: PostgreSQL 端口为 **5433**（非默认 5432），Redis 端口为 **6380**（非默认 6379），MinIO 端口为 **9000**，避免与本地已安装的服务冲突。
 
@@ -200,8 +200,8 @@ qt-platform/
 
 | 服务 | 用户名 | 密码 | 数据库 |
 |------|--------|------|--------|
-| PostgreSQL | qt_user | **3143285505** | qt_platform |
-| Redis | 无 | **3143285505** | — |
+| PostgreSQL | qt_user | **xxxxxxxxxx** | qt_platform |
+| Redis | 无 | **xxxxxxxxxxx** | — |
 | MinIO | minioadmin | minioadmin | — |
 
 ---
