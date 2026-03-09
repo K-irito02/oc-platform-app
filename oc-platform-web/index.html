@@ -5,7 +5,25 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="oc KirLab - 一站式软件产品发布与分发平台" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
     <title>oc KirLab</title>
+    <script>
+      // 清理旧的 chunk 缓存
+      (function() {
+        var keys = [];
+        try {
+          for (var i = 0; i < sessionStorage.length; i++) {
+            var key = sessionStorage.key(i);
+            if (key && key.indexOf('chunk-retry-') === 0) {
+              keys.push(key);
+            }
+          }
+          keys.forEach(function(k) { sessionStorage.removeItem(k); });
+        } catch(e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

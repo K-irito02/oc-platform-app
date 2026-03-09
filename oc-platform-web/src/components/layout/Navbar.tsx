@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Menu, X, Globe, Sun, Moon, Monitor, User, LogOut, Settings } from 'lucide-react';
+import { Menu, X, Globe, Sun, Moon, Monitor, User, LogOut, Settings, ChevronRight } from 'lucide-react';
 import { Button, Dropdown, Avatar } from 'antd';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { logout } from '@/store/slices/authSlice';
@@ -17,7 +17,6 @@ export const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
-  // Handle scroll effect
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
@@ -34,6 +33,7 @@ export const Navbar = () => {
 
   const handleLogout = () => {
     dispatch(logout());
+    setIsMenuOpen(false);
     navigate('/login');
   };
 
@@ -81,12 +81,10 @@ export const Navbar = () => {
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
           <div className="flex-shrink-0 flex items-center cursor-pointer" onClick={() => navigate('/')}>
             <SiteLogo size="md" showText textClassName="text-xl" />
           </div>
 
-          {/* Desktop Nav */}
           <div className="hidden md:flex items-center space-x-8">
             {navLinks.map((link) => (
               <Link
@@ -99,7 +97,6 @@ export const Navbar = () => {
             ))}
           </div>
 
-          {/* Desktop Actions */}
           <div className="hidden md:flex items-center space-x-4">
             <Button type="text" shape="circle" icon={<Globe size={20} />} onClick={toggleLanguage} />
             
@@ -128,7 +125,6 @@ export const Navbar = () => {
             )}
           </div>
 
-          {/* Mobile menu button */}
           <div className="md:hidden flex items-center">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -140,34 +136,122 @@ export const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile Menu */}
       {isMenuOpen && (
         <div className="md:hidden bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+          {isAuthenticated && (
+            <div className="px-4 py-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+              <div className="flex items-center space-x-4">
+                <div className="relative">
+                  <Avatar 
+                    src={user?.avatarUrl} 
+                    size={56}
+                    className="ring-2 ring-blue-500 ring-offset-2 ring-offset-white dark:ring-offset-slate-900"
+                    style={{ backgroundColor: '#2563eb' }}
+                  >
+                    {user?.username?.[0]?.toUpperCase()}
+                  </Avatar>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-lg font-semibold text-slate-900 dark:text-white truncate">
+                    {user?.username}
+                  </p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                    {user?.email}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="mt-4 space-y-2">
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    navigate('/profile');
+                  }}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-left text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 active:scale-[0.98] transition-all shadow-sm min-h-[48px]"
+                >
+                  <span className="flex items-center space-x-3">
+                    <User size={20} className="text-blue-500" />
+                    <span className="font-medium">{t('common.profile') || '个人中心'}</span>
+                  </span>
+                  <ChevronRight size={18} className="text-slate-400" />
+                </button>
+                
+                {isAdmin && (
+                  <button
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      navigate('/admin');
+                    }}
+                    className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-left text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 active:scale-[0.98] transition-all shadow-sm min-h-[48px]"
+                  >
+                    <span className="flex items-center space-x-3">
+                      <Settings size={20} className="text-blue-500" />
+                      <span className="font-medium">{t('common.admin') || '管理后台'}</span>
+                    </span>
+                    <ChevronRight size={18} className="text-slate-400" />
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             {navLinks.map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
-                className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800"
+                className="block px-4 py-3 rounded-xl text-base font-medium text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-[0.98] transition-all min-h-[48px]"
                 onClick={() => setIsMenuOpen(false)}
               >
                 {link.name}
               </Link>
             ))}
           </div>
+          
           <div className="pt-4 pb-4 border-t border-slate-200 dark:border-slate-800">
             <div className="flex items-center justify-around px-5">
-              <Button type="text" icon={<Globe size={20} />} onClick={toggleLanguage}>
+              <Button type="text" icon={<Globe size={20} />} onClick={toggleLanguage} className="min-h-[44px]">
                 {i18n.language === 'zh-CN' ? '中文' : 'EN'}
               </Button>
               <Dropdown menu={themeMenu} trigger={['click']}>
-                <Button type="text" icon={<Sun size={20} />}>{t('theme.title') || 'Theme'}</Button>
+                <Button type="text" icon={<Sun size={20} />} className="min-h-[44px]">{t('theme.title') || 'Theme'}</Button>
               </Dropdown>
             </div>
+            
             {!isAuthenticated && (
-              <div className="mt-4 px-5 space-y-2">
-                <Button block onClick={() => navigate('/login')}>{t('common.login') || 'Log in'}</Button>
-                <Button block type="primary" onClick={() => navigate('/register')}>{t('common.register') || 'Sign up'}</Button>
+              <div className="mt-4 px-5 space-y-3">
+                <Button 
+                  block 
+                  size="large"
+                  onClick={() => { setIsMenuOpen(false); navigate('/login'); }}
+                  className="min-h-[48px] h-12 text-base font-medium"
+                >
+                  {t('common.login') || 'Log in'}
+                </Button>
+                <Button 
+                  block 
+                  type="primary" 
+                  size="large"
+                  onClick={() => { setIsMenuOpen(false); navigate('/register'); }} 
+                  className="bg-blue-600 min-h-[48px] h-12 text-base font-medium"
+                >
+                  {t('common.register') || 'Sign up'}
+                </Button>
+              </div>
+            )}
+            
+            {isAuthenticated && (
+              <div className="mt-4 px-5">
+                <Button 
+                  block 
+                  danger
+                  size="large"
+                  icon={<LogOut size={18} />}
+                  onClick={handleLogout}
+                  className="min-h-[48px] h-12 text-base font-medium"
+                >
+                  {t('common.logout') || '退出登录'}
+                </Button>
               </div>
             )}
           </div>

@@ -11,9 +11,6 @@ services:
       POSTGRES_USER: ${DB_USER:-oc_user}
       POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
       TZ: Asia/Shanghai
-    # 生产环境不暴露端口到宿主机，仅限容器内部访问
-    # ports:
-    #   - "${DB_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
@@ -48,9 +45,6 @@ services:
     environment:
       TZ: Asia/Shanghai
     command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD is required} --maxmemory 64mb --maxmemory-policy allkeys-lru
-    # 生产环境不暴露端口到宿主机
-    # ports:
-    #   - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -69,10 +63,6 @@ services:
       MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:?MINIO_SECRET_KEY is required}
       TZ: Asia/Shanghai
-    # 生产环境不暴露端口到宿主机（通过后端访问）
-    # ports:
-    #   - "9000:9000"
-    #   - "9001:9001"
     volumes:
       - minio_data:/data
     command: server /data --console-address ":9001"
@@ -133,9 +123,6 @@ services:
     volumes:
       - upload_data:/app/uploads
       - app_logs:/app/logs
-    # 生产环境不暴露端口到宿主机（通过 Nginx 反向代理）
-    # ports:
-    #   - "${BACKEND_PORT:-8081}:8081"
     networks:
       - oc-net
 
@@ -152,7 +139,8 @@ services:
       start_period: 10s
     restart: always
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     ports:
       - "${FRONTEND_PORT:-80}:80"
       - "${FRONTEND_SSL_PORT:-443}:443"

@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Github, Twitter, Linkedin, Quote, Calendar, Mail, MessageCircle, MessageSquare } from 'lucide-react';
+import { Github, Twitter, Linkedin, Quote, Calendar, Mail, MessageCircle, MessageSquare, Shield } from 'lucide-react';
 import { SiteLogo } from '../SiteLogo';
 import { useAppSelector } from '@/store/hooks';
 
@@ -40,6 +40,12 @@ export const Footer = () => {
       { name: t('footer.privacyPolicy'), href: '/privacy' },
       { name: t('footer.termsOfService'), href: '/terms' },
     ],
+  };
+
+  const policeFilingConfig = {
+    enabled: false,
+    number: '',
+    url: '',
   };
 
   return (
@@ -131,7 +137,6 @@ export const Footer = () => {
         </div>
 
         <div className="border-t border-slate-200 dark:border-slate-800 pt-8 space-y-6">
-          {/* 节假日定制信息 */}
           {holiday && (
             <div className="flex items-center justify-center gap-2 text-center">
               <Calendar size={16} className="text-rose-500 shrink-0" />
@@ -141,7 +146,6 @@ export const Footer = () => {
             </div>
           )}
 
-          {/* 名人名言 */}
           {quote && (
             <div className="flex flex-col items-center justify-center gap-2 text-center max-w-2xl mx-auto">
               <div className="flex items-start gap-2">
@@ -158,20 +162,13 @@ export const Footer = () => {
             </div>
           )}
 
-          {/* 备案信息和版权 - 备案始终居中 */}
-          <div className="relative flex items-center justify-center py-4 min-h-[48px]">
-            {/* 版权信息 - 绝对定位在左侧 */}
-            <p className="absolute left-0 text-slate-500 dark:text-slate-400 text-sm">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 py-4">
+            <p className="text-slate-500 dark:text-slate-400 text-sm text-center">
               {t('footer.copyright')}
             </p>
             
-            {/* 
-              备案信息 - 静态配置区域
-              请在下方直接修改备案信息，备案成功后填写：
-              1. ICP备案号（如：黔ICP备12345678号-1）
-              2. 公安备案号（如：黔公网安备52010000000000号）
-              3. 公安备案图标URL（可从公安机关备案网站下载）
-            */}
+            <div className="hidden sm:block text-slate-300 dark:text-slate-700">|</div>
+            
             <a 
               href="https://beian.miit.gov.cn/" 
               target="_blank" 
@@ -180,6 +177,25 @@ export const Footer = () => {
             >
               黔ICP备2026002901号-1
             </a>
+            
+            <div className="hidden sm:block text-slate-300 dark:text-slate-700">|</div>
+            
+            {policeFilingConfig.enabled && policeFilingConfig.url ? (
+              <a 
+                href={policeFilingConfig.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-sm hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+              >
+                <Shield size={14} className="text-slate-400" />
+                <span>{policeFilingConfig.number}</span>
+              </a>
+            ) : (
+              <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-sm">
+                <Shield size={14} className="text-slate-400" />
+                <span className="opacity-50">{t('footer.policeFiling') || '公安备案'}</span>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -781,7 +781,8 @@
     "termsOfService": "Terms of Service",
     "weibo": "Weibo",
     "wechat": "WeChat Official Account",
-    "contactEmail": "Contact Email"
+    "contactEmail": "Contact Email",
+    "policeFiling": "Police Filing (Pending)"
   },
   "footerPages": {
     "about": {
@@ -862,6 +863,7 @@
     "wechat": "WeChat Official Account",
     "wechatPlaceholder": "WeChat account name or link",
     "contactEmail": "Contact Email",
+    "policeFiling": "Police Filing (Pending)",
     "linkedin": "LinkedIn",
     "email": "Email",
     "maintenanceConfig": "Maintenance Mode Configuration",
@@ -939,5 +941,16 @@
     "mediaUrl": "Media URL",
     "darkMode": "Dark Mode",
     "setAsDefault": "Set as Default"
+  },
+  "captcha": {
+    "loading": "Loading captcha...",
+    "loadingTimeout": "Captcha loading timeout, please refresh the page",
+    "loadingFailed": "Captcha loading failed, please check your network",
+    "renderFailed": "Captcha render failed, please refresh the page",
+    "verifyHint": "Please complete the verification to continue",
+    "vpnNotice": "Using VPN/proxy may take longer to verify",
+    "retry": "Retry",
+    "refreshPage": "Refresh Page",
+    "or": "or"
   }
 }

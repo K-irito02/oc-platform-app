@@ -10,31 +10,50 @@ const lazyLoad = (Component: React.LazyExoticComponent<ComponentType<unknown>>) 
   </Suspense>
 );
 
-const Home = lazy(() => import('@/pages/Home'));
-const Products = lazy(() => import('@/pages/Products'));
-const ProductDetail = lazy(() => import('@/pages/ProductDetail'));
-const Login = lazy(() => import('@/pages/Login'));
-const Register = lazy(() => import('@/pages/Register'));
-const ForgotPassword = lazy(() => import('@/pages/ForgotPassword'));
-const Profile = lazy(() => import('@/pages/Profile'));
-const OAuthCallback = lazy(() => import('@/pages/OAuthCallback'));
-const NotFound = lazy(() => import('@/pages/NotFound'));
-const ComingSoon = lazy(() => import('@/pages/ComingSoon'));
-const InfoPage = lazy(() => import('@/pages/InfoPage'));
+const lazyWithRetry = (importFn: () => Promise<{ default: ComponentType<unknown> }>) => {
+  return lazy(() => {
+    return importFn().catch(async (error) => {
+      const chunkId = importFn.toString().slice(0, 100);
+      const retryKey = `chunk-retry-${chunkId}`;
+      const hasRetried = sessionStorage.getItem(retryKey);
+      
+      if (!hasRetried) {
+        sessionStorage.setItem(retryKey, '1');
+        window.location.reload();
+        return new Promise(() => {});
+      }
+      
+      sessionStorage.removeItem(retryKey);
+      throw error;
+    });
+  });
+};
 
-const Error500 = lazy(() => import('@/pages/Error').then(m => ({ default: m.Error500 })));
-const Error403 = lazy(() => import('@/pages/Error').then(m => ({ default: m.Error403 })));
-const Maintenance = lazy(() => import('@/pages/Maintenance'));
+const Home = lazyWithRetry(() => import('@/pages/Home'));
+const Products = lazyWithRetry(() => import('@/pages/Products'));
+const ProductDetail = lazyWithRetry(() => import('@/pages/ProductDetail'));
+const Login = lazyWithRetry(() => import('@/pages/Login'));
+const Register = lazyWithRetry(() => import('@/pages/Register'));
+const ForgotPassword = lazyWithRetry(() => import('@/pages/ForgotPassword'));
+const Profile = lazyWithRetry(() => import('@/pages/Profile'));
+const OAuthCallback = lazyWithRetry(() => import('@/pages/OAuthCallback'));
+const NotFound = lazyWithRetry(() => import('@/pages/NotFound'));
+const ComingSoon = lazyWithRetry(() => import('@/pages/ComingSoon'));
+const InfoPage = lazyWithRetry(() => import('@/pages/InfoPage'));
 
-const AdminDashboard = lazy(() => import('@/pages/Admin/Dashboard'));
-const AdminUsers = lazy(() => import('@/pages/Admin/Users'));
-const AdminProducts = lazy(() => import('@/pages/Admin/Products'));
-const AdminProductEdit = lazy(() => import('@/pages/Admin/Products/ProductEdit'));
-const AdminComments = lazy(() => import('@/pages/Admin/Comments'));
-const AdminFeedbacks = lazy(() => import('@/pages/Admin/Feedbacks'));
-const AdminCategories = lazy(() => import('@/pages/Admin/Categories'));
-const AdminTheme = lazy(() => import('@/pages/Admin/Theme'));
-const AdminSystem = lazy(() => import('@/pages/Admin/System'));
+const Error500 = lazyWithRetry(() => import('@/pages/Error').then(m => ({ default: m.Error500 })));
+const Error403 = lazyWithRetry(() => import('@/pages/Error').then(m => ({ default: m.Error403 })));
+const Maintenance = lazyWithRetry(() => import('@/pages/Maintenance'));
+
+const AdminDashboard = lazyWithRetry(() => import('@/pages/Admin/Dashboard'));
+const AdminUsers = lazyWithRetry(() => import('@/pages/Admin/Users'));
+const AdminProducts = lazyWithRetry(() => import('@/pages/Admin/Products'));
+const AdminProductEdit = lazyWithRetry(() => import('@/pages/Admin/Products/ProductEdit'));
+const AdminComments = lazyWithRetry(() => import('@/pages/Admin/Comments'));
+const AdminFeedbacks = lazyWithRetry(() => import('@/pages/Admin/Feedbacks'));
+const AdminCategories = lazyWithRetry(() => import('@/pages/Admin/Categories'));
+const AdminTheme = lazyWithRetry(() => import('@/pages/Admin/Theme'));
+const AdminSystem = lazyWithRetry(() => import('@/pages/Admin/System'));
 
 const router = createBrowserRouter([
   {
