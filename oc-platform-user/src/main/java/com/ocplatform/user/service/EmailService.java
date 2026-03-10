@@ -121,7 +121,7 @@ public class EmailService {
             
             helper.setFrom(mailFrom);
             helper.setTo(email);
-            helper.setSubject(emailTemplateService.getSubject(type, "zh"));
+            helper.setSubject(emailTemplateService.getSubject(type, "zh", code));
             helper.setText(emailTemplateService.generateVerificationEmail(code, type), true);
             
             mailSender.send(mimeMessage);
