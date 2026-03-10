@@ -256,6 +256,11 @@ export function CloudflareTurnstile({
         options['expired-callback'] = () => {
           onExpireRef.current?.();
         };
+      } else {
+        options['expired-callback'] = () => {
+          setError(null);
+          reset();
+        };
       }
 
       widgetIdRef.current = window.turnstile.render(containerRef.current, options);

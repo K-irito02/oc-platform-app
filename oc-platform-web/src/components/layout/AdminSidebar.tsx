@@ -39,7 +39,7 @@ export const AdminSidebar = ({ collapsed, setCollapsed }: AdminSidebarProps) => 
 
   return (
     <aside className={cn(
-      "hidden md:flex flex-col h-screen sticky top-0 z-40 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transition-all duration-300",
+      "flex flex-col h-screen bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transition-all duration-300",
       collapsed ? "w-20" : "w-64"
     )}>
       {/* Logo Section - 与 AdminHeader 高度对齐 */}

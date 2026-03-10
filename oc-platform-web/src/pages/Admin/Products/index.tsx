@@ -167,7 +167,7 @@ export default function AdminProducts() {
       
       // 加载版本信息
       await loadVersionInfo(records);
-    } catch { /* handled */ } finally { setLoading(false); }
+    } catch (error: unknown) { const err = error as { code?: number; response?: { data?: { message?: string } }; message?: string }; const errorMsg = err.response?.data?.message || err.message || '加载产品列表失败'; console.error('Failed to load products:', errorMsg, error); message.error('加载产品失败: ' + errorMsg); } finally { setLoading(false); }
   };
 
   const loadVersionInfo = async (products: ProductRecord[]) => {

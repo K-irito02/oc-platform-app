@@ -9,9 +9,10 @@ import { useNavigate } from 'react-router-dom';
 interface AdminHeaderProps {
   collapsed: boolean;
   setCollapsed: (v: boolean) => void;
+  onMenuClick?: () => void;
 }
 
-export const AdminHeader = ({ collapsed, setCollapsed }: AdminHeaderProps) => {
+export const AdminHeader = ({ collapsed, setCollapsed, onMenuClick }: AdminHeaderProps) => {
   const { t, i18n } = useTranslation();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -50,8 +51,8 @@ export const AdminHeader = ({ collapsed, setCollapsed }: AdminHeaderProps) => {
     <header className="sticky top-0 z-30 flex items-center justify-between px-6 h-14 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
       <div className="flex items-center gap-4">
         <button 
-          onClick={() => setCollapsed(!collapsed)}
-          className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 md:hidden"
+          onClick={() => onMenuClick ? onMenuClick() : setCollapsed(!collapsed)}
+          className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 md:block hidden"
           title={collapsed ? 'Expand menu' : 'Collapse menu'}
           aria-label={collapsed ? 'Expand menu' : 'Collapse menu'}
         >

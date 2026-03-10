@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
-import { Spin } from 'antd';
+import { Spin, Drawer } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { AdminSidebar } from '@/components/layout/AdminSidebar';
 import { AdminHeader } from '@/components/layout/AdminHeader';
@@ -12,6 +12,7 @@ export default function AdminLayout() {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   const [checking, setChecking] = useState(true);
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const hasCheckedRef = useRef(false);
 
   useEffect(() => {
@@ -50,10 +51,29 @@ export default function AdminLayout() {
 
   return (
     <div className="flex min-h-screen w-full bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
-      <AdminSidebar collapsed={collapsed} setCollapsed={setCollapsed} />
+      {/* Desktop Sidebar */}
+      <div className="hidden md:block">
+        <AdminSidebar collapsed={collapsed} setCollapsed={setCollapsed} />
+      </div>
+
+      {/* Mobile Drawer */}
+      <Drawer
+        placement="left"
+        onClose={() => setMobileDrawerOpen(false)}
+        open={mobileDrawerOpen}
+        width={280}
+        bodyStyle={{ padding: 0 }}
+        headerStyle={{ display: 'none' }}
+      >
+        <AdminSidebar collapsed={false} setCollapsed={() => setMobileDrawerOpen(false)} />
+      </Drawer>
 
       <div className="flex-1 flex flex-col min-w-0">
-        <AdminHeader collapsed={collapsed} setCollapsed={setCollapsed} />
+        <AdminHeader 
+          collapsed={collapsed} 
+          setCollapsed={setCollapsed}
+          onMenuClick={() => setMobileDrawerOpen(true)}
+        />
         
         <main className="flex-1 p-6 overflow-y-auto custom-scrollbar">
           <Outlet />
