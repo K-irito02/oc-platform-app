@@ -52,7 +52,7 @@ export const AdminHeader = ({ collapsed, setCollapsed, onMenuClick }: AdminHeade
       <div className="flex items-center gap-4">
         <button 
           onClick={() => onMenuClick ? onMenuClick() : setCollapsed(!collapsed)}
-          className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 md:block hidden"
+          className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 md:hidden block"
           title={collapsed ? 'Expand menu' : 'Collapse menu'}
           aria-label={collapsed ? 'Expand menu' : 'Collapse menu'}
         >
