@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Github, Twitter, Linkedin, Quote, Calendar, Mail, MessageCircle, MessageSquare, Shield } from 'lucide-react';
+import { Github, Twitter, Linkedin, Quote, Calendar, Mail, MessageCircle, MessageSquare } from 'lucide-react';
 import { SiteLogo } from '../SiteLogo';
 import { useAppSelector } from '@/store/hooks';
 
@@ -43,9 +43,9 @@ export const Footer = () => {
   };
 
   const policeFilingConfig = {
-    enabled: false,
-    number: '',
-    url: '',
+    enabled: true,
+    number: '贵公网安备52062302000156号',
+    url: 'https://beian.mps.gov.cn/#/query/webSearch?code=52062302000156',
   };
 
   return (
@@ -187,15 +187,14 @@ export const Footer = () => {
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-sm hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
               >
-                <Shield size={14} className="text-slate-400" />
+                <img 
+                  src="/police-filing.png" 
+                  alt="公安备案" 
+                  className="w-4 h-4"
+                />
                 <span>{policeFilingConfig.number}</span>
               </a>
-            ) : (
-              <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-sm">
-                <Shield size={14} className="text-slate-400" />
-                <span className="opacity-50">{t('footer.policeFiling') || '公安备案'}</span>
-              </div>
-            )}
+            ) : null}
           </div>
         </div>
       </div>
